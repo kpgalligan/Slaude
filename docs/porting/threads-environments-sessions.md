@@ -39,9 +39,13 @@ merges it upstream), and `params` reports the tools a creating turn was given fo
 | the `try: yield item finally: work.stop(...)` of `aiter_work` | with `autoStop`, an item is stopped when the next one is asked for, when the body throws out of `forEach(_:)`, on `close()`, and (best-effort) when the poller is released |
 | `Work` / `AsyncWork` (`poll`, `ack`, `stop`, `heartbeat`) as the poller's dependency | `protocol EnvironmentWorkAPI`, implemented over the generated `BetaEnvironmentsWorkResource` (an empty poll's `null` body is `nil`, as Python's `Optional[BetaSelfHostedWork]`) |
 | `POLL_BLOCK_MS` | `POLL_BLOCK_MS` |
-| `client.beta.environments.work.worker(...)` / `EnvironmentWorker(client, ...)` | `client.beta.environments.work.worker(environmentID:environmentKey:tools:workdir:maxIdle:workerID:extraHeaders:)` / `EnvironmentWorker(client:...)`, with `run()` and `handleItem(workID:environmentID:sessionID:environmentKey:workSecret:)` |
-| `EnvironmentWorkerTools` (a list, or a factory over `AgentToolContext`) | `enum EnvironmentWorkerTools { case list([any BetaRunnableTool]), factory((EnvironmentWorkerContext) throws -> [...]) }` |
-| `AgentToolContext` as the worker drives it (workdir, session, skills download on enter, removal on exit) | `EnvironmentWorkerContext` |
+| `client.beta.environments.work.worker(...)` / `EnvironmentWorker(client, ...)` | `client.beta.environments.work.worker(environmentID:environmentKey:tools:workdir:unrestrictedPaths:maxFileBytes:maxIdle:memorySyncInterval:memorySyncDeletions:workerID:extraHeaders:)` / `try EnvironmentWorker(client:...)` (throws for a `memorySyncInterval` below `MIN_MEMORY_SYNC_INTERVAL`, and for any `unrestrictedPaths`), with `run()` and `handleItem(workID:environmentID:sessionID:environmentKey:workSecret:)` |
+| `EnvironmentWorkerTools` (a list, or a factory over `AgentToolContext`) | `enum EnvironmentWorkerTools { case list([any BetaRunnableTool]), factory((AgentToolContext) throws -> [...]) }` |
+| `tools=None` → `beta_agent_toolset_20260401(env)` | `tools: nil` → `betaAgentToolset20260401(context)` |
+| `AgentToolContext(workdir=..., max_file_bytes=..., client=worker_client, session=session)`, `__aenter__` / `__aexit__` | `AgentToolContext` (`Lib/Tools/AgentToolset.swift`): `setupSkills()` on enter; `exit()` (close bash, remove the skills) on exit |
+| `memory_sync_interval`, `memory_sync_deletions`, `SessionMemoryStores(worker_client, workdir=..., sync_interval=..., sync_deletions=...)` | `memorySyncInterval: TimeInterval?` (`nil` disables), `memorySyncDeletions: MemoryDeleteMode`, `SessionMemoryStores` (`Lib/Tools/Memories.swift`) through the internal `protocol EnvironmentMemoryStores` |
+| `anyio.move_on_after(MEMORY_FLUSH_TIMEOUT)` around `finish()` / `flush_writes()` | a task group racing the pass against its bound; the pass is cancelled and waited for |
+| the `anyio.CancelScope(shield=True)` teardown | the teardown runs in an unstructured `Task`, so cancelling the run (a lost lease) does not cancel it |
 | `_Lease`, `_LeaseEndReason`, `_heartbeat_loop`, `_sessions_token_from_secret` | internal `EnvironmentLease`, `LeaseEndReason`, `heartbeatLoop`, `sessionsTokenFromSecret` |
 | `lib/_retry.py`, `lib/_scoped_client.py` | the existing `HelperRetry` and `ScopedClient` |
 | `logging.getLogger("anthropic.lib.environments._poller" / "._worker")` | `ToolLogger` records under the same names (`ToolDiagnostics`) |
@@ -50,7 +54,13 @@ Per-item flow, as upstream: the sessions token of the item's `secret` is preferr
 heartbeat starts before the session is fetched and its skills are downloaded; a heartbeat that ends the lease
 (stopping / stopped, 412, a fatal 4xx, or no success for a whole TTL) ends the session run; the item is
 force-stopped on exit unless the lease was lost; the latest server-reported TTL is the session tool runner's
-send-retry window.
+send-retry window. Memory stores are mounted only for an item whose secret carries a sessions token (the memory
+endpoints reject the environment key) while `memorySyncInterval` is set; an item without one whose session has memory
+stores attached fails with `SessionMemoryError`. One session fetch is shared by the skills and the memory download; the
+store folders become the context's `allowedRoots` (read-only stores its `readOnlyRoots`); `syncIfDue()` runs after
+each dispatched tool call. The teardown closes the context first, then (after a clean end only) `finish()`, then
+`flushWrites()`, each bounded by `MEMORY_FLUSH_TIMEOUT` with a warning when cut off, then `dispose()`; the heartbeat
+keeps the lease until it is done.
 
 ### Sessions (`Sources/Anthropic/Lib/Sessions/Accumulate.swift`)
 
@@ -61,12 +71,6 @@ send-retry window.
 
 ## Not ported here
 
-* **Memory-store sync of the worker** (`memory_sync_interval`, `memory_sync_deletions`, `SessionMemoryStores`,
-  `SessionMemoryError`, `MEMORY_FLUSH_TIMEOUT`, ...): `_memories.py` is being ported concurrently with the streaming
-  tool runner. The worker runs every item without memory stores (upstream's `memory_sync_interval=None`).
-* **The default worker tools** (`beta_agent_toolset_20260401`, the bash session and file tools of
-  `agent_toolset.py`): not part of the port yet. Without `tools`, a worker answers the session's tool calls as unknown
-  tools. `unrestricted_paths` (deprecated, always refused upstream) has no Swift counterpart.
 * **OpenTelemetry work spans** (`WorkSpan`, `as_current_span`): belong to the tracing port.
 
 ## Tests
@@ -81,13 +85,15 @@ send-retry window.
 | `threads/test_tool_runner_threading.py` | `Lib/Threads/ThreadsRunnerThreadingTests.swift` | 34 of 37 (non-streaming cases of `RESPONSE_KINDS`; `RUNNER_MODES` and `LOOP_BODIES` as arguments) |
 | `environments/test_poller.py` | `Lib/Environments/PollerTests.swift` (`EnvRetryHelpersTests`) | 4 of 4 |
 | `environments/test_poller_method.py` | `Lib/Environments/PollerTests.swift` | 27 of 33: every test but the 6 span tests (a sync `iter_work` test and its async twin are one Swift test; sync-only ones run async); +3 Swift checks (`poller(...)` over HTTP, `close()`, the default worker id) |
-| `environments/test_worker.py` | `Lib/Environments/WorkerTests.swift` | 27 of 36 (+1: the poll client of `run()`) |
+| `environments/test_worker.py` | `Lib/Environments/WorkerTests.swift` | 28 of 36 (+1: the poll client of `run()`) |
+| `tools/memory_sync/test_e2e_memory.py` | `Lib/Tools/MemorySync/MemorySyncE2ETests.swift` | 17 of 17 (see `tools.md`) |
 | `sessions/test_accumulate.py` | `Lib/Sessions/AccumulateTests.swift` | 15 of 15 |
 
 The worker tests run the worker with its real scoped clients over a mock transport: where upstream records the
 `auth_token` / `helper` its fake scoped-client factory was called with, the Swift tests check each request's
 `Authorization` and `x-stainless-helper` headers. Only the poll loop (`aiter_work`) and the session tool runner
-(`_run_session_tools`) are replaced, through internal hooks.
+(`_run_session_tools`) are replaced, through internal hooks. Upstream's `setup_skills` patch in
+`test_heartbeat_starts_before_skill_download` is a skill-version fetch that waits on the first heartbeat.
 
 ### Skipped (no Swift meaning)
 
@@ -109,11 +115,8 @@ The worker tests run the worker with its real scoped clients over a mock transpo
   copied.
 
 `environments/test_worker.py`
-* `test_unrestricted_paths_is_rejected_at_construction`: the deprecated parameter does not exist in Swift.
 * `test_work_resource_worker_and_poller_async_only`: there is no sync client.
 * `test_heartbeat_keeps_beating_while_a_sync_tool_blocks`: Swift tools are async.
-* The default-toolset assertion of `test_environment_worker_serves_session` and the memory assertions of
-  `test_work_resource_worker_builds_environment_worker` / `test_work_resource_worker_defaults` (see "Not ported here").
 
 `environments/test_poller_method.py`
 * The sync `iter_work` tests are the twins of the async ones.

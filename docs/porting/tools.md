@@ -64,8 +64,6 @@ Toolset differences from upstream, all forced by Swift's types:
 
 * The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is ported in `Lib/Threads/` (see `threads-environments-sessions.md`).
 * `test_open_telemetry.py` belongs to the tracing port.
-* `memory_sync/test_e2e_memory.py` (17 tests) drives `SessionMemoryStores` through the real `EnvironmentWorker`; it
-  belongs with the environment worker's tests (`Lib/Environments/`, which does not use `SessionMemoryStores` yet).
 
 ## Streaming runner and output format notes
 
@@ -121,6 +119,13 @@ Toolset differences from upstream, all forced by Swift's types:
   `setUploadConcurrency` instead, and wrap the fake resource's calls. `download` is driven with the session's
   `memory_store` resources (`download(resources:)`), so the foreign `file` resource of
   `test_prefix_items_and_foreign_resources_leave_no_trace` has no counterpart.
+* `test_e2e_memory.py` patches `SessionMemoryStores.finish` / `flush_writes` / `dispose`, `AgentToolContext.__aexit__`,
+  the worker's `_heartbeat_loop`, `_copy_client_with_bearer_auth`, `aiter_work`, `_run_session_tools` and
+  `MEMORY_FLUSH_TIMEOUT`. The Swift tests run the worker with its real scoped clients over a mock transport and set
+  the worker's internal `EnvironmentWorkerHooks` instead (`memoryStores` returns a `SessionMemoryStores` over the fake
+  resource, optionally wrapped; `exitContext`, `heartbeatLoop`, `workItems`, `runSessionTools`, `retrieveSession`).
+  Where upstream shortens `MEMORY_FLUSH_TIMEOUT` and asserts the elapsed time, the `memoryTeardownBound` hook ends a
+  pass's bound as soon as the pass under test is stuck; a bound that did not work holds the test until its time limit.
 
 `test_session_runner.py`
 * `test_sync_tool_runs_off_the_event_loop`: sync tools on a worker thread; Swift tools are async. The timeout for
@@ -215,6 +220,7 @@ shares and are ported as async tests.
 | `test_runner_eager_tools.py` | `RunnerEagerToolsTests.swift` (fixtures in `StreamingRunnerSupport.swift`) | 38 of 39 (sync/async merged) |
 | `test_runner_eager_toolsets.py` | `RunnerEagerToolsetsTests.swift` | 16 of 16 (the computer and browser toolsets of the timeline are `StreamingRunnerTimelineToolset`s; the `confirm` and `javascript_exec` tests use the SDK toolsets' fakes) |
 | `memory_sync/test_memory_sync.py` | `MemorySync/MemorySyncTests.swift` (fixtures in `MemorySyncSupport.swift`) | 22 of 23 |
+| `memory_sync/test_e2e_memory.py` | `MemorySync/MemorySyncE2ETests.swift` (`MemoryE2ETests`) | 17 of 17 |
 | `memory_sync/test_delete_discipline.py`, `test_final_flush.py`, `test_folder_trust.py`, `test_keep_only_copy.py`, `test_lost_response.py`, `test_two_pass.py` | `MemorySync/MemorySync*Tests.swift` | 10 of 10, 8 of 8, 14 of 14, 7 of 7, 10 of 10, 6 of 6 |
 | `memory_tools/test_filesystem.py` | `MemoryToolTests.swift` | the 41 async tests (as 33 Swift tests, some parametrized) + 2 |
 | `test_file_store.py` | `FileStoreTests.swift` | 29 of 31 (+ SHA-256 vectors) |
@@ -247,4 +253,7 @@ classes cannot capture a test's variables.
 No core or generated files were changed. Outside `Lib/Tools/Toolsets/` and `AgentToolset.swift`, the toolset port added
 `ToolError.cause` (`BetaFunctions.swift`). The streaming runner added the internal `BetaMessageStreamHooks` to
 `Lib/Streaming/BetaMessageStream.swift`, and an injectable `SessionRunnerClock` (`SessionRunnerTimings.clock`) lets the
-session runner's retry-window tests run on a virtual clock.
+session runner's retry-window tests run on a virtual clock. Wiring the memory sync into the environment worker made
+`AgentToolContext.allowedRoots` / `readOnlyRoots` settable (upstream's dataclass fields, which the worker assigns
+after the download), added the internal `AgentToolContext.exit()` (`__aexit__`), and moved the removal of downloaded
+skills off the cooperative pool.
