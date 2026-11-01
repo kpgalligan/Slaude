@@ -7,16 +7,19 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 
 | Upstream | Swift |
 | --- | --- |
-| `@beta_async_tool` / `BetaAsyncFunctionTool` | `BetaAsyncFunctionTool(name:description:inputSchema:...) { (input: T) in ... }` — explicit JSON schema; the closure takes the raw JSON object or any `Decodable` input (a decode failure is `ValueError("Invalid arguments for function <name>")`, as pydantic's validation is upstream) |
-| `@beta_async_tool` over an `@asynccontextmanager` | `BetaAsyncFunctionTool(..., enter: { (function, exit) })`: entered on the first call, exited by `acloseRunnableTool` |
-| `BetaAsyncBuiltinFunctionTool` | `open class BetaAsyncBuiltinFunctionTool` (override `toDict()` / `call(_:)`) |
-| `BetaAsyncRunnableToolset` | `open class BetaAsyncRunnableToolset` (override `toolsetName`, `toDict()`, `call(context:name:input:)`) |
+| `@beta_async_tool` / `BetaFunctionTool` | `BetaFunctionTool(name:description:inputSchema:...) { (input: T) in ... }` — explicit JSON schema; the closure takes the raw JSON object or any `Decodable` input (a decode failure is `ValueError("Invalid arguments for function <name>")`, as pydantic's validation is upstream) |
+| `@beta_async_tool` over an `@asynccontextmanager` | `BetaFunctionTool(..., enter: { (function, exit) })`: entered on the first call, exited by `acloseRunnableTool` |
+| `BetaBuiltinFunctionTool` | `open class BetaBuiltinFunctionTool` (override `toDict()` / `call(_:)`) |
+| `BetaRunnableToolset` | `open class BetaRunnableToolset` (override `toolsetName`, `toDict()`, `call(context:name:input:)`) |
 | `ToolError` and the toolset refusals | `open class ToolError: Error` and subclasses; `ToolsetUsageError` family derive from `AnthropicError` |
 | `BetaToolLike` / `to_tool_params` | `protocol BetaToolLike` (function tools, builtin tools, toolsets, `BetaToolUnionParam`, `BetaToolParam` and a raw `JSONValue` definition conform) / `toToolParams` |
 | `client.beta.messages.tool_runner(...)` | `client.beta.messages.toolRunner(...)` (extension on `BetaMessagesResource`) → `BetaToolRunner` |
 | `BetaAsyncToolRunner` | `actor BetaToolRunner: AsyncSequence` (`for try await message in runner`, `untilDone()`, `generateToolCallResponse()`, `setMessagesParams`, `appendMessages`, `addTools`, `removeTools`, `compactBeforeNextTurn`, `close()`, `init(params:tools:client:)`) |
 | `lib/threads` `ThreadState` / `BetaAsyncMessageThread` (sending half) | internal `ThreadState` / `MessageThread` in `Lib/Tools/Threads/`; `MessageThreadsUnsupported` marks a client without message threads (`_supports_message_threads = False`) |
 | `SessionToolRunner` / `client.beta.sessions.events.tool_runner(...)` | `final class SessionToolRunner: AsyncSequence` of `DispatchedToolCall` / `client.beta.sessions.events.toolRunner(...)`; events are handled as JSON through `protocol SessionEventsAPI` (the generated resource, or a fake) |
+| `BetaAsyncAbstractMemoryTool` / `BetaAsyncLocalFilesystemMemoryTool` (`anthropic.tools.memory`) | `open class BetaAbstractMemoryTool` / `BetaLocalFilesystemMemoryTool(basePath:)` (POSIX I/O: exact bytes, `O_EXCL` 0600 files, 0700 directories regardless of umask, atomic replace with fsync, `..` and symlink escapes refused) |
+| `FileStore` / `LocalFileStore` | `actor FileStore` (`open`, `createRoot`, `put`, `get`, `ls`, `findSymlinks`, `hashtree`, `hashFile`, `move`, `remove`, `dispose`); SHA-256 is a small internal implementation (Foundation has none on Linux) |
+| `_files.py` | `FileOps.readTextExact`, `FileOps.atomicWrite`, `readLineRange`, `LineRangeCollector` |
 | `logging` / `warnings` in the helpers | `ToolDiagnostics` (log handler, `AnthropicWarnings` for warnings, task-local `capture` for tests) |
 
 Request fields and messages are held as JSON inside the runner, as Python holds them as dicts; the public API takes
@@ -36,6 +39,8 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
   takes `outputConfig` with a JSON-schema format. Deferred: the `forced tool and output_format` case of
   `test_compaction_request_leaves_off_reply_params_*` and the `two_output_formats` case of
   `test_a_runner_made_from_params_raises_the_errors_of_tool_runner`.
+* **`_memories.py` (`SessionMemoryStores`, memory-store sync for the environment worker)** and its tests
+  (`memory_sync/`): not ported in this pass.
 * The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is not ported; only what the runners use.
 
 ## Skipped tests (no Swift meaning)
@@ -78,6 +83,18 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
 * `test_send_retry_window_update_bounds_send_already_retrying` drives the internal `send_retry_window` hook directly
   (no `_run_session_tools` shim, which only the environment worker uses).
 
+`memory_tools/test_filesystem.py`
+* The sync class `TestBetaLocalFilesystemMemoryTool` is the twin of the async one, which is ported (Swift's
+  `BetaLocalFilesystemMemoryTool` is the async tool under the sync name, as `AsyncAnthropic` is `Anthropic`).
+  Three insert cases and three symlink cases are parametrized tests.
+
+`test_file_store.py`
+* `test_localfilestore_is_an_alias_for_the_combined_class`: `LocalFileStore` is a typealias (checked by the compiler).
+* `test_filestore_open_raises_on_an_unreadable_mount_path`, `test_filestore_listings_raise_on_an_unreadable_subdirectory`:
+  permission checks do not bind root, so upstream skips them as root too; the second is ported and returns early under root.
+* The direct `_open_regular_file` leg of `test_filestore_get_refuses_a_non_regular_file` calls a private helper; the
+  public `get` legs are ported.
+
 Sync/async twins are ported once (async). Tests that exist only as `_sync` exercise behaviour the async runner
 shares and are ported as async tests.
 
@@ -87,4 +104,7 @@ shares and are ported as async tests.
 | --- | --- | --- |
 | `test_functions.py` | `FunctionsTests.swift` | 9 upstream tests (+4 Swift-specific checks) |
 | `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift` | 62 upstream tests/twin pairs (non-streaming) |
+| `memory_tools/test_filesystem.py` | `MemoryToolTests.swift` | the 41 async tests (as 33 Swift tests, some parametrized) + 2 |
+| `test_file_store.py` | `FileStoreTests.swift` | 29 of 31 (+ SHA-256 vectors) |
+| `test_files.py` | `FileStoreTests.swift` (`FilesTests`) | 2 of 2 (+1) |
 | `test_session_runner.py` | `SessionRunnerTests.swift` | 55 of 59 (2 merged into one parametrized test, 1 via HTTP) |

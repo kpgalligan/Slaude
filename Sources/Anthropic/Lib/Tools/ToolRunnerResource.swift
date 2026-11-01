@@ -9,7 +9,7 @@ extension BetaMessagesResource {
     /// to send the full history every turn.
     ///
     /// - Parameters:
-    ///   - tools: Function tools (`BetaAsyncFunctionTool`), builtin tools, toolsets and raw tool definitions.
+    ///   - tools: Function tools (`BetaFunctionTool`), builtin tools, toolsets and raw tool definitions.
     ///   - maxIterations: How many replies the loop asks for at most. There is no limit by default.
     ///   - thread: `false` sends the full history with every request instead of continuing a message thread.
     public func toolRunner(

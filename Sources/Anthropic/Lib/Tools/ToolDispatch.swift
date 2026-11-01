@@ -29,13 +29,13 @@ struct OrderedDict<Value> {
 
 /// Index a runner's tools by `name` and its toolsets by family (`toolset_name`). On a duplicate key the later one
 /// wins (`index_runnables`).
-func indexRunnables(_ tools: [any BetaToolLike]) -> (OrderedDict<any BetaAsyncRunnableTool>, OrderedDict<BetaAsyncRunnableToolset>) {
-    var byName = OrderedDict<any BetaAsyncRunnableTool>()
-    var byFamily = OrderedDict<BetaAsyncRunnableToolset>()
+func indexRunnables(_ tools: [any BetaToolLike]) -> (OrderedDict<any BetaRunnableTool>, OrderedDict<BetaRunnableToolset>) {
+    var byName = OrderedDict<any BetaRunnableTool>()
+    var byFamily = OrderedDict<BetaRunnableToolset>()
     for tool in tools {
-        if let toolset = tool as? BetaAsyncRunnableToolset {
+        if let toolset = tool as? BetaRunnableToolset {
             byFamily[toolset.toolsetName] = toolset
-        } else if let runnable = tool as? any BetaAsyncRunnableTool {
+        } else if let runnable = tool as? any BetaRunnableTool {
             byName[runnable.name] = runnable
         }
     }

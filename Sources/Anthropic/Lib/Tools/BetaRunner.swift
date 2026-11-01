@@ -80,7 +80,7 @@ func withoutCompactionIncompatibleParams(_ params: [String: JSONValue]) -> [Stri
 
 /// The tool a name runs under where that differs from the thread's tools.
 private enum ToolOverride {
-    case tool(any BetaAsyncRunnableTool)
+    case tool(any BetaRunnableTool)
     case removed
 }
 
@@ -119,7 +119,7 @@ public actor BetaToolRunner: AsyncSequence {
 
     private let options: TurnOverrides
     private var toolOverrides = OrderedDict<ToolOverride>()
-    private var toolsets = OrderedDict<BetaAsyncRunnableToolset>()
+    private var toolsets = OrderedDict<BetaRunnableToolset>()
     private let helperHeaders: Headers
     private var cachedToolCallResponse: JSONValue?
     private let maxIterations: Int?
@@ -376,7 +376,7 @@ public actor BetaToolRunner: AsyncSequence {
         for (name, tool) in runnable.items { overrides[name] = .tool(tool) }
         for name in withdrawn { overrides[name] = .removed }
         toolOverrides = overrides
-        var kept = OrderedDict<BetaAsyncRunnableToolset>()
+        var kept = OrderedDict<BetaRunnableToolset>()
         for (family, toolset) in families.items where !withdrawn.contains(family) { kept[family] = toolset }
         toolsets = kept
     }
@@ -520,14 +520,14 @@ public actor BetaToolRunner: AsyncSequence {
     public func addTools(_ tools: [any BetaToolLike]) throws {
         let families = toolsetsByFamily()
         for tool in tools {
-            if let toolset = tool as? BetaAsyncRunnableToolset { throw ToolsetsFixedError(.add, toolset.toolsetName) }
+            if let toolset = tool as? BetaRunnableToolset { throw ToolsetsFixedError(.add, toolset.toolsetName) }
             var name: String?
             if isRawDefinition(tool) {
                 let definition = try tool.toToolParam()
                 let family = toolFamily(definition)
                 if families.contains(family) { throw ToolsetsFixedError(.replace, family) }
                 name = definition["name"]?.stringValue
-            } else if let runnable = tool as? any BetaAsyncRunnableTool {
+            } else if let runnable = tool as? any BetaRunnableTool {
                 name = runnable.name
             }
             if let name, families.contains(name) {
@@ -538,7 +538,7 @@ public actor BetaToolRunner: AsyncSequence {
         }
         for tool in tools {
             let definition = try tool.toToolParam()
-            if let runnable = tool as? any BetaAsyncRunnableTool {
+            if let runnable = tool as? any BetaRunnableTool {
                 toolOverrides[runnable.name] = .tool(runnable)
             } else if let name = definition["name"]?.stringValue {
                 toolOverrides[name] = .removed
@@ -557,8 +557,8 @@ public actor BetaToolRunner: AsyncSequence {
         let families = toolsetsByFamily()
         var names: [String] = []
         for tool in tools {
-            if let toolset = tool as? BetaAsyncRunnableToolset { throw ToolsetsFixedError(.remove, toolset.toolsetName) }
-            if let runnable = tool as? any BetaAsyncRunnableTool {
+            if let toolset = tool as? BetaRunnableToolset { throw ToolsetsFixedError(.remove, toolset.toolsetName) }
+            if let runnable = tool as? any BetaRunnableTool {
                 names.append(runnable.name)
             } else if let name = try tool.toToolParam()["name"]?.stringValue {
                 names.append(name)
@@ -578,7 +578,7 @@ public actor BetaToolRunner: AsyncSequence {
     }
 
     /// The tools the runner runs, by name: the thread's runnable tools with the overrides applied.
-    func runnableTools() -> OrderedDict<any BetaAsyncRunnableTool> {
+    func runnableTools() -> OrderedDict<any BetaRunnableTool> {
         var tools = thread.state.runnableTools
         for (name, o) in toolOverrides.items {
             switch o {
@@ -608,23 +608,23 @@ public actor BetaToolRunner: AsyncSequence {
     }
 
     /// The runnable toolsets among the thread's tools, and the ones the runner was given apart from them.
-    func toolsetsByFamily() -> OrderedDict<BetaAsyncRunnableToolset> {
-        var out = OrderedDict<BetaAsyncRunnableToolset>()
+    func toolsetsByFamily() -> OrderedDict<BetaRunnableToolset> {
+        var out = OrderedDict<BetaRunnableToolset>()
         for tool in thread.state.tools ?? [] {
-            if let toolset = tool as? BetaAsyncRunnableToolset { out[toolset.toolsetName] = toolset }
+            if let toolset = tool as? BetaRunnableToolset { out[toolset.toolsetName] = toolset }
         }
         for (family, toolset) in toolsets.items { out[family] = toolset }
         return out
     }
 
-    private func toolsetFor(_ toolUse: BetaToolUseBlock) -> BetaAsyncRunnableToolset? {
+    private func toolsetFor(_ toolUse: BetaToolUseBlock) -> BetaRunnableToolset? {
         let families = toolsetsByFamily()
         guard let toolset = families[toolUse.toolsetName ?? ""] else {
             ToolDiagnostics.warn(
                 "Toolset '\(quotedName(toolUse.toolsetName))' (member '\(quotedName(toolUse.name))') not found in tool runner. "
                     + "Registered toolsets: \(pythonList(families.keys)). "
                     + "If using a raw toolset definition, handle the tool call manually and use `append_messages()` to add the result. "
-                    + "Otherwise, pass a `BetaRunnableToolset` / `BetaAsyncRunnableToolset` instance.")
+                    + "Otherwise, pass a `BetaRunnableToolset` / `BetaRunnableToolset` instance.")
             return nil
         }
         return toolset
@@ -693,7 +693,7 @@ public actor BetaToolRunner: AsyncSequence {
         return ["role": "user", "content": .array(results)]
     }
 
-    func runTool(_ tool: any BetaAsyncRunnableTool, _ toolUse: BetaToolUseBlock) async throws -> JSONValue {
+    func runTool(_ tool: any BetaRunnableTool, _ toolUse: BetaToolUseBlock) async throws -> JSONValue {
         do {
             let content = try await tool.call(.object(toolUse.input))
             return ["type": "tool_result", "tool_use_id": .string(toolUse.id), "content": toolResultContent(content)]

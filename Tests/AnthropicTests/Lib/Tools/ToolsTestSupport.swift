@@ -115,9 +115,9 @@ let weatherSchema: [String: JSONValue] = [
 
 /// The `get_weather` tool the runner tests use; `calls` counts its runs.
 func weatherTool(name: String = "get_weather", calls: Box<Int>? = nil,
-                 run: (@Sendable (WeatherInput) async throws -> BetaFunctionToolResult?)? = nil) -> BetaAsyncFunctionTool
+                 run: (@Sendable (WeatherInput) async throws -> BetaFunctionToolResult?)? = nil) -> BetaFunctionTool
 {
-    BetaAsyncFunctionTool(name: name, description: "Lookup the weather for a given city.", inputSchema: weatherSchema) {
+    BetaFunctionTool(name: name, description: "Lookup the weather for a given city.", inputSchema: weatherSchema) {
         (input: WeatherInput) in
         calls?.mutate { $0 += 1 }
         if let run { return try await run(input) }
@@ -126,8 +126,8 @@ func weatherTool(name: String = "get_weather", calls: Box<Int>? = nil,
 }
 
 /// A tool that records its runs by name (`_recording_tool`).
-func recordingTool(_ name: String, _ calls: Box<[String]>, label: String? = nil) -> BetaAsyncFunctionTool {
-    BetaAsyncFunctionTool(name: name, description: "Run \(name).",
+func recordingTool(_ name: String, _ calls: Box<[String]>, label: String? = nil) -> BetaFunctionTool {
+    BetaFunctionTool(name: name, description: "Run \(name).",
                           inputSchema: ["additionalProperties": false, "properties": [:], "type": "object"]) { _ in
         calls.mutate { $0.append(label ?? name) }
         return .string("\(label ?? name) ran")

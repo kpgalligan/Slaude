@@ -136,7 +136,7 @@ final class ThreadState: @unchecked Sendable {
     var unsupportedRequestBehavior: String
     /// The tools as given, function tools included; `fields["tools"]` holds their request definitions.
     private(set) var tools: [any BetaToolLike]?
-    var runnableTools = OrderedDict<any BetaAsyncRunnableTool>()
+    var runnableTools = OrderedDict<any BetaRunnableTool>()
     var fields: [String: JSONValue] = [:]
 
     private var stored: [ThreadEntry] = []
@@ -244,10 +244,10 @@ final class ThreadState: @unchecked Sendable {
 
     private func readTools() throws {
         guard let tools else { return }
-        var registry = OrderedDict<any BetaAsyncRunnableTool>()
+        var registry = OrderedDict<any BetaRunnableTool>()
         var definitions: [JSONValue] = []
         for tool in tools {
-            if let runnable = tool as? any BetaAsyncRunnableTool { registry[runnable.name] = runnable }
+            if let runnable = tool as? any BetaRunnableTool { registry[runnable.name] = runnable }
             definitions.append(try tool.toToolParam())
         }
         runnableTools = registry

@@ -37,5 +37,5 @@ public func toToolParams(_ tools: [any BetaToolLike]?) throws -> [JSONValue]? {
 
 /// Whether `tool` is a raw definition rather than an object the runner runs.
 func isRawDefinition(_ tool: any BetaToolLike) -> Bool {
-    !(tool is any BetaAsyncRunnableTool) && !(tool is BetaAsyncRunnableToolset)
+    !(tool is any BetaRunnableTool) && !(tool is BetaRunnableToolset)
 }

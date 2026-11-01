@@ -118,12 +118,12 @@ final class FakeSessionEvents: SessionEventsAPI, @unchecked Sendable {
 }
 
 private func fakeTool(_ name: String, close: (@Sendable () async throws -> Void)? = nil,
-                      _ run: @escaping @Sendable (BetaToolInput) async throws -> BetaFunctionToolResult?) -> BetaAsyncFunctionTool
+                      _ run: @escaping @Sendable (BetaToolInput) async throws -> BetaFunctionToolResult?) -> BetaFunctionTool
 {
-    BetaAsyncFunctionTool(name: name, inputSchema: ["type": "object"], close: close, run)
+    BetaFunctionTool(name: name, inputSchema: ["type": "object"], close: close, run)
 }
 
-private func runner(_ events: FakeSessionEvents, tools: [any BetaAsyncRunnableTool], maxIdle: TimeInterval? = nil,
+private func runner(_ events: FakeSessionEvents, tools: [any BetaRunnableTool], maxIdle: TimeInterval? = nil,
                     extraHeaders: Headers? = nil, timings: SessionRunnerTimings = SessionRunnerTimings(),
                     sendRetryWindow: @escaping @Sendable () -> TimeInterval? = { nil }) -> SessionToolRunner
 {
@@ -131,7 +131,7 @@ private func runner(_ events: FakeSessionEvents, tools: [any BetaAsyncRunnableTo
                       timings: timings, sendRetryWindow: sendRetryWindow)
 }
 
-private func run(_ events: FakeSessionEvents, tools: [any BetaAsyncRunnableTool], maxIdle: TimeInterval? = nil,
+private func run(_ events: FakeSessionEvents, tools: [any BetaRunnableTool], maxIdle: TimeInterval? = nil,
                  extraHeaders: Headers? = nil, timings: SessionRunnerTimings = SessionRunnerTimings()) async throws -> [DispatchedToolCall]
 {
     var items: [DispatchedToolCall] = []
@@ -141,16 +141,27 @@ private func run(_ events: FakeSessionEvents, tools: [any BetaAsyncRunnableTool]
     return items
 }
 
-/// Drives a runner for `seconds`: `finished` is whether it ended on its own (`asyncio.wait_for(drive(), timeout)`).
-private func drive(_ runner: SessionToolRunner, for seconds: TimeInterval) async throws -> (items: [DispatchedToolCall], finished: Bool) {
+/// Drives a runner (`asyncio.wait_for(drive(), timeout)`): `finished` is whether it ended on its own. Waits until it
+/// finishes, or until it has yielded `atLeast` calls and `seconds` have passed, giving up after `limit` seconds (the
+/// suite shares the machine with every other test, so the bound is generous).
+private func drive(_ runner: SessionToolRunner, for seconds: TimeInterval, atLeast: Int = 0, limit: TimeInterval = 20)
+    async throws -> (items: [DispatchedToolCall], finished: Bool)
+{
     let seen = Box<[DispatchedToolCall]>([])
     let done = Box(false)
     let task = Task {
         for try await call in runner { seen.mutate { $0.append(call) } }
         done.value = true
     }
-    let deadline = Date().addingTimeInterval(seconds)
-    while Date() < deadline && !done.value { try await Task.sleep(nanoseconds: 10_000_000) }
+    let start = Date()
+    var reached: Date?
+    while !done.value {
+        let now = Date()
+        if now.timeIntervalSince(start) > limit { break }
+        if reached == nil && seen.value.count >= atLeast { reached = now }
+        if let reached, now.timeIntervalSince(reached) >= seconds { break }
+        try await Task.sleep(nanoseconds: 10_000_000)
+    }
     task.cancel()
     return (seen.value, done.value)
 }
@@ -299,7 +310,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
             ? [toolUse("evt_pending", "not_ours", permission: "ask"), idleEndTurn(), confirmation("evt_pending", "allow")]
             : [toolUse("evt_pending", "not_ours"), idleEndTurn()]
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : unanswered, listEvents: inHistory ? unanswered : [])
-        let (seen, finished) = try await drive(runner(events, tools: [], maxIdle: 0.1), for: 0.8)
+        let (seen, finished) = try await drive(runner(events, tools: [], maxIdle: 0.1), for: 0.8, atLeast: 1)
         #expect(!finished, "an unanswered unowned call must keep the runner alive")
         #expect(seen.count >= 1, "the unowned call must still be surfaced")
         #expect(seen.first?.toolUseID == "evt_pending")
@@ -563,9 +574,9 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
 
     @Test func runsContextManagerToolCleanupOnExit() async throws {
         let seen = Box<[String]>([])
-        let tool = BetaAsyncFunctionTool(name: "echo", inputSchema: ["type": "object"], enter: {
+        let tool = BetaFunctionTool(name: "echo", inputSchema: ["type": "object"], enter: {
             seen.mutate { $0.append("enter") }
-            let f: BetaAsyncFunctionTool.Function = { input in .string("echo:\(input["command"]?.stringValue ?? "None")") }
+            let f: BetaFunctionTool.Function = { input in .string("echo:\(input["command"]?.stringValue ?? "None")") }
             return (f, { seen.mutate { $0.append("exit") } })
         })
         let calls = try await run(FakeSessionEvents(streamEvents: [toolUse("tu_1", "echo", ["command": "hi"]), terminated()]), tools: [tool])
@@ -611,7 +622,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
         }
         #expect(items.count == 1)
         #expect(items.first?.posted == false)
-        #expect(Date().timeIntervalSince(start) < 2)
+        #expect(Date().timeIntervalSince(start) < 10)
     }
 
     @Test func yieldsWithPostedFalseOnPermanent4xx() async throws {

@@ -14,8 +14,8 @@ import Testing
         "required": ["a", "b"],
     ]
 
-    func addNumbers() -> BetaAsyncFunctionTool {
-        BetaAsyncFunctionTool(name: "add_numbers", description: "Add two numbers together.", inputSchema: addSchema) {
+    func addNumbers() -> BetaFunctionTool {
+        BetaFunctionTool(name: "add_numbers", description: "Add two numbers together.", inputSchema: addSchema) {
             (input: Numbers) in .string(String(input.a + input.b))
         }
     }
@@ -29,7 +29,7 @@ import Testing
             ],
             "required": ["location"],
         ]
-        let tool = BetaAsyncFunctionTool(name: "get_weather", description: "Get the weather for a specific location.", inputSchema: schema) {
+        let tool = BetaFunctionTool(name: "get_weather", description: "Get the weather for a specific location.", inputSchema: schema) {
             input in
             let unit = input["unit"]?.stringValue ?? "celsius"
             return .string("Weather in \(input["location"]?.stringValue ?? "") is 20 degrees \(unit)")
@@ -46,7 +46,7 @@ import Testing
             "properties": ["name": ["title": "Name", "type": "string"], "age": ["title": "Age", "type": "integer"]],
             "required": ["name", "age"],
         ]
-        let tool = BetaAsyncFunctionTool(name: "simple_function", description: "A simple function with basic parameter types.",
+        let tool = BetaFunctionTool(name: "simple_function", description: "A simple function with basic parameter types.",
                                          inputSchema: schema) { (p: Person) in .string("Person: \(p.name), \(p.age) years old") }
         #expect(tool.name == "simple_function")
         #expect(tool.description == "A simple function with basic parameter types.")
@@ -77,7 +77,7 @@ import Testing
     }
 
     @Test func customNameAndDescription() {
-        let tool = BetaAsyncFunctionTool(name: "custom_name", description: "Custom description",
+        let tool = BetaFunctionTool(name: "custom_name", description: "Custom description",
                                          inputSchema: ["type": "object"]) { _ in "x" }
         #expect(tool.name == "custom_name")
         #expect(tool.description == "Custom description")
@@ -88,7 +88,7 @@ import Testing
             "additionalProperties": false, "type": "object",
             "properties": ["x": ["type": "number", "description": "A number to double"]], "required": ["x"],
         ]
-        let tool = BetaAsyncFunctionTool(name: "some_function", inputSchema: schema) { _ in "x" }
+        let tool = BetaFunctionTool(name: "some_function", inputSchema: schema) { _ in "x" }
         #expect(tool.inputSchema == schema)
     }
 
@@ -97,7 +97,7 @@ import Testing
             "additionalProperties": false, "type": "object",
             "properties": ["message": ["title": "Message", "type": "string"]], "required": ["message"],
         ]
-        let tool = BetaAsyncFunctionTool(name: "simple_func", description: "A simple function.", inputSchema: schema) { input in
+        let tool = BetaFunctionTool(name: "simple_func", description: "A simple function.", inputSchema: schema) { input in
             .string(input["message"]?.stringValue ?? "")
         }
         #expect(try JSONValue.from(tool.toDict()) == [
@@ -107,7 +107,7 @@ import Testing
     }
 
     @Test func toDictCarriesTheOptionalFields() throws {
-        let tool = BetaAsyncFunctionTool(
+        let tool = BetaFunctionTool(
             name: "t", description: "d", inputSchema: ["type": "object"], deferLoading: true,
             cacheControl: BetaCacheControlEphemeralParam(), allowedCallers: [.direct], eagerInputStreaming: false,
             inputExamples: [["a": 1]], strict: true) { _ in nil }
@@ -119,7 +119,7 @@ import Testing
     }
 
     @Test func functionWithoutDocstring() {
-        let tool = BetaAsyncFunctionTool(name: "no_docs", inputSchema: ["type": "object"]) { _ in "" }
+        let tool = BetaFunctionTool(name: "no_docs", inputSchema: ["type": "object"]) { _ in "" }
         #expect(tool.description == "")
     }
 }
@@ -128,9 +128,9 @@ import Testing
     @Test func asyncContextManagerToolLazyEnterAndCleanup() async throws {
         let seen = Box<[String]>([])
         let schema: [String: JSONValue] = ["type": "object", "properties": ["value": ["type": "string"]], "required": ["value"]]
-        let echo = BetaAsyncFunctionTool(name: "echo", description: "Echo the value.", inputSchema: schema, enter: {
+        let echo = BetaFunctionTool(name: "echo", description: "Echo the value.", inputSchema: schema, enter: {
             seen.mutate { $0.append("enter") }
-            let function: BetaAsyncFunctionTool.Function = { input in .string("echo:\(input["value"]?.stringValue ?? "")") }
+            let function: BetaFunctionTool.Function = { input in .string("echo:\(input["value"]?.stringValue ?? "")") }
             return (function, { seen.mutate { $0.append("exit") } })
         })
 
@@ -151,7 +151,7 @@ import Testing
 
     @Test func closeHookRuns() async throws {
         let closed = Box(false)
-        let tool = BetaAsyncFunctionTool(name: "t", inputSchema: ["type": "object"], close: { closed.value = true }) { _ in nil }
+        let tool = BetaFunctionTool(name: "t", inputSchema: ["type": "object"], close: { closed.value = true }) { _ in nil }
         await acloseRunnableTool(tool)
         #expect(closed.value)
     }

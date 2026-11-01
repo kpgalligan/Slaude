@@ -197,7 +197,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
     @Test func aToolRemovedInTheHistoryStaysRemovedAfterCompaction() async throws {
         let mock = MessagesMock([compactedResponse(), toolUseResponse("get_weather", "toolu_1", input: [:]), endTurnResponse()])
         let calls = Box<[String]>([])
-        let getWeather = BetaAsyncFunctionTool(name: "get_weather", description: "Lookup the weather.", inputSchema: ["type": "object"]) { _ in
+        let getWeather = BetaFunctionTool(name: "get_weather", description: "Lookup the weather.", inputSchema: ["type": "object"]) { _ in
             calls.mutate { $0.append("get_weather") }
             return "sunny"
         }
@@ -426,7 +426,7 @@ private func weatherThenBrowserReplies() -> [JSONValue] {
     } + [endTurnResponse()]
 }
 
-private final class TaggedEchoToolset: BetaAsyncRunnableToolset, @unchecked Sendable {
+private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable {
     let calls = Box<[JSONValue]>([])
     override var toolsetName: String { "browser" }
     override var helperTag: String? { "browser-toolset" }
@@ -445,7 +445,7 @@ private final class TaggedEchoToolset: BetaAsyncRunnableToolset, @unchecked Send
         fields["betas"] = ["inline-tools-2026-09-15"]
         if threading == "thread_false" { fields["thread"] = false }
 
-        func requests(_ makeRunner: (Anthropic, BetaAsyncFunctionTool, TaggedEchoToolset) throws -> BetaToolRunner) async throws
+        func requests(_ makeRunner: (Anthropic, BetaFunctionTool, TaggedEchoToolset) throws -> BetaToolRunner) async throws
             -> [(String, [String: String], JSONValue)]
         {
             let mock = MessagesMock(weatherThenBrowserReplies())

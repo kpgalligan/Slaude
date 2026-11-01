@@ -227,7 +227,7 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
     public typealias Element = DispatchedToolCall
 
     public let sessionID: String
-    public let tools: [any BetaAsyncRunnableTool]
+    public let tools: [any BetaRunnableTool]
     public let maxIdle: TimeInterval?
     public let extraHeaders: Headers?
     let events: any SessionEventsAPI
@@ -239,7 +239,7 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
     ///   - environmentKey: Authenticates the runner's requests with this Bearer credential (a self-hosted
     ///     environment key) in place of the client's own.
     ///   - extraHeaders: Headers threaded into every event stream / list / send request.
-    public convenience init(client: Anthropic, sessionID: String, tools: [any BetaAsyncRunnableTool],
+    public convenience init(client: Anthropic, sessionID: String, tools: [any BetaRunnableTool],
                             maxIdle: TimeInterval? = DEFAULT_MAX_IDLE, environmentKey: String? = nil,
                             extraHeaders: Headers? = nil) throws
     {
@@ -249,14 +249,14 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
     }
 
     /// A runner over any implementation of the events endpoints.
-    public convenience init(events: any SessionEventsAPI, sessionID: String, tools: [any BetaAsyncRunnableTool],
+    public convenience init(events: any SessionEventsAPI, sessionID: String, tools: [any BetaRunnableTool],
                             maxIdle: TimeInterval? = DEFAULT_MAX_IDLE, extraHeaders: Headers? = nil)
     {
         self.init(events: events, sessionID: sessionID, tools: tools, maxIdle: maxIdle, extraHeaders: extraHeaders,
                   timings: SessionRunnerTimings(), sendRetryWindow: { nil })
     }
 
-    init(events: any SessionEventsAPI, sessionID: String, tools: [any BetaAsyncRunnableTool], maxIdle: TimeInterval?,
+    init(events: any SessionEventsAPI, sessionID: String, tools: [any BetaRunnableTool], maxIdle: TimeInterval?,
          extraHeaders: Headers?, timings: SessionRunnerTimings, sendRetryWindow: @escaping @Sendable () -> TimeInterval?)
     {
         self.events = events
@@ -315,7 +315,7 @@ func sessionScopedClient(_ client: Anthropic, environmentKey: String?) throws ->
 
 extension BetaSessionsEventsResource {
     /// Attach to a managed-agents session and dispatch its tool calls locally (`events.tool_runner(...)`).
-    public func toolRunner(_ sessionID: String, tools: [any BetaAsyncRunnableTool], maxIdle: TimeInterval? = DEFAULT_MAX_IDLE,
+    public func toolRunner(_ sessionID: String, tools: [any BetaRunnableTool], maxIdle: TimeInterval? = DEFAULT_MAX_IDLE,
                            environmentKey: String? = nil, extraHeaders: Headers? = nil) throws -> SessionToolRunner
     {
         guard let client = client as? Anthropic else {
@@ -333,7 +333,7 @@ actor SessionRunCore {
     private let results: AsyncThrowingStream<DispatchedToolCall, Error>.Continuation
     private let work: AsyncStream<(JSONValue, String?)>
     private let workContinuation: AsyncStream<(JSONValue, String?)>.Continuation
-    private var toolsByName: [String: any BetaAsyncRunnableTool] = [:]
+    private var toolsByName: [String: any BetaRunnableTool] = [:]
 
     private var seen = Set<String>()
     private var answered = Set<String>()
@@ -654,7 +654,7 @@ actor SessionRunCore {
     }
 
     /// Runs `tool` for `event` and builds the result event, turning a timeout or an error into an error result.
-    private func callTool(_ tool: any BetaAsyncRunnableTool, _ event: JSONValue) async -> JSONValue {
+    private func callTool(_ tool: any BetaRunnableTool, _ event: JSONValue) async -> JSONValue {
         let name = event["name"]?.stringValue ?? ""
         let input = event["input"] ?? [:]
         let timeout = runner.timings.toolTimeout

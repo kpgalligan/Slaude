@@ -164,7 +164,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
         let mock = MessagesMock([callsTool("get_weather", "toolu_weather"), endTurnResponse()])
         let calls = Box<[String]>([])
         let old = recordingTool("get_weather", calls)
-        let new = BetaAsyncFunctionTool(
+        let new = BetaFunctionTool(
             name: "get_weather", description: "Lookup the weather for a given city.",
             inputSchema: ["type": "object", "properties": ["city": ["type": "string"]], "required": ["city"]]
         ) { (input: City) in
@@ -351,7 +351,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 }
 
 /// A toolset that answers each member call with its name and input (`EchoBrowserToolset`).
-final class EchoToolset: BetaAsyncRunnableToolset, @unchecked Sendable {
+final class EchoToolset: BetaRunnableToolset, @unchecked Sendable {
     let family: String
     let calls = Box<[String]>([])
     var fail: Set<String> = []

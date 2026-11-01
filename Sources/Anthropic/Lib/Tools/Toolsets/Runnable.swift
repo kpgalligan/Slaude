@@ -16,9 +16,9 @@ public struct BetaToolsetCallContext: Sendable, Hashable {
     public init(toolUse: BetaToolUseBlock? = nil) { self.toolUse = toolUse }
 }
 
-/// A toolset the tool runner can run (`BetaAsyncRunnableToolset`). Subclass it and override `toolsetName`,
+/// A toolset the tool runner can run (`BetaRunnableToolset`). Subclass it and override `toolsetName`,
 /// `toDict()` and `call(context:name:input:)`.
-open class BetaAsyncRunnableToolset: BetaToolLike, @unchecked Sendable {
+open class BetaRunnableToolset: BetaToolLike, @unchecked Sendable {
     private let closedLock = NSLock()
     private var _toolsetClosed = false
 

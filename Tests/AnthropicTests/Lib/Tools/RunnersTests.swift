@@ -120,7 +120,7 @@ private func text(of message: BetaMessage) -> String? {
 
     @Test func programmaticToolCall() async throws {
         let mock = try snapshotMock("092be1de-d3f8-4c22-a4ea-a7ad54689836")
-        let tool = BetaAsyncFunctionTool(name: "get_weather", description: "Lookup the weather for a given city.",
+        let tool = BetaFunctionTool(name: "get_weather", description: "Lookup the weather for a given city.",
                                          inputSchema: weatherSchema, allowedCallers: [.codeExecution20260120]) { (input: WeatherInput) in
             .string(getWeather(input.location, input.units))
         }
@@ -233,7 +233,7 @@ private func runToolUse(_ mock: MessagesMock, tools: [any BetaToolLike], message
     try await collectToolResults(try weatherRunner(try mock.client(), tools: tools, messages: messages, thread: false))
 }
 
-private let getTime = BetaAsyncFunctionTool(name: "get_time", description: "Lookup the current time in a timezone.",
+private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup the current time in a timezone.",
                                             inputSchema: ["type": "object", "properties": ["timezone": ["type": "string"]]]) { input in
     .string("12:00 \(input["timezone"]?.stringValue ?? "")")
 }

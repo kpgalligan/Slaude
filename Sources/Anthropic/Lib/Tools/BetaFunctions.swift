@@ -44,8 +44,8 @@ open class ToolError: Error, CustomStringConvertible, LocalizedError, PythonRepr
     open var pythonRepr: String { "\(String(describing: type(of: self)))(\(pythonStringRepr(message)))" }
 }
 
-/// Anything the tool runners can run by name: a function tool or a builtin tool (`BetaAsyncRunnableTool`).
-public protocol BetaAsyncRunnableTool: BetaToolLike, AnyObject {
+/// Anything the tool runners can run by name: a function tool or a builtin tool (`BetaRunnableTool`).
+public protocol BetaRunnableTool: BetaToolLike, AnyObject {
     /// The name the model calls the tool by.
     var name: String { get }
     /// Runs the tool with the model's input. `nil` sends `content: null`.
@@ -54,13 +54,13 @@ public protocol BetaAsyncRunnableTool: BetaToolLike, AnyObject {
     func closeTool() async throws
 }
 
-extension BetaAsyncRunnableTool {
+extension BetaRunnableTool {
     public func closeTool() async throws {}
 }
 
 /// A tool whose definition is a builtin (non-`custom`) tool type and whose behaviour the application supplies
-/// (`BetaAsyncBuiltinFunctionTool`). Subclass it and override `toDict()` and `call(_:)`.
-open class BetaAsyncBuiltinFunctionTool: BetaAsyncRunnableTool, @unchecked Sendable {
+/// (`BetaBuiltinFunctionTool`). Subclass it and override `toDict()` and `call(_:)`.
+open class BetaBuiltinFunctionTool: BetaRunnableTool, @unchecked Sendable {
     public init() {}
 
     /// The `tools[]` entry to send.
@@ -89,10 +89,10 @@ func builtinToolName(_ raw: JSONValue) throws -> String {
     return name
 }
 
-/// A tool backed by an async Swift closure (`BetaAsyncFunctionTool`, what `@beta_async_tool` builds).
+/// A tool backed by an async Swift closure (`BetaFunctionTool`, what `@beta_async_tool` builds).
 ///
 /// ```swift
-/// let getWeather = BetaAsyncFunctionTool(
+/// let getWeather = BetaFunctionTool(
 ///     name: "get_weather",
 ///     description: "Lookup the weather for a given city",
 ///     inputSchema: ["type": "object", "properties": ["location": ["type": "string"]], "required": ["location"]]
@@ -100,7 +100,7 @@ func builtinToolName(_ raw: JSONValue) throws -> String {
 ///     "Sunny in \(input.location)"
 /// }
 /// ```
-public final class BetaAsyncFunctionTool: BetaAsyncRunnableTool, @unchecked Sendable {
+public final class BetaFunctionTool: BetaRunnableTool, @unchecked Sendable {
     public typealias Function = @Sendable (BetaToolInput) async throws -> BetaFunctionToolResult?
     public typealias AllowedCaller = BetaToolParam.AllowedCallers
 
@@ -229,7 +229,7 @@ public final class BetaAsyncFunctionTool: BetaAsyncRunnableTool, @unchecked Send
 let toolsLog = ToolLogger(name: "anthropic.lib.tools._beta_functions")
 
 private func typedFunction<Input: Decodable>(name: String, _ f: @escaping @Sendable (Input) async throws -> BetaFunctionToolResult?)
-    -> BetaAsyncFunctionTool.Function
+    -> BetaFunctionTool.Function
 {
     { input in
         let decoded: Input
@@ -242,16 +242,16 @@ private func typedFunction<Input: Decodable>(name: String, _ f: @escaping @Senda
 
 /// The context-manager state of a lazily entered tool.
 private actor LazyEntry {
-    private var function: BetaAsyncFunctionTool.Function?
+    private var function: BetaFunctionTool.Function?
     private var exit: (@Sendable () async throws -> Void)?
-    private var entering: Task<BetaAsyncFunctionTool.Function, Error>?
+    private var entering: Task<BetaFunctionTool.Function, Error>?
 
-    func entered(_ enter: @escaping @Sendable () async throws -> (BetaAsyncFunctionTool.Function, @Sendable () async throws -> Void))
-        async throws -> BetaAsyncFunctionTool.Function
+    func entered(_ enter: @escaping @Sendable () async throws -> (BetaFunctionTool.Function, @Sendable () async throws -> Void))
+        async throws -> BetaFunctionTool.Function
     {
         if let function { return function }
         if let entering { return try await entering.value }
-        let task = Task { () async throws -> BetaAsyncFunctionTool.Function in
+        let task = Task { () async throws -> BetaFunctionTool.Function in
             let (f, e) = try await enter()
             self.store(f, e)
             return f
@@ -265,7 +265,7 @@ private actor LazyEntry {
         }
     }
 
-    private func store(_ f: @escaping BetaAsyncFunctionTool.Function, _ e: @escaping @Sendable () async throws -> Void) {
+    private func store(_ f: @escaping BetaFunctionTool.Function, _ e: @escaping @Sendable () async throws -> Void) {
         function = f
         exit = e
     }
@@ -278,7 +278,7 @@ private actor LazyEntry {
 }
 
 /// Runs a runnable tool's optional cleanup (`aclose_runnable_tool`): never raises.
-public func acloseRunnableTool(_ tool: any BetaAsyncRunnableTool) async {
+public func acloseRunnableTool(_ tool: any BetaRunnableTool) async {
     do { try await tool.closeTool() } catch {
         toolsLog.warning("tool.close failed tool=\(tool.name) error=\(error)")
     }
