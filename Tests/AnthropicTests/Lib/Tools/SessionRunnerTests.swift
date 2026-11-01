@@ -162,8 +162,26 @@ private func drive(_ runner: SessionToolRunner, for seconds: TimeInterval, atLea
         if let reached, now.timeIntervalSince(reached) >= seconds { break }
         try await Task.sleep(nanoseconds: 10_000_000)
     }
+    // Read before cancelling: a cancelled iteration ends too, and would then report the run as finished.
+    let finished = done.value
     task.cancel()
-    return (seen.value, done.value)
+    return (seen.value, finished)
+}
+
+/// A clock whose sleeps return at once after moving its time forward, so that a test of the runner's deadlines reads
+/// the time the runner waited out rather than how long a busy machine took to schedule it.
+private final class SessionRunnerVirtualClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var time: TimeInterval = 1_000
+
+    var now: TimeInterval { lock.withLock { time } }
+
+    var clock: SessionRunnerClock {
+        SessionRunnerClock(now: { [self] in now }, sleep: { [self] seconds in
+            lock.withLock { time += max(0, seconds) }
+            await Task.yield()
+        })
+    }
 }
 
 private func resultText(_ item: DispatchedToolCall) -> String {
@@ -600,29 +618,36 @@ private func counting(_ counter: ToolsBox<Int>, _ value: String = "ran") -> @Sen
         var timings = SessionRunnerTimings()
         timings.sendBackoffCap = 0.05
         timings.sendRetryWindow = 0.5
+        let virtual = SessionRunnerVirtualClock()
+        timings.clock = virtual.clock
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "echo"), terminated()], sendFailures: Array(repeating: apiStatusError(500), count: 100))
-        let start = Date()
+        let start = virtual.now
         let items = try await run(events, tools: [fakeTool("echo") { _ in "result" }], timings: timings)
-        let elapsed = Date().timeIntervalSince(start)
+        let elapsed = virtual.now - start
         #expect(items.count == 1)
         #expect(items.first?.posted == false)
         #expect(items.first.map(resultText) == "result")
         #expect(events.sendCount >= 3)
-        #expect(elapsed >= 0.5 && elapsed < 5)
+        // The retries wait out the whole window, and no more than it.
+        #expect(abs(elapsed - 0.5) < 1e-9)
     }
 
     @Test func sendRetryWindowUpdateBoundsSendAlreadyRetrying() async throws {
         var timings = SessionRunnerTimings()
         timings.sendBackoffCap = 0.05
+        let virtual = SessionRunnerVirtualClock()
+        timings.clock = virtual.clock
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "echo"), terminated()], sendFailures: Array(repeating: apiStatusError(503), count: 10_000))
-        let start = Date()
+        let start = virtual.now
         var items: [DispatchedToolCall] = []
         for try await call in runner(events, tools: [fakeTool("echo") { _ in "result" }], timings: timings, sendRetryWindow: { 0.2 }) {
             items.append(call)
         }
         #expect(items.count == 1)
         #expect(items.first?.posted == false)
-        #expect(Date().timeIntervalSince(start) < 10)
+        // The 0.2s window the callback gives bounds the send, not the 300s default.
+        #expect(abs(virtual.now - start - 0.2) < 1e-9)
+        #expect(events.sendCount >= 3)
     }
 
     @Test func yieldsWithPostedFalseOnPermanent4xx() async throws {

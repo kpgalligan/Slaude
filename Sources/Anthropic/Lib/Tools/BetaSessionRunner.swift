@@ -22,8 +22,21 @@ public let DEFAULT_MAX_IDLE: TimeInterval = 60
 /// The outer per-tool-call timeout. It must stay strictly greater than the bash tool's own timeout (120s).
 public let TOOL_TIMEOUT: TimeInterval = 150
 
+/// The clock a session tool runner reads its deadlines from and waits on: the idle grace, the send retry window and
+/// the reconnect and retry backoffs. Tests drive a virtual one, so that what they assert about time does not depend on
+/// how busy the machine is.
+struct SessionRunnerClock: Sendable {
+    var now: @Sendable () -> TimeInterval
+    var sleep: @Sendable (TimeInterval) async -> Void
+
+    static let system = SessionRunnerClock(
+        now: { ProcessInfo.processInfo.systemUptime },
+        sleep: { seconds in try? await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000)) })
+}
+
 /// The timings of a session tool runner (upstream's module constants, which its tests patch).
 struct SessionRunnerTimings: Sendable {
+    var clock = SessionRunnerClock.system
     var streamBackoffStart: TimeInterval = 0.5
     var streamBackoffCap: TimeInterval = 10
     var toolTimeout: TimeInterval = TOOL_TIMEOUT
@@ -368,7 +381,7 @@ actor SessionRunCore {
         signal()
     }
 
-    private func now() -> TimeInterval { ProcessInfo.processInfo.systemUptime }
+    private func now() -> TimeInterval { runner.timings.clock.now() }
 
     // MARK: Idle clock
 
@@ -432,8 +445,10 @@ actor SessionRunCore {
                 return
             }
             // Wait out the remaining grace, waking early if the clock changes or the runner stops.
+            let clock = runner.timings.clock
             let timer = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+                await clock.sleep(remaining)
+                if Task.isCancelled { return }
                 await self?.signal()
             }
             await waitForWake()
@@ -493,7 +508,7 @@ actor SessionRunCore {
                 }
                 sessionLog.warning("stream disconnected, reconnecting backoff=\(String(format: "%.1f", backoff))s error=\(error)")
             }
-            try? await Task.sleep(nanoseconds: UInt64(backoff * 1_000_000_000))
+            await runner.timings.clock.sleep(backoff)
             backoff = min(backoff * 2, runner.timings.streamBackoffCap)
         }
     }
@@ -697,7 +712,7 @@ actor SessionRunCore {
                 let wait = min(Double.random(in: (delay / 2)..<max(delay, delay / 2 + .ulpOfOne)), remaining)
                 sessionLog.warning(
                     "tool result send failed; retrying tool_use_id=\(toolUseID) attempt=\(attempt) backoff=\(String(format: "%.1f", wait))s error=\(error)")
-                try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                await runner.timings.clock.sleep(wait)
             }
         }
         sessionLog.error("failed to send tool result tool_use_id=\(toolUseID) attempts=\(attempt) error=\(lastError.map { "\($0)" } ?? "None")")
