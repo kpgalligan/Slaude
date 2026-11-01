@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_read_console_tool_use_block` (beta_response_browser_read_console_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserReadConsoleToolUseBlock has been renamed to BetaBrowserReadConsoleToolUseBlock
+public typealias BetaResponseBrowserReadConsoleToolUseBlock = BetaBrowserReadConsoleToolUseBlock

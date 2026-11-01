@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_left_mouse_down_tool_use_block` (beta_response_computer_left_mouse_down_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerLeftMouseDownToolUseBlock has been renamed to BetaComputerLeftMouseDownToolUseBlock
+public typealias BetaResponseComputerLeftMouseDownToolUseBlock = BetaComputerLeftMouseDownToolUseBlock

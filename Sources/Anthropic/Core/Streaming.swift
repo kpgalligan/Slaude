@@ -1,0 +1,240 @@
+import Foundation
+
+/// One Server-Sent Event (`_streaming.ServerSentEvent`).
+public struct ServerSentEvent: Sendable, Hashable, CustomStringConvertible {
+    public let event: String?
+    public let data: String
+    public let id: String?
+    public let retry: Int?
+    /// The original wire lines this event was decoded from.
+    public let raw: [String]
+
+    public init(event: String? = nil, data: String? = nil, id: String? = nil, retry: Int? = nil, raw: [String] = []) {
+        self.event = (event?.isEmpty ?? true) ? nil : event
+        self.data = data ?? ""
+        self.id = id
+        self.retry = retry
+        self.raw = raw
+    }
+
+    public func json() throws -> JSONValue { try JSONValue.parse(data) }
+
+    public var description: String {
+        "ServerSentEvent(event=\(event ?? "None"), data=\(data), id=\(id ?? "None"), retry=\(retry.map(String.init) ?? "None"))"
+    }
+}
+
+/// Decodes a byte stream into Server-Sent Events (`_streaming.SSEDecoder`).
+public struct SSEDecoder: Sendable {
+    private var event: String? = nil
+    private var dataLines: [String] = []
+    private var lastEventID: String? = nil
+    private var retry: Int? = nil
+    private var rawLines: [String] = []
+
+    public init() {}
+
+    /// Feeds one line (without its terminator). Returns an event when the line completes one.
+    public mutating func decode(_ line: String) -> ServerSentEvent? {
+        if line.isEmpty {
+            if event == nil && dataLines.isEmpty && lastEventID == nil && retry == nil {
+                rawLines = []
+                return nil
+            }
+            let sse = ServerSentEvent(event: event, data: dataLines.joined(separator: "\n"), id: lastEventID, retry: retry, raw: rawLines)
+            // Per the SSE spec, the last event id is not reset.
+            event = nil
+            dataLines = []
+            retry = nil
+            rawLines = []
+            return sse
+        }
+        rawLines.append(line)
+        if line.hasPrefix(":") { return nil }
+        let fieldname: String
+        var value: String
+        if let colon = line.firstIndex(of: ":") {
+            fieldname = String(line[..<colon])
+            value = String(line[line.index(after: colon)...])
+        } else {
+            fieldname = line
+            value = ""
+        }
+        if value.hasPrefix(" ") { value.removeFirst() }
+        switch fieldname {
+        case "event": event = value
+        case "data": dataLines.append(value)
+        case "id": if !value.contains("\0") { lastEventID = value }
+        case "retry": if let r = Int(value) { retry = r }
+        default: break
+        }
+        return nil
+    }
+
+    /// Splits raw bytes into SSE chunks the way `_iter_chunks` does, then decodes each line.
+    public static func events(from bytes: ByteStream) -> AsyncThrowingStream<ServerSentEvent, Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                var decoder = SSEDecoder()
+                var pending = Data()
+                func emit(_ chunk: Data) {
+                    for line in splitLines(chunk) {
+                        if let sse = decoder.decode(line) { continuation.yield(sse) }
+                    }
+                }
+                do {
+                    for try await chunk in bytes {
+                        for line in splitLinesKeepEnds(chunk) {
+                            pending.append(line)
+                            if pending.hasSuffix([0x0D, 0x0D]) || pending.hasSuffix([0x0A, 0x0A]) || pending.hasSuffix([0x0D, 0x0A, 0x0D, 0x0A]) {
+                                emit(pending)
+                                pending = Data()
+                            }
+                        }
+                    }
+                    if !pending.isEmpty { emit(pending) }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// Decodes all events in a complete byte buffer.
+    public static func events(in data: Data) -> [ServerSentEvent] {
+        var decoder = SSEDecoder()
+        var out: [ServerSentEvent] = []
+        var pending = Data()
+        func emit(_ chunk: Data) {
+            for line in splitLines(chunk) { if let sse = decoder.decode(line) { out.append(sse) } }
+        }
+        for line in splitLinesKeepEnds(data) {
+            pending.append(line)
+            if pending.hasSuffix([0x0D, 0x0D]) || pending.hasSuffix([0x0A, 0x0A]) || pending.hasSuffix([0x0D, 0x0A, 0x0D, 0x0A]) {
+                emit(pending)
+                pending = Data()
+            }
+        }
+        if !pending.isEmpty { emit(pending) }
+        return out
+    }
+}
+
+extension Data {
+    func hasSuffix(_ bytes: [UInt8]) -> Bool {
+        guard count >= bytes.count else { return false }
+        return Array(suffix(bytes.count)) == bytes
+    }
+}
+
+/// `bytes.splitlines(keepends=True)` for `\r`, `\n` and `\r\n` terminators.
+func splitLinesKeepEnds(_ data: Data) -> [Data] {
+    var out: [Data] = []
+    let bytes = [UInt8](data)
+    var start = 0
+    var i = 0
+    while i < bytes.count {
+        if bytes[i] == 0x0A {
+            out.append(Data(bytes[start...i]))
+            start = i + 1
+        } else if bytes[i] == 0x0D {
+            if i + 1 < bytes.count, bytes[i + 1] == 0x0A {
+                out.append(Data(bytes[start...(i + 1)]))
+                i += 1
+            } else {
+                out.append(Data(bytes[start...i]))
+            }
+            start = i + 1
+        }
+        i += 1
+    }
+    if start < bytes.count { out.append(Data(bytes[start...])) }
+    return out
+}
+
+/// `bytes.splitlines()` decoded as UTF-8.
+func splitLines(_ data: Data) -> [String] {
+    splitLinesKeepEnds(data).map { line in
+        var l = [UInt8](line)
+        while let last = l.last, last == 0x0A || last == 0x0D { l.removeLast() }
+        return String(decoding: l, as: UTF8.self)
+    }
+}
+
+/// An asynchronous stream of decoded server-sent events (`_streaming.AsyncStream`).
+///
+/// Iterate it with `for try await event in stream`. The underlying response is closed when
+/// iteration finishes, fails, or is abandoned, or when `close()` is called.
+public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchecked Sendable {
+    public typealias AsyncIterator = AsyncThrowingStream<Element, Error>.AsyncIterator
+
+    public let response: HTTPResponse
+    let client: BaseClient
+    private let events: AsyncThrowingStream<ServerSentEvent, Error>
+    private let lock = NSLock()
+    private var consumed = false
+
+    init(response: HTTPResponse, client: BaseClient) {
+        self.response = response
+        self.client = client
+        self.events = client.makeSSEEvents(response.bytes())
+    }
+
+    /// The raw server-sent events, before JSON parsing and event-name filtering.
+    public static func rawEvents(_ response: HTTPResponse) -> AsyncThrowingStream<ServerSentEvent, Error> {
+        SSEDecoder.events(from: response.bytes())
+    }
+
+    public func makeAsyncIterator() -> AsyncIterator {
+        let alreadyConsumed: Bool = lock.withLock {
+            let c = consumed
+            consumed = true
+            return c
+        }
+        if alreadyConsumed {
+            return AsyncThrowingStream<Element, Error> { $0.finish() }.makeAsyncIterator()
+        }
+        let events = self.events
+        let response = self.response
+        let client = self.client
+        let stream = AsyncThrowingStream<Element, Error> { continuation in
+            let task = Task {
+                do {
+                    for try await sse in events {
+                        if sse.event == "ping" { continue }
+                        guard let name = sse.event else { continue }
+                        if name == "error" {
+                            var body: JSONValue = .string(sse.data)
+                            var message: String
+                            if let parsed = try? sse.json() {
+                                body = parsed
+                                message = pythonRepr(parsed)
+                            } else {
+                                message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
+                            }
+                            throw client.makeStatusError(message, body: body, response: response)
+                        }
+                        if sse.data.isEmpty { continue }
+                        let value: Element = try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
+                        continuation.yield(value)
+                    }
+                    response.close()
+                    continuation.finish()
+                } catch {
+                    response.close()
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in
+                task.cancel()
+                response.close()
+            }
+        }
+        return stream.makeAsyncIterator()
+    }
+
+    /// Closes the response and releases the connection.
+    public func close() { response.close() }
+}

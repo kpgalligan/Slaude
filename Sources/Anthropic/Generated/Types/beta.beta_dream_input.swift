@@ -1,0 +1,26 @@
+// Transformed from `anthropic.types.beta.beta_dream_input` (beta_dream_input.py).
+
+import Foundation
+
+public indirect enum BetaDreamInput: Codable, Hashable, Sendable {
+    case memoryStore(BetaDreamMemoryStoreInput)
+    case sessions(BetaDreamSessionsInput)
+    /// A value that matched none of the known variants.
+    case unknown(JSONValue)
+
+    public init(from decoder: Decoder) throws {
+        switch _Coding.discriminator(decoder, "type") {
+        case "memory_store": self = .memoryStore(try BetaDreamMemoryStoreInput(from: decoder))
+        case "sessions": self = .sessions(try BetaDreamSessionsInput(from: decoder))
+        default: self = .unknown(try _Coding.raw(decoder))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .memoryStore(let v): try v.encode(to: encoder)
+        case .sessions(let v): try v.encode(to: encoder)
+        case .unknown(let v): try v.encode(to: encoder)
+        }
+    }
+}

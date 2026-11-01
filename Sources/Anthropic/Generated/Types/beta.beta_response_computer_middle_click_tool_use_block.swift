@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_middle_click_tool_use_block` (beta_response_computer_middle_click_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerMiddleClickToolUseBlock has been renamed to BetaComputerMiddleClickToolUseBlock
+public typealias BetaResponseComputerMiddleClickToolUseBlock = BetaComputerMiddleClickToolUseBlock

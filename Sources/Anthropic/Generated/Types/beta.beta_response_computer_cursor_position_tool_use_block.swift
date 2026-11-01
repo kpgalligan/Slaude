@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_cursor_position_tool_use_block` (beta_response_computer_cursor_position_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerCursorPositionToolUseBlock has been renamed to BetaComputerCursorPositionToolUseBlock
+public typealias BetaResponseComputerCursorPositionToolUseBlock = BetaComputerCursorPositionToolUseBlock

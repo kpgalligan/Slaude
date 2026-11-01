@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.response_computer_left_click_drag_tool_use_block` (response_computer_left_click_drag_tool_use_block.py).
+
+import Foundation
+
+/// ResponseComputerLeftClickDragToolUseBlock has been renamed to ComputerLeftClickDragToolUseBlock
+public typealias ResponseComputerLeftClickDragToolUseBlock = ComputerLeftClickDragToolUseBlock

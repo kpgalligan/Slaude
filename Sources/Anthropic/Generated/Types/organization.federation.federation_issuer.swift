@@ -1,0 +1,116 @@
+// Transformed from `anthropic.types.organization.federation.federation_issuer` (federation_issuer.py).
+
+import Foundation
+
+/// Registered external OIDC identity provider.
+///
+/// Records an external IdP the organization trusts for the RFC 7523
+/// jwt-bearer grant. The `issuer_url` must match the JWT `iss` claim exactly.
+public struct FederationIssuer: Codable, Hashable, Sendable {
+    /// Tagged ID of the federation issuer.
+    public var id: String
+    /// If set, all rules referencing this issuer reject token exchange.
+    public var archivedAt: Date?
+    /// Tagged ID (`user_`/`svac_`) of the actor that archived this issuer.
+    public var archivedByActorId: String?
+    /// Whether the jwt-bearer exchange enforces JTI single-use (replay protection) for
+    /// tokens from this issuer. Applies only to assertions carrying a `jti` claim;
+    /// tokens without one are accepted without single-use enforcement.
+    public var checkJti: Bool
+    /// When this issuer was created.
+    public var createdAt: Date
+    /// Tagged ID (`user_`/`svac_`) of the actor that created this issuer.
+    public var createdByActorId: String?
+    /// The `iss` claim value. Incoming JWTs must match exactly.
+    public var issuerUrl: String
+    /// How signing keys are obtained for signature verification.
+    public var jwks: FederationIssuer.JWKS
+    /// If set, Anthropic's JWKS poller has paused polling for this issuer after
+    /// repeated fetch failures. Re-enable by sending `jwks_polling_disabled: false` via
+    /// the issuer update endpoint (POST) once the upstream JWKS endpoint is fixed. An
+    /// OAuth caller cannot send this when the issuer backs a rule with any scope other
+    /// than `workspace:developer` or `workspace:inference`; use a Console session.
+    public var jwksPollingDisabledAt: Date?
+    /// Maximum allowed iat→exp spread for assertions from this issuer (1-176400
+    /// seconds, i.e. up to 49h). Assertions must carry both `iat` and `exp`; a missing
+    /// `iat` is rejected.
+    public var maxJwtLifetimeSeconds: Int
+    /// Admin-chosen slug identifier.
+    public var name: String
+    /// Live state of Anthropic's JWKS polling for this issuer.
+    ///
+    /// Populated on both single-issuer retrieval and list responses, including archived
+    /// issuers. Typically null for inline-key issuers (no polling), or when poll status
+    /// is temporarily unavailable or polling has not started yet.
+    public var pollStatus: FederationIssuerPollStatus?
+    public var type: String
+    /// When this issuer was last updated.
+    public var updatedAt: Date
+    /// Tagged ID (`user_`/`svac_`) of the actor that last updated this issuer.
+    public var updatedByActorId: String?
+
+    public init(id: String, archivedAt: Date? = nil, archivedByActorId: String? = nil, checkJti: Bool, createdAt: Date, createdByActorId: String? = nil, issuerUrl: String, jwks: FederationIssuer.JWKS, jwksPollingDisabledAt: Date? = nil, maxJwtLifetimeSeconds: Int, name: String, pollStatus: FederationIssuerPollStatus? = nil, type: String = "federation_issuer", updatedAt: Date, updatedByActorId: String? = nil) {
+        self.id = id
+        self.archivedAt = archivedAt
+        self.archivedByActorId = archivedByActorId
+        self.checkJti = checkJti
+        self.createdAt = createdAt
+        self.createdByActorId = createdByActorId
+        self.issuerUrl = issuerUrl
+        self.jwks = jwks
+        self.jwksPollingDisabledAt = jwksPollingDisabledAt
+        self.maxJwtLifetimeSeconds = maxJwtLifetimeSeconds
+        self.name = name
+        self.pollStatus = pollStatus
+        self.type = type
+        self.updatedAt = updatedAt
+        self.updatedByActorId = updatedByActorId
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case archivedAt = "archived_at"
+        case archivedByActorId = "archived_by_actor_id"
+        case checkJti = "check_jti"
+        case createdAt = "created_at"
+        case createdByActorId = "created_by_actor_id"
+        case issuerUrl = "issuer_url"
+        case jwks
+        case jwksPollingDisabledAt = "jwks_polling_disabled_at"
+        case maxJwtLifetimeSeconds = "max_jwt_lifetime_seconds"
+        case name
+        case pollStatus = "poll_status"
+        case type
+        case updatedAt = "updated_at"
+        case updatedByActorId = "updated_by_actor_id"
+    }
+}
+
+extension FederationIssuer {
+
+    public indirect enum JWKS: Codable, Hashable, Sendable {
+        case discovery(JWKSDiscovery)
+        case explicitUrl(JWKSExplicitURL)
+        case inline(JWKSInline)
+        /// A value that matched none of the known variants.
+        case unknown(JSONValue)
+
+        public init(from decoder: Decoder) throws {
+            switch _Coding.discriminator(decoder, "type") {
+            case "discovery": self = .discovery(try JWKSDiscovery(from: decoder))
+            case "explicit_url": self = .explicitUrl(try JWKSExplicitURL(from: decoder))
+            case "inline": self = .inline(try JWKSInline(from: decoder))
+            default: self = .unknown(try _Coding.raw(decoder))
+            }
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            switch self {
+            case .discovery(let v): try v.encode(to: encoder)
+            case .explicitUrl(let v): try v.encode(to: encoder)
+            case .inline(let v): try v.encode(to: encoder)
+            case .unknown(let v): try v.encode(to: encoder)
+            }
+        }
+    }
+}

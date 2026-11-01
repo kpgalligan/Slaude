@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_left_click_drag_tool_use_block` (beta_response_computer_left_click_drag_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerLeftClickDragToolUseBlock has been renamed to BetaComputerLeftClickDragToolUseBlock
+public typealias BetaResponseComputerLeftClickDragToolUseBlock = BetaComputerLeftClickDragToolUseBlock

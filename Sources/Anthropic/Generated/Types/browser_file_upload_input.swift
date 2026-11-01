@@ -1,0 +1,35 @@
+// Transformed from `anthropic.types.browser_file_upload_input` (browser_file_upload_input.py).
+
+import Foundation
+
+/// Set the value of a file-input element to one or more files.
+///
+/// The target must be an
+/// element reference; at least one of paths or document_ids is required.
+public struct BrowserFileUploadInput: Codable, Hashable, Sendable {
+    /// An element on the page, identified by a reference from a prior `read_page` or
+    /// `find` result. References are scoped to the tab that produced them and become
+    /// stale after navigation or a major re-render.
+    public var target: BrowserRefTarget
+    /// References to files the harness has staged, for deployments where the browser
+    /// executor cannot read the caller's filesystem.
+    public var documentIds: [String]?
+    /// File paths on the browser executor's filesystem.
+    public var paths: [String]?
+    /// Tab to act on. Defaults to the active tab when omitted.
+    public var tabId: String?
+
+    public init(target: BrowserRefTarget, documentIds: [String]? = nil, paths: [String]? = nil, tabId: String? = nil) {
+        self.target = target
+        self.documentIds = documentIds
+        self.paths = paths
+        self.tabId = tabId
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case target
+        case documentIds = "document_ids"
+        case paths
+        case tabId = "tab_id"
+    }
+}

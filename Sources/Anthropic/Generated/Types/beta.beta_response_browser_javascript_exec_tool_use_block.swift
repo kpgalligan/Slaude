@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_javascript_exec_tool_use_block` (beta_response_browser_javascript_exec_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserJavascriptExecToolUseBlock has been renamed to BetaBrowserJavascriptExecToolUseBlock
+public typealias BetaResponseBrowserJavascriptExecToolUseBlock = BetaBrowserJavascriptExecToolUseBlock

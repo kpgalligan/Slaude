@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.response_browser_left_click_drag_tool_use_block` (response_browser_left_click_drag_tool_use_block.py).
+
+import Foundation
+
+/// ResponseBrowserLeftClickDragToolUseBlock has been renamed to BrowserLeftClickDragToolUseBlock
+public typealias ResponseBrowserLeftClickDragToolUseBlock = BrowserLeftClickDragToolUseBlock

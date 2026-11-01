@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_double_click_tool_use_block` (beta_response_browser_double_click_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserDoubleClickToolUseBlock has been renamed to BetaBrowserDoubleClickToolUseBlock
+public typealias BetaResponseBrowserDoubleClickToolUseBlock = BetaBrowserDoubleClickToolUseBlock

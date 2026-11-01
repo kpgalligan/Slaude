@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_triple_click_tool_use_block` (beta_response_computer_triple_click_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerTripleClickToolUseBlock has been renamed to BetaComputerTripleClickToolUseBlock
+public typealias BetaResponseComputerTripleClickToolUseBlock = BetaComputerTripleClickToolUseBlock

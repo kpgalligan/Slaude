@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_get_page_text_tool_use_block` (beta_response_browser_get_page_text_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserGetPageTextToolUseBlock has been renamed to BetaBrowserGetPageTextToolUseBlock
+public typealias BetaResponseBrowserGetPageTextToolUseBlock = BetaBrowserGetPageTextToolUseBlock

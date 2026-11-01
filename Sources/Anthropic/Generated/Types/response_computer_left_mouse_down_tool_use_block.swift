@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.response_computer_left_mouse_down_tool_use_block` (response_computer_left_mouse_down_tool_use_block.py).
+
+import Foundation
+
+/// ResponseComputerLeftMouseDownToolUseBlock has been renamed to ComputerLeftMouseDownToolUseBlock
+public typealias ResponseComputerLeftMouseDownToolUseBlock = ComputerLeftMouseDownToolUseBlock

@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.response_browser_javascript_exec_tool_use_block` (response_browser_javascript_exec_tool_use_block.py).
+
+import Foundation
+
+/// ResponseBrowserJavascriptExecToolUseBlock has been renamed to BrowserJavascriptExecToolUseBlock
+public typealias ResponseBrowserJavascriptExecToolUseBlock = BrowserJavascriptExecToolUseBlock

@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_file_upload_tool_use_block` (beta_response_browser_file_upload_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserFileUploadToolUseBlock has been renamed to BetaBrowserFileUploadToolUseBlock
+public typealias BetaResponseBrowserFileUploadToolUseBlock = BetaBrowserFileUploadToolUseBlock

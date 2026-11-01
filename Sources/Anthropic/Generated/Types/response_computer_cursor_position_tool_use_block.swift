@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.response_computer_cursor_position_tool_use_block` (response_computer_cursor_position_tool_use_block.py).
+
+import Foundation
+
+/// ResponseComputerCursorPositionToolUseBlock has been renamed to ComputerCursorPositionToolUseBlock
+public typealias ResponseComputerCursorPositionToolUseBlock = ComputerCursorPositionToolUseBlock

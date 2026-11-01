@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_computer_screenshot_tool_use_block` (beta_response_computer_screenshot_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseComputerScreenshotToolUseBlock has been renamed to BetaComputerScreenshotToolUseBlock
+public typealias BetaResponseComputerScreenshotToolUseBlock = BetaComputerScreenshotToolUseBlock

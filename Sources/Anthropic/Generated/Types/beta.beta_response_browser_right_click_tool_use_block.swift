@@ -1,0 +1,6 @@
+// Transformed from `anthropic.types.beta.beta_response_browser_right_click_tool_use_block` (beta_response_browser_right_click_tool_use_block.py).
+
+import Foundation
+
+/// BetaResponseBrowserRightClickToolUseBlock has been renamed to BetaBrowserRightClickToolUseBlock
+public typealias BetaResponseBrowserRightClickToolUseBlock = BetaBrowserRightClickToolUseBlock
