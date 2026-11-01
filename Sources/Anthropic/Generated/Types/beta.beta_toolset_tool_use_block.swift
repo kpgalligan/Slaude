@@ -12,7 +12,7 @@ public indirect enum BetaToolsetToolUseBlock: Codable, Hashable, Sendable {
     public init(from decoder: Decoder) throws {
         if let v = try? BetaBrowserToolUseBlock(from: decoder) { self = .betaBrowserToolUseBlock(v); return }
         if let v = try? BetaComputerToolUseBlock(from: decoder) { self = .betaComputerToolUseBlock(v); return }
-        if let v = try? BetaToolUseBlock(from: decoder) { self = .betaToolUseBlock(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "tool_use"]), let v = try? BetaToolUseBlock(from: decoder) { self = .betaToolUseBlock(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 

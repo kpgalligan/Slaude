@@ -12,7 +12,7 @@ public indirect enum WebSearchToolResultBlockParamContentParam: Codable, Hashabl
 
     public init(from decoder: Decoder) throws {
         if let v = try? [WebSearchResultBlockParam](from: decoder) { self = .webSearchResultBlockParams(v); return }
-        if let v = try? WebSearchToolRequestErrorParam(from: decoder) { self = .webSearchToolRequestErrorParam(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "web_search_tool_result_error"]), let v = try? WebSearchToolRequestErrorParam(from: decoder) { self = .webSearchToolRequestErrorParam(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 

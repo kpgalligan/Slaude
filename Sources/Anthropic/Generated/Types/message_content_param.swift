@@ -4,29 +4,29 @@ import Foundation
 
 public indirect enum MessageContentParam: Codable, Hashable, Sendable, ExpressibleByStringLiteral, ExpressibleByArrayLiteral {
     case string(String)
-    case unions([Unions])
+    case items([Item])
     /// A value that matched none of the known variants.
     case unknown(JSONValue)
 
     public init(stringLiteral value: String) { self = .string(value) }
 
-    public init(arrayLiteral elements: Unions...) { self = .unions(elements) }
+    public init(arrayLiteral elements: Item...) { self = .items(elements) }
 
     public init(from decoder: Decoder) throws {
         if let v = try? String(from: decoder) { self = .string(v); return }
-        if let v = try? [Unions](from: decoder) { self = .unions(v); return }
+        if let v = try? [Item](from: decoder) { self = .items(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 
     public func encode(to encoder: Encoder) throws {
         switch self {
         case .string(let v): try v.encode(to: encoder)
-        case .unions(let v): try v.encode(to: encoder)
+        case .items(let v): try v.encode(to: encoder)
         case .unknown(let v): try v.encode(to: encoder)
         }
     }
 
-    public indirect enum Unions: Codable, Hashable, Sendable {
+    public indirect enum Item: Codable, Hashable, Sendable {
         case textBlockParam(TextBlockParam)
         case imageBlockParam(ImageBlockParam)
         case documentBlockParam(DocumentBlockParam)
@@ -48,22 +48,22 @@ public indirect enum MessageContentParam: Codable, Hashable, Sendable, Expressib
         case unknown(JSONValue)
 
         public init(from decoder: Decoder) throws {
-            if let v = try? TextBlockParam(from: decoder) { self = .textBlockParam(v); return }
-            if let v = try? ImageBlockParam(from: decoder) { self = .imageBlockParam(v); return }
-            if let v = try? DocumentBlockParam(from: decoder) { self = .documentBlockParam(v); return }
-            if let v = try? SearchResultBlockParam(from: decoder) { self = .searchResultBlockParam(v); return }
-            if let v = try? ThinkingBlockParam(from: decoder) { self = .thinkingBlockParam(v); return }
-            if let v = try? RedactedThinkingBlockParam(from: decoder) { self = .redactedThinkingBlockParam(v); return }
-            if let v = try? ToolUseBlockParam(from: decoder) { self = .toolUseBlockParam(v); return }
-            if let v = try? ToolResultBlockParam(from: decoder) { self = .toolResultBlockParam(v); return }
-            if let v = try? ServerToolUseBlockParam(from: decoder) { self = .serverToolUseBlockParam(v); return }
-            if let v = try? WebSearchToolResultBlockParam(from: decoder) { self = .webSearchToolResultBlockParam(v); return }
-            if let v = try? WebFetchToolResultBlockParam(from: decoder) { self = .webFetchToolResultBlockParam(v); return }
-            if let v = try? CodeExecutionToolResultBlockParam(from: decoder) { self = .codeExecutionToolResultBlockParam(v); return }
-            if let v = try? BashCodeExecutionToolResultBlockParam(from: decoder) { self = .bashCodeExecutionToolResultBlockParam(v); return }
-            if let v = try? TextEditorCodeExecutionToolResultBlockParam(from: decoder) { self = .textEditorCodeExecutionToolResultBlockParam(v); return }
-            if let v = try? ToolSearchToolResultBlockParam(from: decoder) { self = .toolSearchToolResultBlockParam(v); return }
-            if let v = try? ContainerUploadBlockParam(from: decoder) { self = .containerUploadBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "text"]), let v = try? TextBlockParam(from: decoder) { self = .textBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "image"]), let v = try? ImageBlockParam(from: decoder) { self = .imageBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "document"]), let v = try? DocumentBlockParam(from: decoder) { self = .documentBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "search_result"]), let v = try? SearchResultBlockParam(from: decoder) { self = .searchResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "thinking"]), let v = try? ThinkingBlockParam(from: decoder) { self = .thinkingBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "redacted_thinking"]), let v = try? RedactedThinkingBlockParam(from: decoder) { self = .redactedThinkingBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "tool_use"]), let v = try? ToolUseBlockParam(from: decoder) { self = .toolUseBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "tool_result"]), let v = try? ToolResultBlockParam(from: decoder) { self = .toolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "server_tool_use"]), let v = try? ServerToolUseBlockParam(from: decoder) { self = .serverToolUseBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "web_search_tool_result"]), let v = try? WebSearchToolResultBlockParam(from: decoder) { self = .webSearchToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "web_fetch_tool_result"]), let v = try? WebFetchToolResultBlockParam(from: decoder) { self = .webFetchToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "code_execution_tool_result"]), let v = try? CodeExecutionToolResultBlockParam(from: decoder) { self = .codeExecutionToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "bash_code_execution_tool_result"]), let v = try? BashCodeExecutionToolResultBlockParam(from: decoder) { self = .bashCodeExecutionToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "text_editor_code_execution_tool_result"]), let v = try? TextEditorCodeExecutionToolResultBlockParam(from: decoder) { self = .textEditorCodeExecutionToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "tool_search_tool_result"]), let v = try? ToolSearchToolResultBlockParam(from: decoder) { self = .toolSearchToolResultBlockParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "container_upload"]), let v = try? ContainerUploadBlockParam(from: decoder) { self = .containerUploadBlockParam(v); return }
             if let v = try? ContentBlock(from: decoder) { self = .contentBlock(v); return }
             self = .unknown(try _Coding.raw(decoder))
         }

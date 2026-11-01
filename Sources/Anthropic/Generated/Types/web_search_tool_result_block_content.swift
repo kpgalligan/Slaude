@@ -11,7 +11,7 @@ public indirect enum WebSearchToolResultBlockContent: Codable, Hashable, Sendabl
     public init(arrayLiteral elements: WebSearchResultBlock...) { self = .webSearchResultBlocks(elements) }
 
     public init(from decoder: Decoder) throws {
-        if let v = try? WebSearchToolResultError(from: decoder) { self = .webSearchToolResultError(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "web_search_tool_result_error"]), let v = try? WebSearchToolResultError(from: decoder) { self = .webSearchToolResultError(v); return }
         if let v = try? [WebSearchResultBlock](from: decoder) { self = .webSearchResultBlocks(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }

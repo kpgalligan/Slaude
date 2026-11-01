@@ -97,7 +97,7 @@ extension DeploymentCreateParams {
 
         public init(from decoder: Decoder) throws {
             if let v = try? String(from: decoder) { self = .string(v); return }
-            if let v = try? BetaManagedAgentsAgentParams(from: decoder) { self = .betaManagedAgentsAgentParams(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "agent"]), let v = try? BetaManagedAgentsAgentParams(from: decoder) { self = .betaManagedAgentsAgentParams(v); return }
             self = .unknown(try _Coding.raw(decoder))
         }
 

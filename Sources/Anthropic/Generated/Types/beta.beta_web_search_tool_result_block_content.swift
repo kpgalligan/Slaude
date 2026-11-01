@@ -11,7 +11,7 @@ public indirect enum BetaWebSearchToolResultBlockContent: Codable, Hashable, Sen
     public init(arrayLiteral elements: BetaWebSearchResultBlock...) { self = .betaWebSearchResultBlocks(elements) }
 
     public init(from decoder: Decoder) throws {
-        if let v = try? BetaWebSearchToolResultError(from: decoder) { self = .betaWebSearchToolResultError(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "web_search_tool_result_error"]), let v = try? BetaWebSearchToolResultError(from: decoder) { self = .betaWebSearchToolResultError(v); return }
         if let v = try? [BetaWebSearchResultBlock](from: decoder) { self = .betaWebSearchResultBlocks(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }

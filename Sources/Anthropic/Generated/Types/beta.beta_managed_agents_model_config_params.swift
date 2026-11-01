@@ -77,11 +77,11 @@ extension BetaManagedAgentsModelConfigParams {
 
         public init(from decoder: Decoder) throws {
             if let v = try? Literal(from: decoder) { self = .literal(v); return }
-            if let v = try? BetaManagedAgentsEffortLowParam(from: decoder) { self = .betaManagedAgentsEffortLowParam(v); return }
-            if let v = try? BetaManagedAgentsEffortMediumParam(from: decoder) { self = .betaManagedAgentsEffortMediumParam(v); return }
-            if let v = try? BetaManagedAgentsEffortHighParam(from: decoder) { self = .betaManagedAgentsEffortHighParam(v); return }
-            if let v = try? BetaManagedAgentsEffortXhighParam(from: decoder) { self = .betaManagedAgentsEffortXhighParam(v); return }
-            if let v = try? BetaManagedAgentsEffortMaxParam(from: decoder) { self = .betaManagedAgentsEffortMaxParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "low"]), let v = try? BetaManagedAgentsEffortLowParam(from: decoder) { self = .betaManagedAgentsEffortLowParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "medium"]), let v = try? BetaManagedAgentsEffortMediumParam(from: decoder) { self = .betaManagedAgentsEffortMediumParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "high"]), let v = try? BetaManagedAgentsEffortHighParam(from: decoder) { self = .betaManagedAgentsEffortHighParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "xhigh"]), let v = try? BetaManagedAgentsEffortXhighParam(from: decoder) { self = .betaManagedAgentsEffortXhighParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "max"]), let v = try? BetaManagedAgentsEffortMaxParam(from: decoder) { self = .betaManagedAgentsEffortMaxParam(v); return }
             self = .unknown(try _Coding.raw(decoder))
         }
 

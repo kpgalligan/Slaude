@@ -6,3 +6,4 @@ DerivedData/
 __pycache__/
 *.pyc
 Package.resolved
+.claude/worktrees/

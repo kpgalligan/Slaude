@@ -127,7 +127,7 @@ extension ToolParam {
         case unknown(JSONValue)
 
         public init(from decoder: Decoder) throws {
-            if let v = try? ToolParam.InputSchemaTyped(from: decoder) { self = .inputSchemaTyped(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "object"]), let v = try? ToolParam.InputSchemaTyped(from: decoder) { self = .inputSchemaTyped(v); return }
             if let v = try? [String: JSONValue](from: decoder) { self = .dictionary(v); return }
             self = .unknown(try _Coding.raw(decoder))
         }

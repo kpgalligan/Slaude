@@ -30,8 +30,8 @@ extension BetaClearThinking20251015EditParam {
         case unknown(JSONValue)
 
         public init(from decoder: Decoder) throws {
-            if let v = try? BetaThinkingTurnsParam(from: decoder) { self = .betaThinkingTurnsParam(v); return }
-            if let v = try? BetaAllThinkingTurnsParam(from: decoder) { self = .betaAllThinkingTurnsParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "thinking_turns"]), let v = try? BetaThinkingTurnsParam(from: decoder) { self = .betaThinkingTurnsParam(v); return }
+            if _Coding.constantsMatch(decoder, ["type": "all"]), let v = try? BetaAllThinkingTurnsParam(from: decoder) { self = .betaAllThinkingTurnsParam(v); return }
             if let v = try? String(from: decoder) { self = .all(v); return }
             self = .unknown(try _Coding.raw(decoder))
         }

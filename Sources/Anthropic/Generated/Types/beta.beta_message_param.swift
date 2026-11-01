@@ -3,24 +3,26 @@
 import Foundation
 
 public indirect enum BetaMessageParam: Codable, Hashable, Sendable {
-    case betaUserMessageParam(BetaUserMessageParam)
-    case betaAssistantMessageParam(BetaAssistantMessageParam)
-    case betaSystemMessageParam(BetaSystemMessageParam)
+    case user(BetaUserMessageParam)
+    case assistant(BetaAssistantMessageParam)
+    case system(BetaSystemMessageParam)
     /// A value that matched none of the known variants.
     case unknown(JSONValue)
 
     public init(from decoder: Decoder) throws {
-        if let v = try? BetaUserMessageParam(from: decoder) { self = .betaUserMessageParam(v); return }
-        if let v = try? BetaAssistantMessageParam(from: decoder) { self = .betaAssistantMessageParam(v); return }
-        if let v = try? BetaSystemMessageParam(from: decoder) { self = .betaSystemMessageParam(v); return }
-        self = .unknown(try _Coding.raw(decoder))
+        switch _Coding.discriminator(decoder, "role") {
+        case "user": self = .user(try BetaUserMessageParam(from: decoder))
+        case "assistant": self = .assistant(try BetaAssistantMessageParam(from: decoder))
+        case "system": self = .system(try BetaSystemMessageParam(from: decoder))
+        default: self = .unknown(try _Coding.raw(decoder))
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
         switch self {
-        case .betaUserMessageParam(let v): try v.encode(to: encoder)
-        case .betaAssistantMessageParam(let v): try v.encode(to: encoder)
-        case .betaSystemMessageParam(let v): try v.encode(to: encoder)
+        case .user(let v): try v.encode(to: encoder)
+        case .assistant(let v): try v.encode(to: encoder)
+        case .system(let v): try v.encode(to: encoder)
         case .unknown(let v): try v.encode(to: encoder)
         }
     }

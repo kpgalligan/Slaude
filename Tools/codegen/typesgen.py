@@ -545,6 +545,33 @@ class SwiftEmitter:
                 return self.member_discriminator_value(Ref(target), key)
         return None
 
+    def constant_keys(self, member: object) -> set:
+        """JSON keys of the single-value `Literal` (constant) fields of a model/params variant."""
+        out = set()
+        target = member
+        if isinstance(target, Ref) and isinstance(target.decl, AliasDecl) and target.decl.is_rename:
+            t = self.conv.ms.resolve_expr(target.decl.module, target.decl.value)
+            if isinstance(t, (ClassDecl, AliasDecl)):
+                target = Ref(t)
+        if isinstance(target, Ref) and isinstance(target.decl, ClassDecl) and not target.decl.generic:
+            for f in self.conv.fields(target.decl):
+                if isinstance(f.ir, LiteralT) and len(f.ir.values) == 1 and isinstance(f.ir.values[0], str):
+                    out.add(f.json_key)
+        return out
+
+    def constants_of(self, member: object) -> dict:
+        target = member
+        if isinstance(target, Ref) and isinstance(target.decl, AliasDecl) and target.decl.is_rename:
+            t = self.conv.ms.resolve_expr(target.decl.module, target.decl.value)
+            if isinstance(t, (ClassDecl, AliasDecl)):
+                target = Ref(t)
+        out = {}
+        if isinstance(target, Ref) and isinstance(target.decl, ClassDecl) and not target.decl.generic:
+            for f in self.conv.fields(target.decl):
+                if f.required and isinstance(f.ir, LiteralT) and len(f.ir.values) == 1 and isinstance(f.ir.values[0], str):
+                    out[f.json_key] = f.ir.values[0]
+        return out
+
     def member_case_name(self, member: object) -> str:
         if isinstance(member, Prim):
             return {"str": "string", "int": "int", "float": "double", "bool": "bool", "object": "json",
@@ -552,6 +579,8 @@ class SwiftEmitter:
         if isinstance(member, Ref):
             return lower_first(member.decl.swift_name.split(".")[-1])
         if isinstance(member, ListT):
+            if isinstance(member.item, UnionT):
+                return "items"
             inner = self.member_case_name(member.item)
             return inner + ("s" if not inner.endswith("s") else "List")
         if isinstance(member, DictT):
@@ -568,9 +597,11 @@ class SwiftEmitter:
         disc = ir.discriminator
         auto_disc = None
         if disc is None and all(isinstance(m, Ref) for m in members):
-            vals = [self.member_discriminator_value(m, "type") for m in members]
-            if all(v is not None for v in vals) and len(set(vals)) == len(vals):
-                auto_disc = "type"
+            for cand in ["type"] + sorted(self.constant_keys(members[0]) - {"type"}):
+                vals = [self.member_discriminator_value(m, cand) for m in members]
+                if all(v is not None for v in vals) and len(set(vals)) == len(vals):
+                    auto_disc = cand
+                    break
         key = disc or auto_disc
         cases: list[tuple[str, str, object, Optional[str]]] = []  # (case, swift type, member, disc value)
         used: set[str] = {"unknown"}
@@ -580,13 +611,14 @@ class SwiftEmitter:
             while cname in used:
                 cname += "_"
             used.add(cname)
+            hint = "item" if cname == "items" else cname
             if scope is None:
                 try:
-                    stype = self.swift_type(m, None, cname)
+                    stype = self.swift_type(m, None, "item" if cname == "items" else cname)
                 except ConvertError:
                     stype = None
             else:
-                stype = self.swift_type(m, scope, cname)
+                stype = self.swift_type(m, scope, hint)
             cases.append((escape_ident(cname), stype, m, dv))
         return key, cases
 
@@ -630,7 +662,12 @@ class SwiftEmitter:
             for c, t, m, dv in cases:
                 if key and dv is not None:
                     continue
-                out += f"{i}        if let v = try? {t}(from: decoder) {{ self = .{bare(c)}(v); return }}\n"
+                consts = self.constants_of(m)
+                if consts:
+                    pairs = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in sorted(consts.items()))
+                    out += f"{i}        if _Coding.constantsMatch(decoder, [{pairs}]), let v = try? {t}(from: decoder) {{ self = .{bare(c)}(v); return }}\n"
+                else:
+                    out += f"{i}        if let v = try? {t}(from: decoder) {{ self = .{bare(c)}(v); return }}\n"
             out += f"{i}        self = .unknown(try _Coding.raw(decoder))\n"
         out += f"{i}    }}\n\n"
         out += f"{i}    public func encode(to encoder: Encoder) throws {{\n{i}        switch self {{\n"

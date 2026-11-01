@@ -12,7 +12,7 @@ public indirect enum BetaWebSearchToolResultBlockParamContentParam: Codable, Has
 
     public init(from decoder: Decoder) throws {
         if let v = try? [BetaWebSearchResultBlockParam](from: decoder) { self = .betaWebSearchResultBlockParams(v); return }
-        if let v = try? BetaWebSearchToolRequestErrorParam(from: decoder) { self = .betaWebSearchToolRequestErrorParam(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "web_search_tool_result_error"]), let v = try? BetaWebSearchToolRequestErrorParam(from: decoder) { self = .betaWebSearchToolRequestErrorParam(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 

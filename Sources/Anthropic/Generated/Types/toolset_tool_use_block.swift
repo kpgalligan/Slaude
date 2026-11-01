@@ -12,7 +12,7 @@ public indirect enum ToolsetToolUseBlock: Codable, Hashable, Sendable {
     public init(from decoder: Decoder) throws {
         if let v = try? BrowserToolUseBlock(from: decoder) { self = .browserToolUseBlock(v); return }
         if let v = try? ComputerToolUseBlock(from: decoder) { self = .computerToolUseBlock(v); return }
-        if let v = try? ToolUseBlock(from: decoder) { self = .toolUseBlock(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "tool_use"]), let v = try? ToolUseBlock(from: decoder) { self = .toolUseBlock(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 

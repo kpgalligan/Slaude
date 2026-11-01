@@ -156,6 +156,16 @@ public enum _Coding {
         return try? c.decodeIfPresent(String.self, forKey: AnyCodingKey(key))
     }
 
+    /// Whether the object's constant (single-`Literal`) fields hold the expected values; used when a
+    /// union decodes by trying each variant, as pydantic validates `Literal` fields.
+    public static func constantsMatch(_ decoder: Decoder, _ expected: [String: String]) -> Bool {
+        guard let c = try? decoder.container(keyedBy: AnyCodingKey.self) else { return false }
+        for (k, v) in expected {
+            guard let actual = try? c.decodeIfPresent(String.self, forKey: AnyCodingKey(k)), actual == v else { return false }
+        }
+        return true
+    }
+
     /// Error thrown when no variant of a union matched.
     public static func noMatch(_ decoder: Decoder, _ typeName: String, _ errors: [Error] = []) -> DecodingError {
         DecodingError.dataCorrupted(

@@ -36,33 +36,33 @@ public indirect enum BetaResponseToolUnion: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         if let v = try? BetaResponseTool(from: decoder) { self = .betaResponseTool(v); return }
-        if let v = try? BetaToolBash20241022(from: decoder) { self = .betaToolBash20241022(v); return }
-        if let v = try? BetaToolBash20250124(from: decoder) { self = .betaToolBash20250124(v); return }
-        if let v = try? BetaCodeExecutionTool20250522(from: decoder) { self = .betaCodeExecutionTool20250522(v); return }
-        if let v = try? BetaCodeExecutionTool20250825(from: decoder) { self = .betaCodeExecutionTool20250825(v); return }
-        if let v = try? BetaCodeExecutionTool20260120(from: decoder) { self = .betaCodeExecutionTool20260120(v); return }
-        if let v = try? BetaCodeExecutionTool20260521(from: decoder) { self = .betaCodeExecutionTool20260521(v); return }
-        if let v = try? BetaBrowserToolset20260801(from: decoder) { self = .betaBrowserToolset20260801(v); return }
-        if let v = try? BetaToolComputerUse20241022(from: decoder) { self = .betaToolComputerUse20241022(v); return }
-        if let v = try? BetaMemoryTool20250818(from: decoder) { self = .betaMemoryTool20250818(v); return }
-        if let v = try? BetaToolComputerUse20250124(from: decoder) { self = .betaToolComputerUse20250124(v); return }
-        if let v = try? BetaToolTextEditor20241022(from: decoder) { self = .betaToolTextEditor20241022(v); return }
-        if let v = try? BetaToolComputerUse20251124(from: decoder) { self = .betaToolComputerUse20251124(v); return }
-        if let v = try? BetaComputerToolset20260801(from: decoder) { self = .betaComputerToolset20260801(v); return }
-        if let v = try? BetaToolTextEditor20250124(from: decoder) { self = .betaToolTextEditor20250124(v); return }
-        if let v = try? BetaToolTextEditor20250429(from: decoder) { self = .betaToolTextEditor20250429(v); return }
-        if let v = try? BetaToolTextEditor20250728(from: decoder) { self = .betaToolTextEditor20250728(v); return }
-        if let v = try? BetaWebSearchTool20250305(from: decoder) { self = .betaWebSearchTool20250305(v); return }
-        if let v = try? BetaWebFetchTool20250910(from: decoder) { self = .betaWebFetchTool20250910(v); return }
-        if let v = try? BetaWebSearchTool20260209(from: decoder) { self = .betaWebSearchTool20260209(v); return }
-        if let v = try? BetaWebFetchTool20260209(from: decoder) { self = .betaWebFetchTool20260209(v); return }
-        if let v = try? BetaWebFetchTool20260309(from: decoder) { self = .betaWebFetchTool20260309(v); return }
-        if let v = try? BetaWebSearchTool20260318(from: decoder) { self = .betaWebSearchTool20260318(v); return }
-        if let v = try? BetaWebFetchTool20260318(from: decoder) { self = .betaWebFetchTool20260318(v); return }
-        if let v = try? BetaAdvisorTool20260301(from: decoder) { self = .betaAdvisorTool20260301(v); return }
-        if let v = try? BetaToolSearchToolBm25_20251119(from: decoder) { self = .betaToolSearchToolBm25_20251119(v); return }
-        if let v = try? BetaToolSearchToolRegex20251119(from: decoder) { self = .betaToolSearchToolRegex20251119(v); return }
-        if let v = try? BetaMCPToolset(from: decoder) { self = .betaMCPToolset(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "bash", "type": "bash_20241022"]), let v = try? BetaToolBash20241022(from: decoder) { self = .betaToolBash20241022(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "bash", "type": "bash_20250124"]), let v = try? BetaToolBash20250124(from: decoder) { self = .betaToolBash20250124(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "code_execution", "type": "code_execution_20250522"]), let v = try? BetaCodeExecutionTool20250522(from: decoder) { self = .betaCodeExecutionTool20250522(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "code_execution", "type": "code_execution_20250825"]), let v = try? BetaCodeExecutionTool20250825(from: decoder) { self = .betaCodeExecutionTool20250825(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "code_execution", "type": "code_execution_20260120"]), let v = try? BetaCodeExecutionTool20260120(from: decoder) { self = .betaCodeExecutionTool20260120(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "code_execution", "type": "code_execution_20260521"]), let v = try? BetaCodeExecutionTool20260521(from: decoder) { self = .betaCodeExecutionTool20260521(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "browser_toolset_20260801"]), let v = try? BetaBrowserToolset20260801(from: decoder) { self = .betaBrowserToolset20260801(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "computer", "type": "computer_20241022"]), let v = try? BetaToolComputerUse20241022(from: decoder) { self = .betaToolComputerUse20241022(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "memory", "type": "memory_20250818"]), let v = try? BetaMemoryTool20250818(from: decoder) { self = .betaMemoryTool20250818(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "computer", "type": "computer_20250124"]), let v = try? BetaToolComputerUse20250124(from: decoder) { self = .betaToolComputerUse20250124(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "str_replace_editor", "type": "text_editor_20241022"]), let v = try? BetaToolTextEditor20241022(from: decoder) { self = .betaToolTextEditor20241022(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "computer", "type": "computer_20251124"]), let v = try? BetaToolComputerUse20251124(from: decoder) { self = .betaToolComputerUse20251124(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "computer_toolset_20260801"]), let v = try? BetaComputerToolset20260801(from: decoder) { self = .betaComputerToolset20260801(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "str_replace_editor", "type": "text_editor_20250124"]), let v = try? BetaToolTextEditor20250124(from: decoder) { self = .betaToolTextEditor20250124(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "str_replace_based_edit_tool", "type": "text_editor_20250429"]), let v = try? BetaToolTextEditor20250429(from: decoder) { self = .betaToolTextEditor20250429(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "str_replace_based_edit_tool", "type": "text_editor_20250728"]), let v = try? BetaToolTextEditor20250728(from: decoder) { self = .betaToolTextEditor20250728(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_search", "type": "web_search_20250305"]), let v = try? BetaWebSearchTool20250305(from: decoder) { self = .betaWebSearchTool20250305(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_fetch", "type": "web_fetch_20250910"]), let v = try? BetaWebFetchTool20250910(from: decoder) { self = .betaWebFetchTool20250910(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_search", "type": "web_search_20260209"]), let v = try? BetaWebSearchTool20260209(from: decoder) { self = .betaWebSearchTool20260209(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_fetch", "type": "web_fetch_20260209"]), let v = try? BetaWebFetchTool20260209(from: decoder) { self = .betaWebFetchTool20260209(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_fetch", "type": "web_fetch_20260309"]), let v = try? BetaWebFetchTool20260309(from: decoder) { self = .betaWebFetchTool20260309(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_search", "type": "web_search_20260318"]), let v = try? BetaWebSearchTool20260318(from: decoder) { self = .betaWebSearchTool20260318(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "web_fetch", "type": "web_fetch_20260318"]), let v = try? BetaWebFetchTool20260318(from: decoder) { self = .betaWebFetchTool20260318(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "advisor", "type": "advisor_20260301"]), let v = try? BetaAdvisorTool20260301(from: decoder) { self = .betaAdvisorTool20260301(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "tool_search_tool_bm25"]), let v = try? BetaToolSearchToolBm25_20251119(from: decoder) { self = .betaToolSearchToolBm25_20251119(v); return }
+        if _Coding.constantsMatch(decoder, ["name": "tool_search_tool_regex"]), let v = try? BetaToolSearchToolRegex20251119(from: decoder) { self = .betaToolSearchToolRegex20251119(v); return }
+        if _Coding.constantsMatch(decoder, ["type": "mcp_toolset"]), let v = try? BetaMCPToolset(from: decoder) { self = .betaMCPToolset(v); return }
         self = .unknown(try _Coding.raw(decoder))
     }
 
