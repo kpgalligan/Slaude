@@ -210,9 +210,9 @@ private func eventStreamResponse(_ data: Data) -> @Sendable (HTTPRequest) -> HTT
     }
 
     /// `test_beta_messages_helpers_are_bound`, plus the routing checks of
-    /// `test_beta_tool_runner_routes_through_invoke` for the helpers ported so far: `create`,
-    /// `parse` and `stream` (beta and stable) go through `/invoke` (`/invoke-with-response-stream`),
-    /// SigV4-signed, with the body rewritten.
+    /// `test_beta_messages_helpers_are_bound`: `create`, `parse` and `stream` (beta and stable) go through `/invoke`
+    /// (`/invoke-with-response-stream`), SigV4-signed, with the body rewritten. `tool_runner` is checked by
+    /// `betaToolRunnerRoutesThroughInvoke`.
     @Test func messagesHelpersRouteThroughInvoke() async throws {
         let frames = platformCityStreamEvents.map(eventStreamChunkFrame).reduce(Data(), +)
         let recorder = RequestRecorder { req, _ in
@@ -250,6 +250,26 @@ private func eventStreamResponse(_ data: Data) -> @Sendable (HTTPRequest) -> HTT
             #expect(body["anthropic_version"] == .string(ANTHROPIC_API_VERSION))
         }
         for i in 1...4 { #expect(recorder.requests[i].json["output_config"]?["format"]?["type"] == "json_schema") }
+    }
+
+    /// `test_beta_tool_runner_routes_through_invoke` (the sync and async tests are one Swift test).
+    @Test func betaToolRunnerRoutesThroughInvoke() async throws {
+        let recorder = RequestRecorder(sequence: platformToolRunnerReplies())
+        let final = try await bedrockClient(recorder).beta.messages.toolRunner(
+            maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: "anthropic.claude-haiku-4-5-20251001-v1:0",
+            tools: [platformToolRunnerWeatherTool()]).untilDone()
+
+        #expect(final.stopReason == .endTurn)
+        platformToolRunnerCheckSecondRequest(recorder)
+        for req in recorder.requests {
+            #expect(req.url.path == "/model/anthropic.claude-haiku-4-5-20251001-v1:0/invoke")
+            #expect(req.headers["Authorization"]?.hasPrefix("AWS4-HMAC-SHA256 ") == true)
+            #expect(req.headers["x-amz-date"] != nil)
+            #expect(req.headers["anthropic-version"] == nil)
+            let body = req.json
+            #expect(body["model"] == nil && body["stream"] == nil && body["output_format"] == nil)
+            #expect(body["anthropic_version"] == .string(ANTHROPIC_API_VERSION))
+        }
     }
 
     static let throttlingMessage = "Too many requests, please wait before trying again."
@@ -383,4 +403,38 @@ private func eventStreamResponse(_ data: Data) -> @Sendable (HTTPRequest) -> HTT
             }
         }
     }
+}
+
+/// The replies of the platform tool-runner tests (`_tool_runner_responses`): a `get_weather` call, then the answer.
+func platformToolRunnerReplies() -> [@Sendable (HTTPRequest) -> HTTPResponse] {
+    [
+        messageResponse(id: "msg_01", content: [["type": "tool_use", "id": "toolu_01", "name": "get_weather", "input": ["city": "Paris"]]],
+                        stopReason: "tool_use"),
+        messageResponse(id: "msg_02", content: [["type": "text", "text": "It is sunny in Paris."]], stopReason: "end_turn"),
+    ].map { body in platformJSON(String(decoding: try! JSONValue.serialize(body), as: UTF8.self)) }
+}
+
+private struct PlatformToolRunnerCity: Decodable, Sendable { var city: String }
+
+/// `get_weather(city)`, which answers `sunny in <city>`.
+func platformToolRunnerWeatherTool() -> BetaFunctionTool {
+    BetaFunctionTool(name: "get_weather", description: "Get the weather.",
+                     inputSchema: ["type": "object", "properties": ["city": ["type": "string", "description": "city name"]],
+                                   "required": ["city"]]) { (input: PlatformToolRunnerCity) in
+        .string("sunny in \(input.city)")
+    }
+}
+
+/// `_assert_tool_runner_calls`, the part every platform shares: two requests, the second sending the whole history
+/// (a platform client has no message threads) with the tool result.
+func platformToolRunnerCheckSecondRequest(_ recorder: RequestRecorder, sourceLocation: SourceLocation = #_sourceLocation) {
+    #expect(recorder.count == 2, sourceLocation: sourceLocation)
+    guard recorder.count == 2 else { return }
+    for req in recorder.requests { #expect(req.json["thread"] == nil, sourceLocation: sourceLocation) }
+    let messages = recorder.requests[1].json["messages"]?.arrayValue ?? []
+    #expect(messages.map { $0["role"] } == ["user", "assistant", "user"], sourceLocation: sourceLocation)
+    #expect(messages.count == 3 && messages[1]["content"]?[0]?["type"] == "tool_use", sourceLocation: sourceLocation)
+    #expect(messages.count == 3 && messages[2]["content"]?[0] == [
+        "type": "tool_result", "tool_use_id": "toolu_01", "content": "sunny in Paris",
+    ], sourceLocation: sourceLocation)
 }

@@ -128,6 +128,25 @@ final class FakeGoogleCredentials: GoogleCredentials, @unchecked Sendable {
         for i in [1, 2, 4, 5] { #expect(recorder.requests[i].json["output_config"]?["format"]?["type"] == "json_schema") }
     }
 
+    /// `test_beta_tool_runner_routes_through_raw_predict` (both client classes).
+    @Test func betaToolRunnerRoutesThroughRawPredict() async throws {
+        let recorder = RequestRecorder(sequence: platformToolRunnerReplies())
+        let final = try await vertex(recorder).beta.messages.toolRunner(
+            maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: "claude-haiku-4-5@20251001",
+            tools: [platformToolRunnerWeatherTool()]).untilDone()
+
+        #expect(final.stopReason == .endTurn)
+        platformToolRunnerCheckSecondRequest(recorder)
+        #expect(recorder.urls == [toolRunnerURL, toolRunnerURL])
+        for req in recorder.requests {
+            #expect(req.headers["Authorization"] == "Bearer my-access-token")
+            #expect(req.headers["anthropic-version"] == nil)
+            let body = req.json
+            #expect(body["model"] == nil && body["stream"] == nil && body["output_format"] == nil)
+            #expect(body["anthropic_version"] == .string(ANTHROPIC_API_VERSION))
+        }
+    }
+
     @Test func extraBodyAnthropicVersionWins() async throws {
         let recorder = RequestRecorder()
         _ = try await vertex(recorder).messages.create(maxTokens: 1024, messages: userMessages("Hello"), model: "claude-haiku-4-5@20251001",

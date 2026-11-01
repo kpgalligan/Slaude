@@ -31,10 +31,10 @@ private func respondWithMessage() -> RequestRecorder {
 private let batchJSON = #"{"id": "msgbatch_1", "type": "message_batch", "processing_status": "in_progress", "created_at": "2024-01-01T00:00:00Z", "expires_at": "2024-01-02T00:00:00Z", "archived_at": null, "cancel_initiated_at": null, "ended_at": null, "results_url": null, "request_counts": {"canceled": 0, "errored": 0, "expired": 0, "processing": 0, "succeeded": 0}}"#
 
 /// The ways of sending a message (`send_message`): create, stream (the `MessageStream` helper and
-/// the raw `createStreaming`), beta create / stream / parse, count tokens. The tool-runner
-/// parametrization is not ported yet (see docs/porting/platforms.md).
+/// the raw `createStreaming`), beta create / stream / parse / tool runner, count tokens.
 enum MantleSend: String, CaseIterable, Sendable {
-    case create, stream, createStreaming, betaCreate, betaStream, betaCreateStreaming, betaParse, countTokens, betaCountTokens
+    case create, stream, createStreaming, betaCreate, betaStream, betaCreateStreaming, betaParse, betaToolRunner, countTokens,
+         betaCountTokens
 
     func callAsFunction(_ client: AnthropicBedrockMantle, _ userProfileID: String?, _ extraBody: Body?) async throws {
         switch self {
@@ -58,6 +58,9 @@ enum MantleSend: String, CaseIterable, Sendable {
         case .betaParse:
             _ = try await client.beta.messages.parse(maxTokens: 16, messages: betaUserMessages("Hi"), model: model, userProfileID: userProfileID,
                                                      extraBody: extraBody)
+        case .betaToolRunner:
+            _ = try await client.beta.messages.toolRunner(maxTokens: 16, messages: betaUserMessages("Hi"), model: model, tools: [],
+                                                          userProfileID: userProfileID, extraBody: extraBody).untilDone()
         case .countTokens:
             _ = try await client.messages.countTokens(messages: userMessages("Hi"), model: model, userProfileID: userProfileID, extraBody: extraBody)
         case .betaCountTokens:
