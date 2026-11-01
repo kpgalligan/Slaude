@@ -186,7 +186,7 @@ public struct BetaOrganizationAnalyticsUsageResource: Sendable {
         try query.set("time_bucket_width", timeBucketWidth)
         try query.set("user_profile_ids", userProfileIDs)
         try query.set("workspace_ids", workspaceIDs)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/usage", query: query, headers: mergeHeaderLayers(["anthropic-beta": "analytics-usage-cost-2026-08-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["analytics-usage-cost-2026-08-24"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.usage.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/usage", query: query, headers: mergeHeaderLayers(["anthropic-beta": "analytics-usage-cost-2026-08-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["analytics-usage-cost-2026-08-24"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.usage.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(ReportPageCursor<BetaAnalyticsUsageItem>.self, options, stream: _mode == .stream)
     }
 

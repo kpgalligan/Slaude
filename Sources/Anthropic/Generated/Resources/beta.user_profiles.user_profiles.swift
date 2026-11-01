@@ -84,7 +84,7 @@ public struct BetaUserProfilesResource: Sendable {
         try body.set("external_user_onboarded_at", externalUserOnboardedAt)
         try body.set("metadata", metadata)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/user_profiles", body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/user_profiles", body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaUserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -115,7 +115,7 @@ public struct BetaUserProfilesResource: Sendable {
 
     func _retrieve(_ userProfileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaUserProfile> {
         try requireNonEmpty(userProfileID, "user_profile_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaUserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -186,7 +186,7 @@ public struct BetaUserProfilesResource: Sendable {
         try body.set("external_user_onboarded_at", externalUserOnboardedAt)
         try body.set("metadata", metadata)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaUserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -242,7 +242,7 @@ public struct BetaUserProfilesResource: Sendable {
         try query.set("order", order)
         try query.set("order_by", orderBy)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/user_profiles", query: query, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/user_profiles", query: query, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaUserProfile>.self, options, stream: _mode == .stream)
     }
 
@@ -273,7 +273,7 @@ public struct BetaUserProfilesResource: Sendable {
 
     func _delete(_ userProfileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedUserProfile> {
         try requireNonEmpty(userProfileID, "user_profile_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedUserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -304,7 +304,7 @@ public struct BetaUserProfilesResource: Sendable {
 
     func _createEnrollmentURL(_ userProfileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaUserProfileEnrollmentURL> {
         try requireNonEmpty(userProfileID, "user_profile_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/enrollment_url", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create_enrollment_url")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/enrollment_url", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create_enrollment_url", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaUserProfileEnrollmentURL.self, options, stream: _mode == .stream)
     }
 

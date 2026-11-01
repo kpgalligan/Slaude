@@ -83,7 +83,7 @@ public struct BetaDeploymentsResource: Sendable {
         try body.set("resources", resources)
         try body.set("schedule", schedule)
         try body.set("vault_ids", vaultIDs)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/deployments", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/deployments", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 
@@ -115,7 +115,7 @@ public struct BetaDeploymentsResource: Sendable {
 
     func _retrieve(_ deploymentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeployment> {
         try requireNonEmpty(deploymentID, "deployment_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/deployments/{deployment_id}", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/deployments/{deployment_id}", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 
@@ -190,7 +190,7 @@ public struct BetaDeploymentsResource: Sendable {
         try body.set("resources", resources)
         try body.set("schedule", schedule)
         try body.set("vault_ids", vaultIDs)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}", ["deployment_id": deploymentID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}", ["deployment_id": deploymentID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 
@@ -242,7 +242,7 @@ public struct BetaDeploymentsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("status", status)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/deployments", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/deployments", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsDeployment>.self, options, stream: _mode == .stream)
     }
 
@@ -274,7 +274,7 @@ public struct BetaDeploymentsResource: Sendable {
 
     func _archive(_ deploymentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeployment> {
         try requireNonEmpty(deploymentID, "deployment_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/archive", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/archive", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 
@@ -306,7 +306,7 @@ public struct BetaDeploymentsResource: Sendable {
 
     func _pause(_ deploymentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeployment> {
         try requireNonEmpty(deploymentID, "deployment_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/pause", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.pause")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/pause", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.pause", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 
@@ -338,7 +338,7 @@ public struct BetaDeploymentsResource: Sendable {
 
     func _run(_ deploymentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeploymentRun> {
         try requireNonEmpty(deploymentID, "deployment_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/run", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.run")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/run", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.run", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeploymentRun.self, options, stream: _mode == .stream)
     }
 
@@ -370,7 +370,7 @@ public struct BetaDeploymentsResource: Sendable {
 
     func _unpause(_ deploymentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeployment> {
         try requireNonEmpty(deploymentID, "deployment_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/unpause", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.unpause")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/deployments/{deployment_id}/unpause", ["deployment_id": deploymentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployments.unpause", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeployment.self, options, stream: _mode == .stream)
     }
 

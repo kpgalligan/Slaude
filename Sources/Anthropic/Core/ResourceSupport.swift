@@ -15,7 +15,8 @@ extension BaseClient {
     /// (`make_request_options` plus the `_post(path, body=..., ...)` call).
     public func makeRequestOptions(method: String, url: String, body: ParamsBuilder? = nil, query: ParamsBuilder? = nil,
                                    headers: Headers?, extraQuery: Query?, extraBody: Body?, timeout: Timeout?,
-                                   mode: ResponseMode, spanName: String? = nil) throws -> FinalRequestOptions
+                                   mode: ResponseMode, spanName: String? = nil,
+                                   qualifiers: [String: String]? = nil) throws -> FinalRequestOptions
     {
         var o = FinalRequestOptions(method: method, url: url)
         var h = headers ?? [:]
@@ -36,6 +37,7 @@ extension BaseClient {
         o.extraJSON = extraBody
         o.timeout = timeout
         o.spanName = spanName
+        o.qualifiers = qualifiers
         return o
     }
 

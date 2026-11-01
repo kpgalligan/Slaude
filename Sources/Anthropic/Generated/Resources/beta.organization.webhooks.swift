@@ -58,7 +58,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
         try body.set("url", url)
         try body.set("description", description)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/webhooks", body: body, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/webhooks", body: body, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaNewOrganizationWebhookEndpoint.self, options, stream: _mode == .stream)
     }
 
@@ -90,7 +90,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
 
     func _retrieve(_ webhookEndpointID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationWebhookEndpoint> {
         try requireNonEmpty(webhookEndpointID, "webhook_endpoint_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationWebhookEndpoint.self, options, stream: _mode == .stream)
     }
 
@@ -143,7 +143,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
         try body.set("name", name)
         try body.set("state", state)
         try body.set("url", url)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationWebhookEndpoint.self, options, stream: _mode == .stream)
     }
 
@@ -191,7 +191,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
         try query.set("before_id", beforeID)
         try query.set("limit", limit)
         try query.set("order", order)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/webhooks", query: query, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/webhooks", query: query, headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaOrganizationWebhookEndpoint>.self, options, stream: _mode == .stream)
     }
 
@@ -223,7 +223,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
 
     func _delete(_ webhookEndpointID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedOrganizationWebhookEndpoint> {
         try requireNonEmpty(webhookEndpointID, "webhook_endpoint_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedOrganizationWebhookEndpoint.self, options, stream: _mode == .stream)
     }
 
@@ -258,7 +258,7 @@ public struct BetaOrganizationWebhooksResource: Sendable {
 
     func _regenerateSigningSecret(_ webhookEndpointID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationWebhookEndpointSigningSecret> {
         try requireNonEmpty(webhookEndpointID, "webhook_endpoint_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}/regenerate_signing_secret", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.regenerate_signing_secret")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/webhooks/{webhook_endpoint_id}/regenerate_signing_secret", ["webhook_endpoint_id": webhookEndpointID]), headers: mergeHeaderLayers(["anthropic-beta": "webhooks-2026-10-07"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["webhooks-2026-10-07"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.webhooks.regenerate_signing_secret", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationWebhookEndpointSigningSecret.self, options, stream: _mode == .stream)
     }
 

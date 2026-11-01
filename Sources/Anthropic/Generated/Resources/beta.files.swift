@@ -58,7 +58,7 @@ public struct BetaFilesResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("scope_id", scopeID)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/files", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/files", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaFileMetadata>.self, options, stream: _mode == .stream)
     }
 
@@ -89,7 +89,7 @@ public struct BetaFilesResource: Sendable {
 
     func _delete(_ fileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedFile> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedFile.self, options, stream: _mode == .stream)
     }
 
@@ -120,7 +120,7 @@ public struct BetaFilesResource: Sendable {
 
     func _download(_ fileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BinaryResponse> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}/content", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.download")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}/content", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.download", qualifiers: ["beta": "true"])
         return try await client.requestBinaryResponse(options, stream: _mode == .stream)
     }
 
@@ -151,7 +151,7 @@ public struct BetaFilesResource: Sendable {
 
     func _retrieveMetadata(_ fileID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaFileMetadata> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.retrieve_metadata")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.retrieve_metadata", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFileMetadata.self, options, stream: _mode == .stream)
     }
 
@@ -191,7 +191,7 @@ public struct BetaFilesResource: Sendable {
         var body = ParamsBuilder()
         body.setFile("file", file)
         try body.set("expires_in_seconds", expiresInSeconds)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/files", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaders(mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.upload")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/files", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaders(mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.upload", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFileMetadata.self, options, stream: _mode == .stream)
     }
 

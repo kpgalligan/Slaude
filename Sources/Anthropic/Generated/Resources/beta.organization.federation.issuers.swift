@@ -66,7 +66,7 @@ public struct BetaOrganizationFederationIssuersResource: Sendable {
         try body.set("check_jti", checkJti)
         try body.set("jwks", jwks)
         try body.set("max_jwt_lifetime_seconds", maxJwtLifetimeSeconds)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_issuers", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_issuers", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -95,7 +95,7 @@ public struct BetaOrganizationFederationIssuersResource: Sendable {
 
     func _retrieve(_ federationIssuerID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaFederationIssuer> {
         try requireNonEmpty(federationIssuerID, "federation_issuer_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -159,7 +159,7 @@ public struct BetaOrganizationFederationIssuersResource: Sendable {
         try body.set("jwks_polling_disabled", jwksPollingDisabled)
         try body.set("max_jwt_lifetime_seconds", maxJwtLifetimeSeconds)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -197,7 +197,7 @@ public struct BetaOrganizationFederationIssuersResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_issuers", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_issuers", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaFederationIssuer>.self, options, stream: _mode == .stream)
     }
 
@@ -231,7 +231,7 @@ public struct BetaOrganizationFederationIssuersResource: Sendable {
 
     func _archive(_ federationIssuerID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaFederationIssuer> {
         try requireNonEmpty(federationIssuerID, "federation_issuer_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}/archive", ["federation_issuer_id": federationIssuerID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}/archive", ["federation_issuer_id": federationIssuerID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFederationIssuer.self, options, stream: _mode == .stream)
     }
 

@@ -44,7 +44,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
     func _retrieve(_ workID: String, environmentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSelfHostedWork> {
         try requireNonEmpty(environmentID, "environment_id")
         try requireNonEmpty(workID, "work_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}", ["environment_id": environmentID, "work_id": workID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}", ["environment_id": environmentID, "work_id": workID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWork.self, options, stream: _mode == .stream)
     }
 
@@ -84,7 +84,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
         try requireNonEmpty(workID, "work_id")
         var body = ParamsBuilder()
         try body.set("metadata", metadata)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}", ["environment_id": environmentID, "work_id": workID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}", ["environment_id": environmentID, "work_id": workID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWork.self, options, stream: _mode == .stream)
     }
 
@@ -118,7 +118,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work", ["environment_id": environmentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work", ["environment_id": environmentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSelfHostedWork>.self, options, stream: _mode == .stream)
     }
 
@@ -147,7 +147,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
     func _ack(_ workID: String, environmentID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSelfHostedWork> {
         try requireNonEmpty(environmentID, "environment_id")
         try requireNonEmpty(workID, "work_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/ack", ["environment_id": environmentID, "work_id": workID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.ack")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/ack", ["environment_id": environmentID, "work_id": workID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.ack", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWork.self, options, stream: _mode == .stream)
     }
 
@@ -185,7 +185,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
         var query = ParamsBuilder()
         try query.set("desired_ttl_seconds", desiredTtlSeconds)
         try query.set("expected_last_heartbeat", expectedLastHeartbeat)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/heartbeat", ["environment_id": environmentID, "work_id": workID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.heartbeat")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/heartbeat", ["environment_id": environmentID, "work_id": workID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.heartbeat", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWorkHeartbeatResponse.self, options, stream: _mode == .stream)
     }
 
@@ -225,7 +225,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
         var query = ParamsBuilder()
         try query.set("block_ms", blockMs)
         try query.set("reclaim_older_than_ms", reclaimOlderThanMs)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/poll", ["environment_id": environmentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("Anthropic-Worker-ID", anthropicWorkerID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.poll")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/poll", ["environment_id": environmentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("Anthropic-Worker-ID", anthropicWorkerID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.poll", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWork.self, options, stream: _mode == .stream)
     }
 
@@ -254,7 +254,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
 
     func _stats(_ environmentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSelfHostedWorkQueueStats> {
         try requireNonEmpty(environmentID, "environment_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/stats", ["environment_id": environmentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.stats")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/environments/{environment_id}/work/stats", ["environment_id": environmentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.stats", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWorkQueueStats.self, options, stream: _mode == .stream)
     }
 
@@ -293,7 +293,7 @@ public struct BetaEnvironmentsWorkResource: Sendable {
         try requireNonEmpty(workID, "work_id")
         var body = ParamsBuilder()
         try body.set("force", force)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/stop", ["environment_id": environmentID, "work_id": workID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.stop")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/environments/{environment_id}/work/{work_id}/stop", ["environment_id": environmentID, "work_id": workID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.environments.work.stop", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSelfHostedWork.self, options, stream: _mode == .stream)
     }
 

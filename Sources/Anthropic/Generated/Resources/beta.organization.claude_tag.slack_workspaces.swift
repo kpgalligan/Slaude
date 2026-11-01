@@ -49,7 +49,7 @@ public struct BetaOrganizationClaudeTagSlackWorkspacesResource: Sendable {
         try requireNonEmpty(id, "id")
         var query = ParamsBuilder()
         try query.set("include_inherited", includeInherited)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/claude_tag/slack_workspaces/{id}", ["id": id]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/claude_tag/slack_workspaces/{id}", ["id": id]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagSlackWorkspace.self, options, stream: _mode == .stream)
     }
 
@@ -82,7 +82,7 @@ public struct BetaOrganizationClaudeTagSlackWorkspacesResource: Sendable {
         try requireNonEmpty(id, "id")
         var body = ParamsBuilder()
         try body.set("settings", settings)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/slack_workspaces/{id}", ["id": id]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/slack_workspaces/{id}", ["id": id]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagSlackWorkspace.self, options, stream: _mode == .stream)
     }
 
@@ -129,7 +129,7 @@ public struct BetaOrganizationClaudeTagSlackWorkspacesResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("slack_workspace_id", slackWorkspaceID)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/claude_tag/slack_workspaces", query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/claude_tag/slack_workspaces", query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_workspaces.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaClaudeTagSlackWorkspace>.self, options, stream: _mode == .stream)
     }
 

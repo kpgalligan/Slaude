@@ -77,6 +77,9 @@ public struct FinalRequestOptions: Sendable {
     /// Set by the SDK method that makes the call, for tracing. Not a public option.
     public var spanName: String? = nil
     public var spanRoute: String? = nil
+    /// Markers the SDK method attaches for middleware, e.g. `["beta": "true"]` on every
+    /// `client.beta` call (`FinalRequestOptions.qualifiers`). Never sent on the wire.
+    public var qualifiers: [String: String]? = nil
 
     public init(method: String, url: String, params: [(String, JSONValue)] = [], headers: Headers? = nil,
                 maxRetries: Int? = nil, timeout: Timeout? = nil, files: [(String, FileUpload)]? = nil,

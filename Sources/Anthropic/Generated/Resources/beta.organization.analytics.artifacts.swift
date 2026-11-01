@@ -73,7 +73,7 @@ public struct BetaOrganizationAnalyticsArtifactsResource: Sendable {
         try query.set("group_by", groupBy)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/artifacts", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.artifacts.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/artifacts", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.artifacts.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaAnalyticsArtifactActivity>.self, options, stream: _mode == .stream)
     }
 

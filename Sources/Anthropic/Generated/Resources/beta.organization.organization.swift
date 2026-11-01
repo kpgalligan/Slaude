@@ -56,7 +56,7 @@ public struct BetaOrganizationResource: Sendable {
     }
 
     func _retrieve(extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganization> {
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/me", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/me", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganization.self, options, stream: _mode == .stream)
     }
 

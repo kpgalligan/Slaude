@@ -49,7 +49,7 @@ public typealias CallNext = @Sendable (APIRequest) async throws -> RawAPIRespons
 /// Client-level middleware (`_middleware.Middleware`). The chain runs inside the retry loop,
 /// once per attempt, and sees every HTTP response including 4xx/5xx ones.
 public protocol Middleware: Sendable {
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse
 }
 
 /// A middleware built from a closure.
@@ -60,7 +60,7 @@ public struct MiddlewareFunction: Middleware {
         self.name = name
         self.body = body
     }
-    public func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    public func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         try await body(request, next)
     }
 }

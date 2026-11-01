@@ -72,34 +72,13 @@ public struct SSEDecoder: Sendable {
     }
 
     /// Splits raw bytes into SSE chunks the way `_iter_chunks` does, then decodes each line.
+    ///
+    /// The events are decoded on demand: the byte stream is only read as far as the consumer has
+    /// asked for events (like Python's generators), so a consumer that stops early never causes
+    /// the rest of the body to be requested.
     public static func events(from bytes: ByteStream) -> AsyncThrowingStream<ServerSentEvent, Error> {
-        AsyncThrowingStream { continuation in
-            let task = Task {
-                var decoder = SSEDecoder()
-                var pending = Data()
-                func emit(_ chunk: Data) {
-                    for line in splitLines(chunk) {
-                        if let sse = decoder.decode(line) { continuation.yield(sse) }
-                    }
-                }
-                do {
-                    for try await chunk in bytes {
-                        for line in splitLinesKeepEnds(chunk) {
-                            pending.append(line)
-                            if pending.hasSuffix([0x0D, 0x0D]) || pending.hasSuffix([0x0A, 0x0A]) || pending.hasSuffix([0x0D, 0x0A, 0x0D, 0x0A]) {
-                                emit(pending)
-                                pending = Data()
-                            }
-                        }
-                    }
-                    if !pending.isEmpty { emit(pending) }
-                    continuation.finish()
-                } catch {
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
+        let reader = SSEPullReader(bytes.makeAsyncIterator())
+        return AsyncThrowingStream(unfolding: { try await reader.next() })
     }
 
     /// Decodes all events in a complete byte buffer.
@@ -168,18 +147,14 @@ func splitLines(_ data: Data) -> [String] {
 /// Iterate it with `for try await event in stream`. The underlying response is closed when
 /// iteration finishes, fails, or is abandoned, or when `close()` is called.
 public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchecked Sendable {
-    public typealias AsyncIterator = AsyncThrowingStream<Element, Error>.AsyncIterator
-
     public let response: HTTPResponse
     let client: BaseClient
-    private let events: AsyncThrowingStream<ServerSentEvent, Error>
     private let lock = NSLock()
     private var consumed = false
 
     init(response: HTTPResponse, client: BaseClient) {
         self.response = response
         self.client = client
-        self.events = client.makeSSEEvents(response.bytes())
     }
 
     /// The raw server-sent events, before JSON parsing and event-name filtering.
@@ -193,48 +168,102 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
             consumed = true
             return c
         }
-        if alreadyConsumed {
-            return AsyncThrowingStream<Element, Error> { $0.finish() }.makeAsyncIterator()
-        }
-        let events = self.events
-        let response = self.response
-        let client = self.client
-        let stream = AsyncThrowingStream<Element, Error> { continuation in
-            let task = Task {
-                do {
-                    for try await sse in events {
-                        if sse.event == "ping" { continue }
-                        guard let name = sse.event else { continue }
-                        if name == "error" {
-                            var body: JSONValue = .string(sse.data)
-                            var message: String
-                            if let parsed = try? sse.json() {
-                                body = parsed
-                                message = pythonRepr(parsed)
-                            } else {
-                                message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
-                            }
-                            throw client.makeStatusError(message, body: body, response: response)
-                        }
-                        if sse.data.isEmpty { continue }
-                        let value: Element = try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
-                        continuation.yield(value)
-                    }
-                    response.close()
-                    continuation.finish()
-                } catch {
-                    response.close()
-                    continuation.finish(throwing: error)
-                }
-            }
-            continuation.onTermination = { _ in
-                task.cancel()
-                response.close()
-            }
-        }
-        return stream.makeAsyncIterator()
+        // The body is only taken when iteration starts, so it can still be read raw before that.
+        let events = alreadyConsumed ? nil : client.makeSSEEvents(response.bytes())
+        return AsyncIterator(state: StreamIteratorState(events: events, response: response, client: client))
+    }
+
+    /// Iterates the stream, decoding each event when it is asked for.
+    public struct AsyncIterator: AsyncIteratorProtocol {
+        let state: StreamIteratorState<Element>
+        public mutating func next() async throws -> Element? { try await state.next() }
     }
 
     /// Closes the response and releases the connection.
     public func close() { response.close() }
+}
+
+/// Pull-based state behind `SSEDecoder.events(from:)`: reads byte chunks only when an event is requested.
+final class SSEPullReader: @unchecked Sendable {
+    private var bytes: ByteStream.AsyncIterator
+    private var decoder = SSEDecoder()
+    private var pending = Data()
+    private var queue: [ServerSentEvent] = []
+    private var finished = false
+
+    init(_ bytes: ByteStream.AsyncIterator) { self.bytes = bytes }
+
+    private func emit(_ chunk: Data) {
+        for line in splitLines(chunk) {
+            if let sse = decoder.decode(line) { queue.append(sse) }
+        }
+    }
+
+    func next() async throws -> ServerSentEvent? {
+        while true {
+            if !queue.isEmpty { return queue.removeFirst() }
+            if finished { return nil }
+            if let chunk = try await bytes.next() {
+                for line in splitLinesKeepEnds(chunk) {
+                    pending.append(line)
+                    if pending.hasSuffix([0x0D, 0x0D]) || pending.hasSuffix([0x0A, 0x0A]) || pending.hasSuffix([0x0D, 0x0A, 0x0D, 0x0A]) {
+                        emit(pending)
+                        pending = Data()
+                    }
+                }
+            } else {
+                finished = true
+                if !pending.isEmpty {
+                    emit(pending)
+                    pending = Data()
+                }
+            }
+        }
+    }
+}
+
+/// The state of one `Stream` iteration. The response is closed when iteration finishes or fails,
+/// or when the iterator is abandoned.
+public final class StreamIteratorState<Element: Decodable & Sendable>: @unchecked Sendable {
+    private var events: AsyncThrowingStream<ServerSentEvent, Error>.AsyncIterator?
+    private let response: HTTPResponse
+    private let client: BaseClient
+
+    init(events: AsyncThrowingStream<ServerSentEvent, Error>?, response: HTTPResponse, client: BaseClient) {
+        self.events = events?.makeAsyncIterator()
+        self.response = response
+        self.client = client
+    }
+
+    deinit { response.close() }
+
+    func next() async throws -> Element? {
+        guard events != nil else { return nil }
+        do {
+            while let sse = try await events!.next() {
+                if sse.event == "ping" { continue }
+                guard let name = sse.event else { continue }
+                if name == "error" {
+                    var body: JSONValue = .string(sse.data)
+                    var message: String
+                    if let parsed = try? sse.json() {
+                        body = parsed
+                        message = pythonRepr(parsed)
+                    } else {
+                        message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
+                    }
+                    throw client.makeStatusError(message, body: body, response: response)
+                }
+                if sse.data.isEmpty { continue }
+                return try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
+            }
+            events = nil
+            response.close()
+            return nil
+        } catch {
+            events = nil
+            response.close()
+            throw error
+        }
+    }
 }

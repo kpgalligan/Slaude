@@ -34,7 +34,7 @@ public struct BetaOrganizationSpendLimitsIncreaseRequestsResource: Sendable {
 
     func _retrieve(_ spendLimitIncreaseRequestID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSpendLimitIncreaseRequest> {
         try requireNonEmpty(spendLimitIncreaseRequestID, "spend_limit_increase_request_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSpendLimitIncreaseRequest.self, options, stream: _mode == .stream)
     }
 
@@ -67,7 +67,7 @@ public struct BetaOrganizationSpendLimitsIncreaseRequestsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("status", status)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limit_increase_requests", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limit_increase_requests", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSpendLimitIncreaseRequest>.self, options, stream: _mode == .stream)
     }
 
@@ -99,7 +99,7 @@ public struct BetaOrganizationSpendLimitsIncreaseRequestsResource: Sendable {
         try body.set("amount", amount)
         try body.set("period", period)
         try body.set("suppress_notification", suppressNotification)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}/approve", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.approve")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}/approve", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.approve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(IncreaseRequestApproveResponse.self, options, stream: _mode == .stream)
     }
 
@@ -126,7 +126,7 @@ public struct BetaOrganizationSpendLimitsIncreaseRequestsResource: Sendable {
         try requireNonEmpty(spendLimitIncreaseRequestID, "spend_limit_increase_request_id")
         var body = ParamsBuilder()
         try body.set("suppress_notification", suppressNotification)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}/deny", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.deny")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/spend_limit_increase_requests/{spend_limit_increase_request_id}/deny", ["spend_limit_increase_request_id": spendLimitIncreaseRequestID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.increase_requests.deny", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSpendLimitIncreaseRequest.self, options, stream: _mode == .stream)
     }
 

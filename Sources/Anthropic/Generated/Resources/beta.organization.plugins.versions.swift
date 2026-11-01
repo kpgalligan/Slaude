@@ -76,7 +76,7 @@ public struct BetaOrganizationPluginsVersionsResource: Sendable {
         var body = ParamsBuilder()
         body.setFiles("files", files)
         try body.set("release_notes", releaseNotes)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions", ["plugin_id": pluginID]), body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.create")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions", ["plugin_id": pluginID]), body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginVersion.self, options, stream: _mode == .stream)
     }
 
@@ -126,7 +126,7 @@ public struct BetaOrganizationPluginsVersionsResource: Sendable {
         try requireNonEmpty(version, "version")
         var query = ParamsBuilder()
         try query.set("organization_id", organizationID)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions/{version}", ["plugin_id": pluginID, "version": version]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions/{version}", ["plugin_id": pluginID, "version": version]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginVersion.self, options, stream: _mode == .stream)
     }
 
@@ -183,7 +183,7 @@ public struct BetaOrganizationPluginsVersionsResource: Sendable {
         try query.set("limit", limit)
         try query.set("organization_id", organizationID)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaPluginVersion>.self, options, stream: _mode == .stream)
     }
 
@@ -250,7 +250,7 @@ public struct BetaOrganizationPluginsVersionsResource: Sendable {
         try requireNonEmpty(version, "version")
         var query = ParamsBuilder()
         try query.set("organization_id", organizationID)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions/{version}/content", ["plugin_id": pluginID, "version": version]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.download")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/versions/{version}/content", ["plugin_id": pluginID, "version": version]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.versions.download", qualifiers: ["beta": "true"])
         return try await client.requestBinaryResponse(options, stream: _mode == .stream)
     }
 
