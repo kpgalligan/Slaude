@@ -298,7 +298,7 @@ final class StreamingRunnerTimelineToolset: BetaRunnableToolset, @unchecked Send
 /// A runner whose requests are answered by the replies, in order, and whose `lookup` tool writes to the timeline when
 /// it starts (`SetupFactory`).
 final class StreamingRunnerSetup: @unchecked Sendable {
-    let timeline = ToolsBox<[String]>([])
+    let timeline: ToolsBox<[String]>
     let server: StreamingRunnerServer
     let runner: BetaStreamingToolRunner<Never>
     let computer: StreamingRunnerTimelineToolset?
@@ -307,8 +307,9 @@ final class StreamingRunnerSetup: @unchecked Sendable {
 
     init(_ replies: [StreamingRunnerReply], runToolsEagerly: Bool = true, lookup: (@Sendable (String) throws -> String)? = nil,
          logReturns: Bool = false, messages: [JSONValue]? = nil, computer: Bool = false, browser: Bool = false,
-         extraTools: [any BetaToolLike] = []) throws
+         extraTools: [any BetaToolLike] = [], timeline: ToolsBox<[String]> = ToolsBox([])) throws
     {
+        self.timeline = timeline
         server = StreamingRunnerServer(replies, timeline: timeline)
         var tools: [any BetaToolLike] = [streamingRunnerLookupTool(timeline, lookup: lookup, logReturns: logReturns)]
         self.computer = computer ? StreamingRunnerTimelineToolset(family: "computer", timeline: timeline) : nil
