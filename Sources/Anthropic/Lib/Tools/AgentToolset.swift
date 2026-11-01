@@ -88,10 +88,19 @@ struct AgentFileError: Error {
 public final class AgentToolContext: @unchecked Sendable {
     /// Base directory for resolving relative tool paths; the working directory when the context was built.
     public let workdir: String
-    /// Directories outside `workdir` that the file tools may also reach. Does not constrain `bash`.
-    public let allowedRoots: [String]
-    /// Directories the write and edit tools refuse to modify.
-    public let readOnlyRoots: [String]
+    /// Directories outside `workdir` that the file tools may also reach. The environment worker sets this to the
+    /// session's memory-store folders, so memories mounted outside the working directory stay reachable. Does not
+    /// constrain `bash`.
+    public var allowedRoots: [String] {
+        get { lock.withLock { _allowedRoots } }
+        set { lock.withLock { _allowedRoots = newValue } }
+    }
+    /// Directories the write and edit tools refuse to modify. The environment worker sets this to the roots of
+    /// read-only memory stores, so the agent sees the error at write time instead of the change never syncing.
+    public var readOnlyRoots: [String] {
+        get { lock.withLock { _readOnlyRoots } }
+        set { lock.withLock { _readOnlyRoots = newValue } }
+    }
     /// When set together with `session` (or `sessionID`), `setupSkills()` downloads the session agent's skills.
     public let client: Anthropic?
     public let session: BetaManagedAgentsSession?
@@ -108,6 +117,8 @@ public final class AgentToolContext: @unchecked Sendable {
     public let maxPDFBytes: Int??
 
     private let lock = NSLock()
+    private var _allowedRoots: [String]
+    private var _readOnlyRoots: [String]
     private var _bash: BashSession?
     private var skillDirs: [String] = []
 
@@ -119,7 +130,7 @@ public final class AgentToolContext: @unchecked Sendable {
     {
         if unrestrictedPaths != nil { throw ArgumentTypeError(UNRESTRICTED_PATHS_DEPRECATION) }
         self.workdir = workdir
-        self.allowedRoots = allowedRoots
+        self._allowedRoots = allowedRoots
         self.client = client
         self.session = session
         self.sessionID = sessionID
@@ -127,7 +138,7 @@ public final class AgentToolContext: @unchecked Sendable {
         self.maxFileBytes = maxFileBytes
         self.maxImageBase64Bytes = maxImageBase64Bytes
         self.maxPDFBytes = maxPDFBytes
-        self.readOnlyRoots = readOnlyRoots
+        self._readOnlyRoots = readOnlyRoots
     }
 
     /// The context's own bash session, started on first use.
@@ -161,18 +172,33 @@ public final class AgentToolContext: @unchecked Sendable {
     }
 
     /// Remove the skill directories `setupSkills()` downloaded; a pre-existing `{workdir}/skills` tree is left alone.
-    func cleanupSkills() {
+    /// The removal is blocking I/O, so it runs off the cooperative pool.
+    func cleanupSkills() async {
         let dirs: [String] = lock.withLock {
             defer { skillDirs = [] }
             return skillDirs
         }
-        for dir in dirs {
-            do {
-                try FileManager.default.removeItem(atPath: dir)
-            } catch {
-                agentLog.warning("failed to remove downloaded skill dir \(dir): \(error)")
+        if dirs.isEmpty { return }
+        let failures = await withCheckedContinuation { (continuation: CheckedContinuation<[String], Never>) in
+            DispatchQueue.global().async {
+                var failures: [String] = []
+                for dir in dirs {
+                    do {
+                        try FileManager.default.removeItem(atPath: dir)
+                    } catch {
+                        failures.append("failed to remove downloaded skill dir \(dir): \(error)")
+                    }
+                }
+                continuation.resume(returning: failures)
             }
         }
+        for failure in failures { agentLog.warning(failure) }
+    }
+
+    /// Close the bash session, then remove the downloaded skills (`__aexit__`).
+    func exit() async {
+        await close()
+        await cleanupSkills()
     }
 
     /// Runs `body` with the skills set up, then closes the bash session and removes the downloaded skills (Python's
@@ -185,8 +211,7 @@ public final class AgentToolContext: @unchecked Sendable {
         } catch {
             result = .failure(error)
         }
-        await close()
-        cleanupSkills()
+        await exit()
         return try result.get()
     }
 }

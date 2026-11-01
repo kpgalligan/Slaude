@@ -1,11 +1,9 @@
 // Port of `anthropic/lib/environments/_worker.py` (`EnvironmentWorker`, `EnvironmentWorkerTools`) and the
 // hand-written `AsyncWork.worker(...)` of `resources/beta/environments/work.py`: the self-hosted environment
-// worker, the composition of the control-plane poller and the per-session tool runner.
+// worker, the composition of the control-plane poller, the per-session `AgentToolContext` (skills download), the
+// session's memory-store sync (`SessionMemoryStores`) and the per-session tool runner.
 //
-// Not ported here (see docs/porting/threads-environments-sessions.md): the memory-store sync of `_memories.py`
-// (`memory_sync_interval`, `memory_sync_deletions`), and the default `beta_agent_toolset_20260401` tools with the
-// bash session of `AgentToolContext` (`agent_toolset.py`). `EnvironmentWorkerContext` carries the part of
-// `AgentToolContext` the worker drives: the workdir, the session and its downloaded skills.
+// Not ported here (see docs/porting/threads-environments-sessions.md): the OpenTelemetry work spans.
 
 import Foundation
 
@@ -16,45 +14,12 @@ let HEARTBEAT_DEFAULT: Double = 30
 let HEARTBEAT_TTL_DEFAULT: Double = 90
 let NO_HEARTBEAT_SENTINEL = "NO_HEARTBEAT"
 
-/// The per-session context the worker builds for each claimed session (the part of upstream's `AgentToolContext`
-/// that the worker drives): the workdir, the worker's client for the item, the session, and the session agent's
-/// skills, downloaded into `{workdir}/skills/<name>/` before any tool runs and removed when the session ends.
-public final class EnvironmentWorkerContext: @unchecked Sendable {
-    public let workdir: String
-    /// The Bearer-only client of the work item.
-    public let client: Anthropic
-    public let session: BetaManagedAgentsSession
-    public var sessionID: String { session.id }
-    /// The skill directories downloaded for the session.
-    public private(set) var skillDirectories: [String] = []
-    let downloadSkills: Bool
-
-    init(workdir: String, client: Anthropic, session: BetaManagedAgentsSession, downloadSkills: Bool = true) {
-        self.workdir = workdir
-        self.client = client
-        self.session = session
-        self.downloadSkills = downloadSkills
-    }
-
-    /// `__aenter__`: download the session agent's skills.
-    func enter() async throws {
-        if downloadSkills && !session.agent.skills.isEmpty {
-            skillDirectories = try await downloadSessionSkills(client, workdir: workdir, session: session)
-        }
-    }
-
-    /// `__aexit__`: remove the downloaded skills.
-    func exit() {
-        for directory in skillDirectories { try? FileManager.default.removeItem(atPath: directory) }
-        skillDirectories = []
-    }
-}
-
 /// The tools a worker exposes to each claimed session (`EnvironmentWorkerTools`): a fixed list, or a factory
-/// called once per session with that session's context.
+/// called once per session with that session's `AgentToolContext`. Use the factory to bind
+/// `betaAgentToolset20260401` (or any tool that needs the workdir or the session) to the right session.
 public enum EnvironmentWorkerTools: Sendable {
     case list([any BetaRunnableTool])
-    case factory(@Sendable (EnvironmentWorkerContext) throws -> [any BetaRunnableTool])
+    case factory(@Sendable (AgentToolContext) throws -> [any BetaRunnableTool])
 }
 
 /// Why heartbeating of a work item ended (`_LeaseEndReason`).
@@ -291,9 +256,52 @@ struct EnvironmentWorkerHooks: Sendable {
         ).run()
     }
     var heartbeat = HeartbeatTimings()
+    /// Runs the lease heartbeat loop of an item (`_heartbeat_loop`); a test can wrap it.
+    var heartbeatLoop: (@Sendable (_ beat: @Sendable () async -> Void) async -> Void)?
     var environment: @Sendable () -> [String: String] = { ProcessInfo.processInfo.environment }
-    var downloadSkills = true
+    /// `AgentToolContext.__aenter__` / `__aexit__`.
+    var enterContext: @Sendable (AgentToolContext) async throws -> Void = { try await $0.setupSkills() }
+    var exitContext: @Sendable (AgentToolContext) async throws -> Void = { await $0.exit() }
+    /// The memory stores of an item: (the item's token-scoped client, workdir, sync interval, delete mode).
+    var memoryStores: @Sendable (Anthropic, String, TimeInterval, MemoryDeleteMode) throws -> any EnvironmentMemoryStores = {
+        client, workdir, interval, deletions in
+        try SessionMemoryStores(client, workdir: workdir, syncInterval: interval, syncDeletions: deletions)
+    }
+    /// The bound of each memory teardown pass, as the warnings report it (`MEMORY_FLUSH_TIMEOUT`).
+    var memoryFlushTimeout: TimeInterval = MEMORY_FLUSH_TIMEOUT
+    /// Waits out the bound of one memory teardown pass; by default sleeps `memoryFlushTimeout`. It must return
+    /// when cancelled (the pass finished first).
+    var memoryTeardownBound: (@Sendable (MemoryTeardownPass) async -> Void)?
 }
+
+/// The two bounded memory passes of an item's teardown.
+enum MemoryTeardownPass: Sendable {
+    /// The clean end's last full sync (`finish`).
+    case finish
+    /// The push-only flush (`flush_writes`).
+    case flush
+}
+
+/// What the worker drives of `SessionMemoryStores`; a test can wrap one.
+protocol EnvironmentMemoryStores: Sendable {
+    func download(_ session: BetaManagedAgentsSession) async throws
+    var roots: [String] { get async }
+    var readOnlyRoots: [String] { get async }
+    func syncIfDue() async
+    func finish() async throws
+    func flushWrites() async
+    func dispose() async
+}
+
+extension SessionMemoryStores: EnvironmentMemoryStores {}
+
+/// True when the session has at least one memory store attached (`_has_memory_store`).
+func sessionHasMemoryStore(_ session: BetaManagedAgentsSession) -> Bool {
+    session.resources.contains { if case .memoryStore = $0 { return true } else { return false } }
+}
+
+/// Python's `%g` of a bound in seconds.
+private func pyG(_ value: Double) -> String { String(format: "%g", value) }
 
 private final class EnvLeaseTTLBox: @unchecked Sendable {
     private let lock = NSLock()
@@ -306,10 +314,10 @@ private final class EnvLeaseTTLBox: @unchecked Sendable {
 
 /// Run a self-hosted environment worker (`EnvironmentWorker`).
 ///
-/// For each claimed `session` work item the worker builds the per-session `EnvironmentWorkerContext` and downloads
-/// the session agent's skills, then runs a `SessionToolRunner` for the session *while* heartbeating the work-item
-/// lease; on exit it force-stops the work item (unless the lease was lost, in which case the item is left to whoever
-/// holds it now) and goes on to the next one.
+/// For each claimed `session` work item the worker builds the per-session `AgentToolContext` and downloads the
+/// session agent's skills and the session's memory stores, then runs a `SessionToolRunner` for the session *while*
+/// heartbeating the work-item lease; on exit it syncs the memory stores back, force-stops the work item (unless the
+/// lease was lost, in which case the item is left to whoever holds it now) and goes on to the next one.
 ///
 /// The `environmentKey` is the worker's standing credential: polling always uses it, and per-session calls fall back
 /// to it when a work item's `secret` yields no sessions token. Every request rides a Bearer-only scoped sub-client,
@@ -317,10 +325,10 @@ private final class EnvLeaseTTLBox: @unchecked Sendable {
 ///
 /// ```swift
 /// // Long-running daemon: poll for work, serve each session, loop. Cancel the task to stop it.
-/// try await client.beta.environments.work.worker(environmentID: id, environmentKey: key, tools: .list(myTools)).run()
+/// try await client.beta.environments.work.worker(environmentID: id, environmentKey: key, workdir: "/workspace").run()
 ///
 /// // Already-claimed item (e.g. inside `ant worker poll --on-work ...`):
-/// try await client.beta.environments.work.worker(tools: .list(myTools)).handleItem()
+/// try await client.beta.environments.work.worker(workdir: "/workspace").handleItem()
 /// ```
 public final class EnvironmentWorker: Sendable {
     public let client: Anthropic
@@ -328,7 +336,10 @@ public final class EnvironmentWorker: Sendable {
     public let environmentKey: String?
     public let tools: EnvironmentWorkerTools?
     public let workdir: String
+    public let maxFileBytes: Int??
     public let maxIdle: TimeInterval?
+    public let memorySyncInterval: TimeInterval?
+    public let memorySyncDeletions: MemoryDeleteMode
     public let workerID: String?
     public let extraHeaders: Headers?
     let hooks: EnvironmentWorkerHooks
@@ -337,44 +348,67 @@ public final class EnvironmentWorker: Sendable {
     ///   - environmentID: The self-hosted environment to poll. Required by `run()`; not used by `handleItem()`.
     ///   - environmentKey: The environment key: the Bearer credential of the control-plane and session calls, except
     ///     where a claimed item's own `secret` takes precedence. Required by `run()`.
-    ///   - tools: The tools of each claimed session: a list, or a factory called with each session's context.
-    ///     Upstream defaults to the `agent_toolset_20260401` tools, which are not part of this port; without tools
-    ///     the session's tool calls are answered as unknown tools.
-    ///   - workdir: Base directory of each session's context. Defaults to the current directory when the worker is
-    ///     built.
+    ///   - tools: The tools of each claimed session: a list, or a factory called with each session's
+    ///     `AgentToolContext`. Defaults to `betaAgentToolset20260401(context)` (the standard `agent_toolset_20260401`
+    ///     set bound to the session's context).
+    ///   - workdir: Base directory of each session's `AgentToolContext`. Defaults to the current directory when the
+    ///     worker is built.
+    ///   - unrestrictedPaths: Deprecated and no longer accepted: passing it at all throws (see `AgentToolContext`).
+    ///   - maxFileBytes: The `maxFileBytes` of each session's `AgentToolContext`.
     ///   - maxIdle: Seconds the session tool runner keeps running after the session goes idle with any
     ///     `stop_reason` but `requires_action`. `nil` disables it.
+    ///   - memorySyncInterval: How often (seconds) the session's attached memory stores are synced back while it
+    ///     runs — checked after each dispatched tool call, plus one final sync when the session ends cleanly. At
+    ///     least `MIN_MEMORY_SYNC_INTERVAL` (a lower value throws `ValueError`). A session that ends on an error or
+    ///     cancel gets a push-only flush instead, bounded by `MEMORY_FLUSH_TIMEOUT` like the final sync. `nil`
+    ///     disables memory download and sync entirely. Memory stores are only touched for work items whose `secret`
+    ///     carries a `sessions_token`; while sync is enabled, an item without one fails when its session has memory
+    ///     stores attached, because those stores cannot be mounted without the token.
+    ///   - memorySyncDeletions: Whether a file deleted locally in a memory store's folder may delete its server
+    ///     memory. `.logOnly` runs the same checks and only logs; `.disabled` never deletes.
     ///   - workerID: Sent on each poll. Defaults to a unique, hostname-prefixed id.
     ///   - extraHeaders: Headers passed through on every request the worker makes (poll / ack / stop / heartbeat and
     ///     the session tool runner's requests). Use them for passthrough such as trace ids, not for auth.
     public convenience init(client: Anthropic, environmentID: String? = nil, environmentKey: String? = nil,
-                            tools: EnvironmentWorkerTools? = nil, workdir: String? = nil, maxIdle: TimeInterval? = DEFAULT_MAX_IDLE,
-                            workerID: String? = nil, extraHeaders: Headers? = nil)
+                            tools: EnvironmentWorkerTools? = nil, workdir: String? = nil, unrestrictedPaths: Bool? = nil,
+                            maxFileBytes: Int?? = nil, maxIdle: TimeInterval? = DEFAULT_MAX_IDLE,
+                            memorySyncInterval: TimeInterval? = DEFAULT_MEMORY_SYNC_INTERVAL,
+                            memorySyncDeletions: MemoryDeleteMode = .enabled, workerID: String? = nil,
+                            extraHeaders: Headers? = nil) throws
     {
-        self.init(client: client, environmentID: environmentID, environmentKey: environmentKey, tools: tools, workdir: workdir,
-                  maxIdle: maxIdle, workerID: workerID, extraHeaders: extraHeaders, hooks: EnvironmentWorkerHooks())
+        try self.init(client: client, environmentID: environmentID, environmentKey: environmentKey, tools: tools, workdir: workdir,
+                      unrestrictedPaths: unrestrictedPaths, maxFileBytes: maxFileBytes, maxIdle: maxIdle,
+                      memorySyncInterval: memorySyncInterval, memorySyncDeletions: memorySyncDeletions, workerID: workerID,
+                      extraHeaders: extraHeaders, hooks: EnvironmentWorkerHooks())
     }
 
     init(client: Anthropic, environmentID: String?, environmentKey: String?, tools: EnvironmentWorkerTools?, workdir: String?,
-         maxIdle: TimeInterval?, workerID: String?, extraHeaders: Headers?, hooks: EnvironmentWorkerHooks)
+         unrestrictedPaths: Bool? = nil, maxFileBytes: Int?? = nil, maxIdle: TimeInterval?,
+         memorySyncInterval: TimeInterval? = DEFAULT_MEMORY_SYNC_INTERVAL, memorySyncDeletions: MemoryDeleteMode = .enabled,
+         workerID: String?, extraHeaders: Headers?, hooks: EnvironmentWorkerHooks) throws
     {
+        if unrestrictedPaths != nil { throw ArgumentTypeError(UNRESTRICTED_PATHS_DEPRECATION) }
+        if let memorySyncInterval { try checkSyncInterval(memorySyncInterval) }
         self.client = client
         self.environmentID = environmentID
         self.environmentKey = environmentKey
         self.tools = tools
         // The cwd is taken now, so a `chdir` before a session is served does not move where tools resolve paths.
         self.workdir = workdir ?? FileManager.default.currentDirectoryPath
+        self.maxFileBytes = maxFileBytes
         self.maxIdle = maxIdle
+        self.memorySyncInterval = memorySyncInterval
+        self.memorySyncDeletions = memorySyncDeletions
         self.workerID = workerID
         self.extraHeaders = extraHeaders
         self.hooks = hooks
     }
 
-    func toolsFor(_ context: EnvironmentWorkerContext) throws -> [any BetaRunnableTool] {
+    func toolsFor(_ context: AgentToolContext) throws -> [any BetaRunnableTool] {
         switch tools {
         case .list(let tools)?: return tools
         case .factory(let factory)?: return try factory(context)
-        case nil: return []
+        case nil: return betaAgentToolset20260401(context)
         }
     }
 
@@ -446,8 +480,17 @@ public final class EnvironmentWorker: Sendable {
         }
         let workerClient = try hooks.scopedClient(client, credential, .environmentsWorker)
         let work = hooks.workAPI(workerClient)
+        // The memory endpoints accept the per-item sessions token but reject the environment key, so download and
+        // sync only run when the item carried a usable secret (and the interval is set). `workerClient` is scoped to
+        // that token then, so the memory calls ride it too.
+        var stores: (any EnvironmentMemoryStores)?
+        if sessionsToken != nil, let interval = memorySyncInterval {
+            stores = try hooks.memoryStores(workerClient, workdir, interval, memorySyncDeletions)
+        } else {
+            workerLog.debug("memory stores disabled for this item work_id=\(item.id)")
+        }
         do {
-            try await serveSession(item, credential: credential, workerClient: workerClient, work: work, lease: lease)
+            try await serveSession(item, credential: credential, workerClient: workerClient, work: work, stores: stores, lease: lease)
         } catch {
             await stopOnExit(item, work: work, lease: lease)
             throw error
@@ -475,7 +518,7 @@ public final class EnvironmentWorker: Sendable {
     }
 
     private func serveSession(_ item: EnvironmentWorkItem, credential: String, workerClient: Anthropic,
-                              work: any EnvironmentWorkAPI, lease: EnvironmentLease) async throws
+                              work: any EnvironmentWorkAPI, stores: (any EnvironmentMemoryStores)?, lease: EnvironmentLease) async throws
     {
         // The queue also sends "healthcheck" items, which the generated type does not model.
         if item.type != "session" {
@@ -485,17 +528,21 @@ public final class EnvironmentWorker: Sendable {
         let leaseTTL = EnvLeaseTTLBox()
         let timings = hooks.heartbeat
         let extraHeaders = self.extraHeaders
-        // The heartbeat starts before the skills are downloaded, which can take longer than the lease TTL: the lease
-        // stays this worker's the whole time.
+        let wrapHeartbeat = hooks.heartbeatLoop
+        // The heartbeat starts before the skills and memory stores are downloaded, which can take longer than the
+        // lease TTL, and runs until the memory teardown is done: the lease stays this worker's the whole time.
         let result: Result<Void, Error>? = await withTaskGroup(of: (Bool, Result<Void, Error>?).self) { group in
             group.addTask {
-                await heartbeatLoop(work, workID: item.id, environmentID: item.environmentID, lease: lease, extraHeaders: extraHeaders,
-                                    timings: timings, onLeaseTTL: { leaseTTL.value = $0 })
+                let beat: @Sendable () async -> Void = {
+                    await heartbeatLoop(work, workID: item.id, environmentID: item.environmentID, lease: lease,
+                                        extraHeaders: extraHeaders, timings: timings, onLeaseTTL: { leaseTTL.value = $0 })
+                }
+                if let wrapHeartbeat { await wrapHeartbeat(beat) } else { await beat() }
                 return (true, nil)
             }
             group.addTask {
                 do {
-                    try await self.runSession(item, credential: credential, workerClient: workerClient,
+                    try await self.runSession(item, credential: credential, workerClient: workerClient, stores: stores,
                                               sendRetryWindow: { leaseTTL.value })
                     lease.finish(.runnerDone)
                     return (false, .success(()))
@@ -521,34 +568,130 @@ public final class EnvironmentWorker: Sendable {
     }
 
     private func runSession(_ item: EnvironmentWorkItem, credential: String, workerClient: Anthropic,
-                            sendRetryWindow: @escaping @Sendable () -> TimeInterval?) async throws
+                            stores: (any EnvironmentMemoryStores)?, sendRetryWindow: @escaping @Sendable () -> TimeInterval?) async throws
     {
-        // One session fetch, shared by everything that reads the session's resources.
+        // One session fetch, shared by the skills download and the memory-store download: two fetches could disagree
+        // about the attached resources.
         let session = try await hooks.retrieveSession(workerClient, item.sessionID)
-        let context = EnvironmentWorkerContext(workdir: workdir, client: workerClient, session: session, downloadSkills: hooks.downloadSkills)
-        defer { context.exit() }
-        try await context.enter()
-        let tools = try toolsFor(context)
-        let calls = try hooks.runSessionTools(EnvironmentSessionRun(
-            client: client, sessionID: item.sessionID, tools: tools, maxIdle: maxIdle, environmentKey: credential,
-            extraHeaders: extraHeaders, sendRetryWindow: sendRetryWindow))
-        for try await _ in calls {}
-        try Task.checkCancellation()
+        // Only now can a session that simply has no memory be told from one whose memory cannot be mounted. Turning
+        // the interval off is a deliberate opt-out and stays quiet.
+        if stores == nil && memorySyncInterval != nil && sessionHasMemoryStore(session) {
+            throw SessionMemoryError(
+                "this session has memory stores attached, but the work item carried no sessions token; the memory endpoints "
+                    + "reject the environment key, so the session's memories cannot be mounted. The work item was failed rather "
+                    + "than run without them, matching how hosted sandboxes behave (work_id=\(item.id), session_id=\(item.sessionID))")
+        }
+        let context = try AgentToolContext(workdir: workdir, client: workerClient, session: session, maxFileBytes: maxFileBytes)
+        var cleanEnd = false
+        let outcome: Result<Void, Error>
+        do {
+            // A cancel while entering (a lost lease) still interrupts a skill download in progress.
+            try await hooks.enterContext(context)
+            if let stores {
+                try await stores.download(session)
+                // A store mounted outside the workdir must stay reachable by the file tools; read-only stores still
+                // refuse writes through `readOnlyRoots`.
+                context.allowedRoots = await stores.roots
+                context.readOnlyRoots = await stores.readOnlyRoots
+            }
+            let tools = try toolsFor(context)
+            let calls = try hooks.runSessionTools(EnvironmentSessionRun(
+                client: client, sessionID: item.sessionID, tools: tools, maxIdle: maxIdle, environmentKey: credential,
+                extraHeaders: extraHeaders, sendRetryWindow: sendRetryWindow))
+            for try await _ in calls {
+                await stores?.syncIfDue()
+            }
+            // A cancelled run ends its stream quietly; it is not a clean end.
+            try Task.checkCancellation()
+            // The last full sync runs in the teardown, after the bash processes are killed: its waived delete window
+            // must not race a writer.
+            cleanEnd = true
+            outcome = .success(())
+        } catch {
+            outcome = .failure(error)
+        }
+        // The teardown is not a child of the run, so a cancel (a lost lease) cannot abort the bash kill, the skills
+        // removal or the memory sync (upstream shields it). The heartbeat keeps the lease until it is done.
+        let finalSync = cleanEnd
+        // As in a Python `finally`, an error of the teardown replaces the run's.
+        try await Task { try await self.teardown(item, context: context, stores: stores, cleanEnd: finalSync) }.value
+        try outcome.get()
+    }
+
+    /// The session's teardown: the context first (so nothing is still writing when the syncs read), then the final
+    /// memory sync of a clean end, the push-only flush, and the removal of the store folders.
+    private func teardown(_ item: EnvironmentWorkItem, context: AgentToolContext, stores: (any EnvironmentMemoryStores)?,
+                          cleanEnd: Bool) async throws
+    {
+        var exitError: Error?
+        do {
+            try await hooks.exitContext(context)
+        } catch {
+            exitError = error
+        }
+        if let stores {
+            let bound = hooks.memoryFlushTimeout
+            if cleanEnd, try await memoryTeardownPass(.finish, { try await stores.finish() }) {
+                workerLog.warning(
+                    "final memory sync cut off after \(pyG(bound))s; the flush that follows still uploads changed files "
+                        + "work_id=\(item.id) session_id=\(item.sessionID)")
+            }
+            // Push whatever is still on disk before dispose removes it, even after `finish()`, which may have failed
+            // or been cut off; a clean flush is free.
+            if try await memoryTeardownPass(.flush, { await stores.flushWrites() }) {
+                workerLog.warning(
+                    "memory flush cut off after \(pyG(bound))s; changed files it had not uploaded yet are not saved "
+                        + "work_id=\(item.id) session_id=\(item.sessionID)")
+            }
+            await stores.dispose()
+        }
+        if let exitError { throw exitError }
+    }
+
+    /// Runs one memory teardown pass under its bound (`anyio.move_on_after`): once the bound passes, the pass is
+    /// cancelled and waited for. Returns whether it was cut off.
+    private func memoryTeardownPass(_ pass: MemoryTeardownPass, _ body: @escaping @Sendable () async throws -> Void) async throws -> Bool {
+        let bound = hooks.memoryTeardownBound
+        let seconds = hooks.memoryFlushTimeout
+        return try await withThrowingTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                try await body()
+                return false
+            }
+            group.addTask {
+                if let bound {
+                    await bound(pass)
+                } else {
+                    try? await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
+                }
+                return true
+            }
+            let cutOff = try await group.next() ?? false
+            group.cancelAll()
+            // A pass cut off part-way ends on the cancel; whatever it throws then is part of being cut off.
+            while (try? await group.next()) != nil {}
+            return cutOff
+        }
     }
 }
 
 extension BetaEnvironmentsWorkResource {
     /// Build an `EnvironmentWorker` bound to this resource's client (`work.worker(...)`): it polls the environment,
-    /// and for each claimed session sets up the workdir and the session agent's skills, runs `tools` against the
-    /// session's tool calls while heartbeating the work-item lease, force-stops the work on exit, and loops.
+    /// and for each claimed session sets up the workdir, the session agent's skills and the session's memory stores,
+    /// runs `tools` (by default `betaAgentToolset20260401`) against the session's tool calls while heartbeating the
+    /// work-item lease, syncs the memory stores back, force-stops the work on exit, and loops. See `EnvironmentWorker`.
     public func worker(environmentID: String? = nil, environmentKey: String? = nil, tools: EnvironmentWorkerTools? = nil,
-                       workdir: String? = nil, maxIdle: TimeInterval? = DEFAULT_MAX_IDLE, workerID: String? = nil,
+                       workdir: String? = nil, unrestrictedPaths: Bool? = nil, maxFileBytes: Int?? = nil,
+                       maxIdle: TimeInterval? = DEFAULT_MAX_IDLE, memorySyncInterval: TimeInterval? = DEFAULT_MEMORY_SYNC_INTERVAL,
+                       memorySyncDeletions: MemoryDeleteMode = .enabled, workerID: String? = nil,
                        extraHeaders: Headers? = nil) throws -> EnvironmentWorker
     {
         guard let client = client as? Anthropic else {
             throw ArgumentTypeError("The environment worker needs an Anthropic client")
         }
-        return EnvironmentWorker(client: client, environmentID: environmentID, environmentKey: environmentKey, tools: tools,
-                                 workdir: workdir, maxIdle: maxIdle, workerID: workerID, extraHeaders: extraHeaders)
+        return try EnvironmentWorker(client: client, environmentID: environmentID, environmentKey: environmentKey, tools: tools,
+                                     workdir: workdir, unrestrictedPaths: unrestrictedPaths, maxFileBytes: maxFileBytes,
+                                     maxIdle: maxIdle, memorySyncInterval: memorySyncInterval,
+                                     memorySyncDeletions: memorySyncDeletions, workerID: workerID, extraHeaders: extraHeaders)
     }
 }

@@ -180,7 +180,7 @@ func envWorker(_ api: EnvWorkerAPI, hooks: EnvironmentWorkerHooks, environmentID
                tools: EnvironmentWorkerTools? = nil, maxIdle: TimeInterval? = DEFAULT_MAX_IDLE,
                extraHeaders: Headers? = nil) throws -> EnvironmentWorker
 {
-    EnvironmentWorker(client: try api.client(), environmentID: environmentID, environmentKey: environmentKey, tools: tools, workdir: ".",
+    try EnvironmentWorker(client: api.client(), environmentID: environmentID, environmentKey: environmentKey, tools: tools, workdir: ".",
                       maxIdle: maxIdle, workerID: nil, extraHeaders: extraHeaders, hooks: hooks)
 }
 
@@ -227,6 +227,8 @@ private let envLeaseLostBody: JSONValue = [
         #expect(run.sessionID == "s_1")
         #expect(run.maxIdle == 12)
         #expect(run.environmentKey == "env_key")
+        // Without `tools`, the default toolset (the six `agent_toolset_20260401` tools) was bound.
+        #expect(run.tools.map(\.name) == ["bash", "read", "write", "edit", "glob", "grep"])
         // The lease was heartbeated, and the lease TTL it reported (60s) became the send retry window.
         #expect(api.heartbeats.count >= 1)
         #expect(record.sendRetryWindow == .some(60))
@@ -275,7 +277,7 @@ private let envLeaseLostBody: JSONValue = [
         let tool = recordingTool("custom", ToolsBox([]))
         let worker = try envWorker(api, hooks: envHooks(record, items: [envWork("w_1", environmentID: "e_1")]),
                                    tools: .factory { context in
-                                       seen.mutate { $0.append(context.sessionID) }
+                                       seen.mutate { $0.append(context.session?.id ?? "") }
                                        return [tool]
                                    })
         try await envWithTimeout { try await worker.run() }
@@ -554,15 +556,28 @@ private let envLeaseLostBody: JSONValue = [
     @Test func workResourceWorkerBuildsEnvironmentWorker() throws {
         let client = try Anthropic(apiKey: "x", environment: [:])
         let worker = try client.beta.environments.work.worker(
-            environmentID: "e_1", environmentKey: "env_key", workdir: "/workspace", maxIdle: 12, workerID: "w-test",
-            extraHeaders: ["x-trace-id": "abc123"])
+            environmentID: "e_1", environmentKey: "env_key", workdir: "/workspace", maxIdle: 12, memorySyncInterval: 45,
+            memorySyncDeletions: .logOnly, workerID: "w-test", extraHeaders: ["x-trace-id": "abc123"])
         #expect(worker.client === client)
         #expect(worker.environmentID == "e_1")
         #expect(worker.environmentKey == "env_key")
         #expect(worker.workdir == "/workspace")
         #expect(worker.maxIdle == 12)
+        #expect(worker.memorySyncInterval == 45)
+        #expect(worker.memorySyncDeletions == .logOnly)
         #expect(worker.workerID == "w-test")
         #expect(worker.extraHeaders == ["x-trace-id": "abc123"])
+    }
+
+    @Test(arguments: [true, false]) func unrestrictedPathsIsRejectedAtConstruction(_ value: Bool) throws {
+        let client = try Anthropic(apiKey: "x", environment: [:])
+        #expect(throws: ArgumentTypeError(UNRESTRICTED_PATHS_DEPRECATION)) {
+            try EnvironmentWorker(client: client, unrestrictedPaths: value)
+        }
+        #expect(throws: ArgumentTypeError(UNRESTRICTED_PATHS_DEPRECATION)) {
+            try client.beta.environments.work.worker(unrestrictedPaths: value)
+        }
+        #expect(UNRESTRICTED_PATHS_DEPRECATION.hasPrefix("unrestricted_paths is no longer supported"))
     }
 
     @Test func workResourceWorkerDefaults() throws {
@@ -572,6 +587,8 @@ private let envLeaseLostBody: JSONValue = [
         #expect(worker.tools == nil)
         #expect(worker.workdir == FileManager.default.currentDirectoryPath)
         #expect(worker.maxIdle == 60)
+        #expect(worker.memorySyncInterval == 15)
+        #expect(worker.memorySyncDeletions == .enabled)
     }
 
     @Test func heartbeatStartsBeforeSkillDownload() async throws {
@@ -595,7 +612,7 @@ private let envLeaseLostBody: JSONValue = [
         defer { try? FileManager.default.removeItem(atPath: workdir) }
         let wrapped = hooks.workAPI
         hooks.workAPI = { client in EnvHeartbeatSpy(inner: wrapped(client), order: order, fired: heartbeatFired) }
-        let worker = EnvironmentWorker(client: try api.client(), environmentID: "e_1", environmentKey: "env_key", tools: nil, workdir: workdir,
+        let worker = try EnvironmentWorker(client: api.client(), environmentID: "e_1", environmentKey: "env_key", tools: nil, workdir: workdir,
                                        maxIdle: DEFAULT_MAX_IDLE, workerID: nil, extraHeaders: nil, hooks: hooks)
         try await envWithTimeout { try await worker.run() }
 
