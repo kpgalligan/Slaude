@@ -354,7 +354,7 @@ public actor BetaToolRunner: AsyncSequence {
         }
         var tools: [any BetaToolLike]?
         if let given = params["tools"] {
-            if given == current["tools"], let own = thread.state.tools {
+            if given == current["tools"], let own = thread.state.params.tools {
                 // Given back as handed out, so the thread keeps its own.
                 tools = own
             } else {

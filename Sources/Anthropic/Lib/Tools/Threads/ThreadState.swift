@@ -1,6 +1,5 @@
 // Port of `anthropic/lib/threads/_params.py` and `_thread_state.py`: the state of a message thread, the
-// conversation a tool runner sends turn by turn. Only what the tool runners need is ported (the public
-// `client.beta.messages.thread()` API is not).
+// conversation a thread (`Lib/Threads/BetaMessageThread.swift`) or a tool runner sends turn by turn.
 //
 // Request fields and messages are held as JSON objects, as Python holds them as dicts: what the runner compares
 // (`same_message`) and edits (`without_cache_control`) is the request body itself.
@@ -58,7 +57,7 @@ func overrideFields(_ params: [String: JSONValue], _ overrides: [String: JSONVal
 }
 
 /// A message given to a thread: a request param, or a reply the thread received.
-enum ThreadMessage {
+enum ThreadMessage: Sendable {
     case param(JSONValue)
     case reply(BetaMessage)
 
@@ -138,6 +137,8 @@ final class ThreadState: @unchecked Sendable {
     private(set) var tools: [any BetaToolLike]?
     var runnableTools = OrderedDict<any BetaRunnableTool>()
     var fields: [String: JSONValue] = [:]
+    /// The `output_config.format` param of the thread's output format (`JSONOutputFormat.format_param`), if any.
+    var outputFormat: [String: JSONValue]?
 
     private var stored: [ThreadEntry] = []
     private var staged: [ThreadEntry] = []
@@ -161,6 +162,7 @@ final class ThreadState: @unchecked Sendable {
         tools = other.tools
         runnableTools = other.runnableTools
         fields = other.fields
+        outputFormat = other.outputFormat
         stored = other.stored
         staged = other.staged
         thread = other.thread
@@ -312,10 +314,12 @@ final class ThreadState: @unchecked Sendable {
     /// The thread as the arguments of one call for the whole conversation (`params`).
     var params: (fields: [String: JSONValue], messages: [JSONValue], tools: [any BetaToolLike]?) {
         var f = fields
+        var t = tools
         if turn != nil, case .created(_, let given, _) = thread {
             for (k, v) in given { f[k] = v }
+            if let givenTools = given["tools"] { t = (givenTools.arrayValue ?? []).map { $0 as any BetaToolLike } }
         }
-        return (f, messages, tools)
+        return (f, messages, t)
     }
 
     /// Stage `messages` and start the turn that sends them.
@@ -523,7 +527,14 @@ final class ThreadState: @unchecked Sendable {
 
     private func turnParams(_ overrides: TurnOverrides) throws -> [String: JSONValue] {
         try readTools()
-        return overrideFields(fields, overrides.fields)
+        var params = overrideFields(fields, overrides.fields)
+        if let outputFormat {
+            // `merge_output_config`: the output format as `output_config.format`.
+            var config = params["output_config"]?.objectValue ?? [:]
+            config["format"] = .object(outputFormat)
+            params["output_config"] = .object(config)
+        }
+        return params
     }
 
     private func requestOptions(_ overrides: TurnOverrides, stream: Bool) -> ToolRunnerRequestOptions {
