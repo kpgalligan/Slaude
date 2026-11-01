@@ -106,9 +106,10 @@ open class Anthropic: BaseClient, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use: `client.withOptions(timeout: 10).messages.create(...)`.
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
-                            defaultQuery: Query? = nil) throws -> Anthropic
+                            defaultQuery: Query? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
     {
-        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery)
+        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery,
+                 middleware: middleware)
     }
 
     /// A copy of this client with `middleware` appended after its own.

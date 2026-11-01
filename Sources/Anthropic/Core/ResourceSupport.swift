@@ -41,60 +41,107 @@ extension BaseClient {
 
     /// A JSON Lines response.
     public func requestJSONLResponse<T: Decodable & Sendable>(_ type: T.Type, _ options: FinalRequestOptions) async throws -> APIResponse<JSONLDecoder<T>> {
-        let raw = try await sendRequest(options, stream: true)
-        return APIResponse(http: raw.http, options: raw.options, retriesTaken: raw.retriesTaken, client: self) { resp in
+        let raw = try await sendRequest(options, stream: true, castTo: JSONLDecoder<T>.self)
+        return APIResponse(raw, client: self) { resp in
             JSONLDecoder<T>(response: resp.http, client: resp.client)
         }
     }
 }
 
 /// A decoder for [JSON Lines](https://jsonlines.org) responses (`_decoders.jsonl.AsyncJSONLDecoder`).
+///
+/// The body is read only as lines are requested. The response is closed when the lines are read to
+/// completion or decoding fails, when `close()` is called, or as soon as the decoder and every
+/// iterator over it have been dropped. Like a `Stream`, a decoder has a single position.
 public final class JSONLDecoder<Element: Decodable & Sendable>: AsyncSequence, @unchecked Sendable {
-    public typealias AsyncIterator = AsyncThrowingStream<Element, Error>.AsyncIterator
-
     /// The HTTP response this decoder was constructed from.
     public let httpResponse: HTTPResponse
     let client: BaseClient
+    let state: State
 
     init(response: HTTPResponse, client: BaseClient) {
         self.httpResponse = response
         self.client = client
+        self.state = State(bytes: response.bytes(), response: response, client: client)
     }
 
-    public func makeAsyncIterator() -> AsyncIterator {
-        let bytes = httpResponse.bytes()
-        let response = httpResponse
-        let client = self.client
-        return AsyncThrowingStream<Element, Error> { continuation in
-            let task = Task {
-                do {
-                    var buf = Data()
-                    for try await chunk in bytes {
-                        for line in splitLinesKeepEnds(chunk) {
-                            buf.append(line)
-                            if let last = buf.last, last == 0x0A || last == 0x0D {
-                                continuation.yield(try client.decodeData(Element.self, buf, response: response))
-                                buf = Data()
-                            }
-                        }
-                    }
-                    if !buf.isEmpty {
-                        continuation.yield(try client.decodeData(Element.self, buf, response: response))
-                    }
-                    response.close()
-                    continuation.finish()
-                } catch {
-                    response.close()
-                    continuation.finish(throwing: error)
+    /// Decodes `bytes` (Python's `raw_iterator`) rather than the response body.
+    init(bytes: ByteStream, response: HTTPResponse, client: BaseClient) {
+        self.httpResponse = response
+        self.client = client
+        self.state = State(bytes: bytes, response: response, client: client)
+    }
+
+    final class State: @unchecked Sendable {
+        private var bytes: ByteStream.AsyncIterator
+        let response: HTTPResponse
+        let client: BaseClient
+        private var ready: [Data] = []
+        private var buf = Data()
+        private var done = false
+        private var finished = false
+
+        init(bytes: ByteStream, response: HTTPResponse, client: BaseClient) {
+            self.bytes = bytes.makeAsyncIterator()
+            self.response = response
+            self.client = client
+        }
+
+        deinit { response.close() }
+
+        func finish() {
+            finished = true
+            response.close()
+        }
+
+        /// The next complete line (`__decode__`), skipping blank ones.
+        private func nextLine() async throws -> Data? {
+            while true {
+                if !ready.isEmpty { return ready.removeFirst() }
+                if done { return nil }
+                guard let chunk = try await bytes.next() else {
+                    done = true
+                    if !buf.allSatisfy({ $0 == 0x0A || $0 == 0x0D || $0 == 0x20 || $0 == 0x09 }) { ready.append(buf) } // flush
+                    buf = Data()
+                    continue
                 }
+                for line in splitLinesKeepEnds(chunk) {
+                    buf.append(line)
+                    if let last = buf.last, last == 0x0A || last == 0x0D {
+                        ready.append(buf)
+                        buf = Data()
+                    }
+                }
+                ready.removeAll { line in line.allSatisfy { $0 == 0x0A || $0 == 0x0D || $0 == 0x20 || $0 == 0x09 } }
             }
-            continuation.onTermination = { _ in task.cancel() }
-        }.makeAsyncIterator()
+        }
+
+        func next() async throws -> Element? {
+            if finished { return nil }
+            do {
+                guard let line = try await nextLine() else {
+                    finish()
+                    return nil
+                }
+                return try client.decodeData(Element.self, line, response: response)
+            } catch {
+                finish()
+                throw error
+            }
+        }
     }
 
-    /// Closes the response body stream. Called automatically when the stream is consumed.
-    public func close() { httpResponse.close() }
+    public struct AsyncIterator: AsyncIteratorProtocol {
+        let state: State
+        public mutating func next() async throws -> Element? { try await state.next() }
+    }
+
+    public func makeAsyncIterator() -> AsyncIterator { AsyncIterator(state: state) }
+
+    /// Closes the response body stream. Called automatically when the lines are read to completion.
+    public func close() { state.finish() }
 }
+
 
 // MARK: - Model deprecation warnings (`_data/deprecated_models.py`, `_data/models_to_warn_with_thinking_enabled.py`)
 

@@ -203,7 +203,7 @@ public func buildHeaderLayers(_ layers: [Headers]) -> (HTTPHeaders, Set<String>)
                 if appendHeaders.contains(name.lowercased()) {
                     v = appendHeaderValue(headers[name] ?? "", v)
                 }
-                // Preserve the casing of the first layer that set the header.
+                // Replaces the header whatever its casing; the latest layer's casing wins (httpx).
                 headers[name] = v
                 omitted.remove(name.lowercased())
             }

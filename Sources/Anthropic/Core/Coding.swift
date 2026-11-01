@@ -19,24 +19,40 @@ public enum AnthropicJSON {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .custom { decoder in
             let c = try decoder.singleValueContainer()
-            if let s = try? c.decode(String.self) {
-                if let date = parseISO8601(s) { return date }
-                throw DecodingError.dataCorruptedError(in: c, debugDescription: "Invalid ISO 8601 datetime: \(s)")
+            // `_utils/_datetime_parse.py`: ISO 8601 variants, or unix timestamps (s, ms, us or ns).
+            do {
+                if let s = try? c.decode(String.self) {
+                    if let date = try? DatetimeParse.parseDatetime(s) { return date }
+                    if let date = parseISO8601(s) { return date }
+                    return try DatetimeParse.parseDatetime(s)
+                }
+                return try DatetimeParse.parseDatetime(try c.decode(Double.self))
+            } catch let e as ValueError {
+                throw DecodingError.dataCorruptedError(in: c, debugDescription: "Invalid datetime: \(e.message)")
             }
-            // `_utils/_datetime_parse.py` also accepts unix timestamps.
-            let n = try c.decode(Double.self)
-            return Date(timeIntervalSince1970: n > 2e10 ? n / 1000 : n)
         }
         return d
     }
 
-    /// Formats a date the way Python's `datetime.isoformat()` renders an aware UTC datetime.
+    /// Formats a date as an ISO 8601 UTC datetime (`2024-01-02T03:04:05Z`), keeping microseconds
+    /// like Python's `datetime.isoformat()` does (trailing zeros of the fraction are dropped).
     public static func formatISO8601(_ date: Date) -> String {
         let f = ISO8601DateFormatter()
         f.timeZone = TimeZone(identifier: "UTC")
-        let frac = date.timeIntervalSince1970 - date.timeIntervalSince1970.rounded(.down)
-        f.formatOptions = frac > 0.0000005 ? [.withInternetDateTime, .withFractionalSeconds] : [.withInternetDateTime]
-        return f.string(from: date)
+        f.formatOptions = [.withInternetDateTime]
+        let t = date.timeIntervalSince1970
+        var whole = t.rounded(.down)
+        var micros = Int(((t - whole) * 1_000_000).rounded())
+        if micros >= 1_000_000 {
+            whole += 1
+            micros -= 1_000_000
+        }
+        let base = f.string(from: Date(timeIntervalSince1970: whole))
+        if micros == 0 { return base }
+        var frac = String(micros)
+        frac = String(repeating: "0", count: 6 - frac.count) + frac
+        while frac.hasSuffix("0") { frac.removeLast() }
+        return String(base.dropLast()) + "." + frac + "Z"
     }
 
     /// Parses the ISO 8601 variants accepted by `_utils/_datetime_parse.py`.
