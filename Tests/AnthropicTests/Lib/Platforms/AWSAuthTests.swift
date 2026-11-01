@@ -161,11 +161,12 @@ import Testing
 
     func headers(method: String = "POST", url: String = "https://gateway.us-east-1.api.aws/v1/messages",
                  headers: HTTPHeaders = ["content-type": "application/json"], data: String? = #"{"hello": "world"}"#,
-                 credentials: AWSCredentials? = nil, service: String = "aws-external-anthropic") -> [String: String]
+                 credentials: AWSCredentials? = nil, service: String = "aws-external-anthropic",
+                 date: Date = Date()) -> [String: String]
     {
         var out: [String: String] = [:]
         for (k, v) in awsAuthHeaders(method: method, url: URL(string: url)!, headers: headers, body: data.map { Data($0.utf8) },
-                                     credentials: credentials ?? creds, region: "us-east-1", serviceName: service)
+                                     credentials: credentials ?? creds, region: "us-east-1", serviceName: service, date: date)
         {
             out[k] = v
         }
@@ -208,13 +209,16 @@ import Testing
     }
 
     @Test func includesQueryParamsInSigning() {
-        let with = headers(method: "GET", url: "https://gateway.us-east-1.api.aws/v1/models?limit=10", headers: [:], data: nil)
-        let without = headers(method: "GET", url: "https://gateway.us-east-1.api.aws/v1/models", headers: [:], data: nil)
+        let now = Date()
+        let with = headers(method: "GET", url: "https://gateway.us-east-1.api.aws/v1/models?limit=10", headers: [:], data: nil, date: now)
+        let without = headers(method: "GET", url: "https://gateway.us-east-1.api.aws/v1/models", headers: [:], data: nil, date: now)
         #expect(with["Authorization"] != without["Authorization"])
     }
 
     @Test func uppercasesMethod() {
-        #expect(headers(method: "post", headers: [:], data: "{}")["Authorization"] == headers(method: "POST", headers: [:], data: "{}")["Authorization"])
+        // Both signatures are made for the same instant; the signature covers the request time.
+        let now = Date()
+        #expect(headers(method: "post", headers: [:], data: "{}", date: now)["Authorization"] == headers(method: "POST", headers: [:], data: "{}", date: now)["Authorization"])
     }
 
     @Test func raisesOnMissingCredentials() async {

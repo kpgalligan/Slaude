@@ -42,7 +42,7 @@ public struct BetaOrganizationClaudeTagBundlesTargetsResource: Sendable {
         try requireNonEmpty(bundleID, "bundle_id")
         var body = ParamsBuilder()
         try body.merge(target)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/bundles/{bundle_id}/targets", ["bundle_id": bundleID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.bundles.targets.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/bundles/{bundle_id}/targets", ["bundle_id": bundleID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.bundles.targets.create", spanRoute: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets", spanAttributes: ["anthropic.organization.claude_tag.bundle.id": bundleID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagBundleTarget.self, options, stream: _mode == .stream)
     }
 
