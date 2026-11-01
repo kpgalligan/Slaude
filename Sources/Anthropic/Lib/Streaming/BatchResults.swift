@@ -28,7 +28,8 @@ extension MessagesBatchesResource {
         let headers = mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), ["Accept": "application/binary"], extraHeaders)
         let options = try client.makeRequestOptions(
             method: "get", url: try pathTemplate(resultsURL, ["message_batch_id": messageBatchID]), headers: headers,
-            extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.results")
+            extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.results",
+            spanRoute: "/v1/messages/batches/{message_batch_id}/results", spanAttributes: ["anthropic.message.batch.id": messageBatchID])
         return try await client.requestJSONLResponse(MessageBatchIndividualResponse.self, options)
     }
 }
@@ -82,6 +83,7 @@ extension BetaMessagesBatchesResource {
         let options = try client.makeRequestOptions(
             method: "get", url: try pathTemplate(resultsURL, ["message_batch_id": messageBatchID]), headers: headers,
             extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.results",
+            spanRoute: "/v1/messages/batches/{message_batch_id}/results", spanAttributes: ["anthropic.message.batch.id": messageBatchID],
             qualifiers: ["beta": "true"])
         return try await client.requestJSONLResponse(BetaMessageBatchIndividualResponse.self, options)
     }

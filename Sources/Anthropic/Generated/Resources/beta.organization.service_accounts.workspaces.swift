@@ -57,7 +57,7 @@ public struct BetaOrganizationServiceAccountsWorkspacesResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces", ["service_account_id": serviceAccountID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces", ["service_account_id": serviceAccountID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.list", spanRoute: "/v1/organizations/service_accounts/{service_account_id}/workspaces", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID], qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaServiceAccountWorkspaceMember>.self, options, stream: _mode == .stream)
     }
 
@@ -99,7 +99,7 @@ public struct BetaOrganizationServiceAccountsWorkspacesResource: Sendable {
         var body = ParamsBuilder()
         try body.set("workspace_id", workspaceID)
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces", ["service_account_id": serviceAccountID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.add", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces", ["service_account_id": serviceAccountID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.add", spanRoute: "/v1/organizations/service_accounts/{service_account_id}/workspaces", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID], spanCreatedID: SpanCreatedID("anthropic.organization.service_account.workspace.id", field: "workspace_id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaServiceAccountWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -139,7 +139,7 @@ public struct BetaOrganizationServiceAccountsWorkspacesResource: Sendable {
     func _remove(_ workspaceID: String, serviceAccountID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationServiceAccountsWorkspaceRemoveResponse> {
         try requireNonEmpty(serviceAccountID, "service_account_id")
         try requireNonEmpty(workspaceID, "workspace_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces/{workspace_id}", ["service_account_id": serviceAccountID, "workspace_id": workspaceID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.remove", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/workspaces/{workspace_id}", ["service_account_id": serviceAccountID, "workspace_id": workspaceID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.workspaces.remove", spanRoute: "/v1/organizations/service_accounts/{service_account_id}/workspaces/{workspace_id}", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID, "anthropic.organization.service_account.workspace.id": workspaceID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationServiceAccountsWorkspaceRemoveResponse.self, options, stream: _mode == .stream)
     }
 

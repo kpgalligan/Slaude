@@ -23,7 +23,10 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
     private let parser: OutputParser<Output>?
     private var rawIterator: Stream<RawMessageStreamEvent>.AsyncIterator?
     private var pending: [ParsedMessageStreamEvent] = []
-    private var snapshot: Message?
+    private var snapshot: Message? {
+        didSet { tracedMessage?.updateSnapshot(snapshot) }
+    }
+    private var tracedMessage: StreamedMessage?
     private var parsedOutputs: [Int: Output] = [:]
     private var jsonBufs: [Int: String] = [:]
     private var done = false
@@ -31,6 +34,8 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
     public init(rawStream: Stream<RawMessageStreamEvent>, parser: OutputParser<Output>? = nil) {
         self.rawStream = rawStream
         self.parser = parser
+        // The span of the call takes its output content from the Message accumulated here.
+        self.tracedMessage = shareMessageSnapshot(rawStream)
     }
 
     /// The HTTP response the events are read from.
@@ -106,7 +111,12 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
             if snapshot == nil {
                 guard case .messageStart = event else { return .raw(event) }
             }
-            snapshot = try accumulateEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs)
+            do {
+                snapshot = try accumulateEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs)
+            } catch {
+                withholdMessageSnapshot(rawStream)
+                throw error
+            }
             guard let message = snapshot else { continue }
             if case .contentBlockStop(let e) = event, let parser, message.content.indices.contains(e.index),
                case .text(let t) = message.content[e.index]

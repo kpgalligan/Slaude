@@ -74,9 +74,19 @@ public struct FinalRequestOptions: Sendable {
     public var content: Data? = nil
     public var jsonData: JSONValue? = nil
     public var extraJSON: Body? = nil
-    /// Set by the SDK method that makes the call, for tracing. Not a public option.
+    /// Set by the SDK method that makes the call, for the call's span. Not public options.
     public var spanName: String? = nil
     public var spanRoute: String? = nil
+    /// The names of the query parameters that the endpoint defines.
+    public var spanQueryParams: [String] = []
+    /// The query parameters that are content on this endpoint only.
+    public var spanContentQueryParams: [String] = []
+    /// The attributes that the span starts with, from the method's arguments.
+    public var spanAttributes: SpanAttributes? = nil
+    /// The attributes that the span starts with, read from the prepared body.
+    public var spanBodyAttributes: SpanBodyAttributes? = nil
+    /// The attribute of the ID of the object that the method creates.
+    public var spanCreatedID: SpanCreatedID? = nil
     /// Markers the SDK method attaches for middleware, e.g. `["beta": "true"]` on every
     /// `client.beta` call (`FinalRequestOptions.qualifiers`). Never sent on the wire.
     public var qualifiers: [String: String]? = nil
@@ -138,11 +148,14 @@ public struct RequestOptions: Sendable {
 /// (Python's `omit`), while a double-optional argument holding `.some(nil)` is sent as `null`.
 public struct ParamsBuilder: Sendable {
     public private(set) var items: [(String, JSONValue)] = []
+    /// Every key that was set, given or not: the parameters that the endpoint defines.
+    public private(set) var keys: [String] = []
     public private(set) var files: [(String, FileUpload)] = []
 
     public init() {}
 
     public mutating func set<T: Encodable>(_ key: String, _ value: T?) throws {
+        if !keys.contains(key) { keys.append(key) }
         guard let value else { return }
         try put(key, JSONValue.from(value))
     }
@@ -167,6 +180,7 @@ public struct ParamsBuilder: Sendable {
     }
 
     public mutating func put(_ key: String, _ value: JSONValue) {
+        if !keys.contains(key) { keys.append(key) }
         if let i = items.firstIndex(where: { $0.0 == key }) { items[i].1 = value } else { items.append((key, value)) }
     }
 

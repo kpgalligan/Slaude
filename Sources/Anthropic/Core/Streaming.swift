@@ -227,7 +227,11 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
 
         func next() async throws -> Element? {
             if finished { return nil }
-            if events == nil { events = client.makeSSEEvents(response.bytes()).makeAsyncIterator() }
+            if events == nil {
+                // A stream of a traced call tells the call's span how the application reads it.
+                response.streamObserver?.begin()
+                events = client.makeSSEEvents(response.bytes()).makeAsyncIterator()
+            }
             do {
                 while let sse = try await events!.next() {
                     if sse.event == "ping" { continue }
@@ -244,11 +248,15 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
                         throw client.makeStatusError(message, body: body, response: response)
                     }
                     if sse.data.isEmpty { continue }
-                    return try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
+                    let item = try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
+                    response.streamObserver?.item(item)
+                    return item
                 }
+                response.streamObserver?.end(.read, error: nil)
                 finish()
                 return nil
             } catch {
+                if !finished { response.streamObserver?.end(.failed, error: error) }
                 finish()
                 throw error
             }
@@ -264,6 +272,11 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
 
     /// Closes the response and releases the connection. Called automatically when the stream is
     /// read to completion.
-    public func close() { state.finish() }
+    public func close() {
+        response.streamObserver?.end(.closed, error: nil)
+        state.finish()
+    }
 }
+
+extension Stream: TracedEventStream {}
 

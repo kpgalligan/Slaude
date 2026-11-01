@@ -42,7 +42,7 @@ public struct BetaOrganizationRbacRolesPermissionsResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_roles/{rbac_role_id}/permissions", ["rbac_role_id": rbacRoleID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.permissions.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_roles/{rbac_role_id}/permissions", ["rbac_role_id": rbacRoleID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.permissions.list", spanRoute: "/v1/organizations/rbac_roles/{rbac_role_id}/permissions", spanAttributes: ["anthropic.organization.rbac_role.id": rbacRoleID], qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaRBACRolePermission>.self, options, stream: _mode == .stream)
     }
 

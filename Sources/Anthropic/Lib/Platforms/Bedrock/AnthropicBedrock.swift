@@ -7,6 +7,9 @@ import Foundation
 /// betas travel in the body, and requests are signed with SigV4 (service `bedrock`) unless an API
 /// key (`AWS_BEARER_TOKEN_BEDROCK`) is used. Streaming responses use the AWS event-stream encoding.
 open class AnthropicBedrock: BaseClient, @unchecked Sendable {
+    open override var genAIProviderName: String { "aws.bedrock" }
+    open override var otelPlatform: String? { "bedrock" }
+
     public let apiKey: String?
     public let awsSecretKey: String?
     public let awsAccessKey: String?
@@ -25,6 +28,7 @@ open class AnthropicBedrock: BaseClient, @unchecked Sendable {
                 maxRetries: Int = DEFAULT_MAX_RETRIES, defaultHeaders: Headers? = nil, defaultQuery: Query? = nil,
                 transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
                 credentialsProvider: AWSCredentialsProvider? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         let apiKey = apiKey ?? environment["AWS_BEARER_TOKEN_BEDROCK"]
@@ -48,7 +52,8 @@ open class AnthropicBedrock: BaseClient, @unchecked Sendable {
         let base = baseURL ?? environment["ANTHROPIC_BEDROCK_BASE_URL"] ?? "https://bedrock-runtime.\(self.awsRegion).amazonaws.com"
         guard let url = URL(string: base) else { throw ValueError("Invalid base URL: \(base)") }
         super.init(version: ANTHROPIC_SDK_VERSION, baseURL: url, maxRetries: maxRetries, timeout: timeout,
-                   customHeaders: defaultHeaders, customQuery: defaultQuery, transport: transport, middleware: middleware)
+                   customHeaders: defaultHeaders, customQuery: defaultQuery, transport: transport, middleware: middleware,
+                   openTelemetry: openTelemetry, openTelemetryEnvironment: environment)
     }
 
     /// The region from `AWS_REGION` / `AWS_DEFAULT_REGION`, else from the profile in the AWS config file.
@@ -141,7 +146,7 @@ open class AnthropicBedrock: BaseClient, @unchecked Sendable {
                      awsSessionToken: String? = nil, apiKey: String? = nil, baseURL: String? = nil, timeout: Timeout? = nil,
                      maxRetries: Int? = nil, defaultHeaders: Headers? = nil, setDefaultHeaders: Headers? = nil,
                      defaultQuery: Query? = nil, setDefaultQuery: Query? = nil, transport: HTTPTransport? = nil,
-                     middleware: [Middleware]? = nil) throws -> AnthropicBedrock
+                     middleware: [Middleware]? = nil, openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicBedrock
     {
         let (headers, params) = try copiedLayers(defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                                  defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery)
@@ -152,7 +157,7 @@ open class AnthropicBedrock: BaseClient, @unchecked Sendable {
             baseURL: baseURL ?? self.baseURL.absoluteString, timeout: timeout ?? (timeoutOverridden ? self.timeout : nil),
             maxRetries: maxRetries ?? self.maxRetries, defaultHeaders: headers, defaultQuery: params,
             transport: transport ?? self.transport, middleware: middleware ?? self.middleware,
-            credentialsProvider: credentialsProvider, environment: environment)
+            credentialsProvider: credentialsProvider, openTelemetry: openTelemetry ?? self.openTelemetry, environment: environment)
         client.timeoutOverridden = timeoutOverridden || timeout != nil
         client.sleeper = sleeper
         return client
@@ -160,9 +165,10 @@ open class AnthropicBedrock: BaseClient, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use.
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
-                            defaultQuery: Query? = nil) throws -> AnthropicBedrock
+                            defaultQuery: Query? = nil, openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicBedrock
     {
-        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery)
+        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery,
+                 openTelemetry: openTelemetry)
     }
 
     /// A copy of this client with `middleware` appended after its own.

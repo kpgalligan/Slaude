@@ -63,7 +63,7 @@ public struct OrganizationWorkspacesResource: Sendable {
         try body.set("display_color", displayColor)
         try body.set("external_key_id", externalKeyID)
         try body.set("tags", tags)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/workspaces", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/workspaces", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.create", spanRoute: "/v1/organizations/workspaces", spanCreatedID: SpanCreatedID("anthropic.organization.workspace.id"))
         return try await client.requestResponse(Workspace.self, options, stream: _mode == .stream)
     }
 
@@ -85,7 +85,7 @@ public struct OrganizationWorkspacesResource: Sendable {
 
     func _retrieve(_ workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<Workspace> {
         try requireNonEmpty(workspaceID, "workspace_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}", ["workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}", ["workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.retrieve", spanRoute: "/v1/organizations/workspaces/{workspace_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestResponse(Workspace.self, options, stream: _mode == .stream)
     }
 
@@ -132,7 +132,7 @@ public struct OrganizationWorkspacesResource: Sendable {
         try body.set("external_key_id", externalKeyID)
         try body.set("name", name)
         try body.set("tags", tags)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.update", spanRoute: "/v1/organizations/workspaces/{workspace_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestResponse(Workspace.self, options, stream: _mode == .stream)
     }
 
@@ -171,7 +171,7 @@ public struct OrganizationWorkspacesResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("include_default", includeDefault)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/workspaces", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/workspaces", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.list", spanRoute: "/v1/organizations/workspaces")
         return try await client.requestPageResponse(Page<Workspace>.self, options, stream: _mode == .stream)
     }
 
@@ -191,7 +191,7 @@ public struct OrganizationWorkspacesResource: Sendable {
 
     func _archive(_ workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<Workspace> {
         try requireNonEmpty(workspaceID, "workspace_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/archive", ["workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/archive", ["workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.archive", spanRoute: "/v1/organizations/workspaces/{workspace_id}/archive", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestResponse(Workspace.self, options, stream: _mode == .stream)
     }
 

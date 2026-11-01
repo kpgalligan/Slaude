@@ -42,7 +42,7 @@ public struct UserProfilesActionURLsResource: Sendable {
         try requireNonEmpty(userProfileID, "user_profile_id")
         var body = ParamsBuilder()
         try body.set("action", action)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/action_urls", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.action_urls.create")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/action_urls", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.action_urls.create", spanRoute: "/v1/user_profiles/{user_profile_id}/action_urls", spanAttributes: ["anthropic.user_profile.id": userProfileID])
         return try await client.requestResponse(UserProfileActionURL.self, options, stream: _mode == .stream)
     }
 

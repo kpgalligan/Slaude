@@ -53,7 +53,7 @@ public struct BetaOrganizationRateLimitsResource: Sendable {
         try query.set("limit", limit)
         try query.set("model", model)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rate_limits", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rate_limits.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rate_limits", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rate_limits.list", spanRoute: "/v1/organizations/rate_limits", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaOrganizationRateLimit>.self, options, stream: _mode == .stream)
     }
 

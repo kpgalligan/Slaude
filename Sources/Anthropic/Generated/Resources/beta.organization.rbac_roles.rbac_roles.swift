@@ -35,7 +35,7 @@ public struct BetaOrganizationRbacRolesRBACRolesResource: Sendable {
 
     func _retrieve(_ rbacRoleID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaRBACRole> {
         try requireNonEmpty(rbacRoleID, "rbac_role_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_roles/{rbac_role_id}", ["rbac_role_id": rbacRoleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_roles/{rbac_role_id}", ["rbac_role_id": rbacRoleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.retrieve", spanRoute: "/v1/organizations/rbac_roles/{rbac_role_id}", spanAttributes: ["anthropic.organization.rbac_role.id": rbacRoleID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaRBACRole.self, options, stream: _mode == .stream)
     }
 
@@ -65,7 +65,7 @@ public struct BetaOrganizationRbacRolesRBACRolesResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rbac_roles", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rbac_roles", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_roles.list", spanRoute: "/v1/organizations/rbac_roles", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaRBACRole>.self, options, stream: _mode == .stream)
     }
 

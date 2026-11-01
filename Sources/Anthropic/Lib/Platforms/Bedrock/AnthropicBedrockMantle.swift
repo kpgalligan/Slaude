@@ -7,6 +7,9 @@ import Foundation
 /// authenticated with an API key (`AWS_BEARER_TOKEN_BEDROCK`, then `ANTHROPIC_AWS_API_KEY`) or
 /// SigV4 (service `bedrock-mantle`). Only `messages` and `beta.messages` are available.
 open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
+    open override var genAIProviderName: String { "aws.bedrock" }
+    open override var otelPlatform: String? { "bedrock" }
+
     public static let defaultServiceName = "bedrock-mantle"
     static let apiKeyEnvVars = ["AWS_BEARER_TOKEN_BEDROCK", "ANTHROPIC_AWS_API_KEY"]
     static let userProfileIDHeader = "anthropic-user-profile-id"
@@ -31,6 +34,7 @@ open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
                 timeout: Timeout? = nil, maxRetries: Int = DEFAULT_MAX_RETRIES, defaultHeaders: Headers? = nil,
                 defaultQuery: Query? = nil, transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
                 credentialsProvider: AWSCredentialsProvider? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         // `_resolve_mantle_config`
@@ -73,7 +77,8 @@ open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
                                                profile: awsProfile, provider: credentialsProvider, environment: environment,
                                                transport: nil)
         super.init(version: ANTHROPIC_SDK_VERSION, baseURL: url, maxRetries: maxRetries, timeout: timeout,
-                   customHeaders: defaultHeaders ?? [:], customQuery: defaultQuery, transport: transport, middleware: middleware)
+                   customHeaders: defaultHeaders ?? [:], customQuery: defaultQuery, transport: transport, middleware: middleware,
+                   openTelemetry: openTelemetry, openTelemetryEnvironment: environment)
     }
 
     public var messages: MessagesResource { MessagesResource(client: self) }
@@ -150,7 +155,8 @@ open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
                      awsRegion: String? = nil, awsProfile: String? = nil, skipAuth: Bool? = nil, baseURL: String? = nil,
                      timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                      setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                     transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> AnthropicBedrockMantle
+                     transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                     openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicBedrockMantle
     {
         let (headers, params) = try copiedLayers(defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                                  defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery)
@@ -161,7 +167,7 @@ open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
             baseURL: baseURL ?? self.baseURL.absoluteString, timeout: timeout ?? (timeoutOverridden ? self.timeout : nil),
             maxRetries: maxRetries ?? self.maxRetries, defaultHeaders: headers, defaultQuery: params,
             transport: transport ?? self.transport, middleware: middleware ?? self.middleware,
-            credentialsProvider: credentialsProvider, environment: environment)
+            credentialsProvider: credentialsProvider, openTelemetry: openTelemetry ?? self.openTelemetry, environment: environment)
         client.timeoutOverridden = timeoutOverridden || timeout != nil
         client.sleeper = sleeper
         return client
@@ -169,9 +175,10 @@ open class AnthropicBedrockMantle: BaseClient, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use.
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
-                            defaultQuery: Query? = nil) throws -> AnthropicBedrockMantle
+                            defaultQuery: Query? = nil, openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicBedrockMantle
     {
-        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery)
+        try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery,
+                 openTelemetry: openTelemetry)
     }
 
     /// A copy of this client with `middleware` appended after its own.

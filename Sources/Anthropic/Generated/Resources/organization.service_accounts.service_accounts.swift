@@ -53,7 +53,7 @@ public struct OrganizationServiceAccountsResource: Sendable {
         try body.set("name", name)
         try body.set("description", description)
         try body.set("organization_role", organizationRole)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/service_accounts", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/service_accounts", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.create", spanRoute: "/v1/organizations/service_accounts", spanCreatedID: SpanCreatedID("anthropic.organization.service_account.id"))
         return try await client.requestResponse(ServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -80,7 +80,7 @@ public struct OrganizationServiceAccountsResource: Sendable {
 
     func _retrieve(_ serviceAccountID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ServiceAccount> {
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.retrieve", spanRoute: "/v1/organizations/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -120,7 +120,7 @@ public struct OrganizationServiceAccountsResource: Sendable {
         var body = ParamsBuilder()
         try body.set("description", description)
         try body.set("organization_role", organizationRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.update", spanRoute: "/v1/organizations/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -158,7 +158,7 @@ public struct OrganizationServiceAccountsResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/service_accounts", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/service_accounts", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.list", spanRoute: "/v1/organizations/service_accounts")
         return try await client.requestPageResponse(PageCursor<ServiceAccount>.self, options, stream: _mode == .stream)
     }
 
@@ -190,7 +190,7 @@ public struct OrganizationServiceAccountsResource: Sendable {
 
     func _archive(_ serviceAccountID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ServiceAccount> {
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/archive", ["service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/archive", ["service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.archive", spanRoute: "/v1/organizations/service_accounts/{service_account_id}/archive", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccount.self, options, stream: _mode == .stream)
     }
 

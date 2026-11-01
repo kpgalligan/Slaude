@@ -49,7 +49,7 @@ public struct BetaOrganizationSpendLimitsEffectiveResource: Sendable {
         try query.set("page", page)
         try query.set("period", period)
         try query.set("user_ids", userIDs)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limits/effective", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.effective.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limits/effective", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.effective.list", spanRoute: "/v1/organizations/spend_limits/effective", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSpendSummary>.self, options, stream: _mode == .stream)
     }
 

@@ -64,7 +64,7 @@ public struct OrganizationFederationIssuersResource: Sendable {
         try body.set("check_jti", checkJti)
         try body.set("jwks", jwks)
         try body.set("max_jwt_lifetime_seconds", maxJwtLifetimeSeconds)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_issuers", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_issuers", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.create", spanRoute: "/v1/organizations/federation_issuers", spanCreatedID: SpanCreatedID("anthropic.organization.federation_issuer.id"))
         return try await client.requestResponse(FederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -91,7 +91,7 @@ public struct OrganizationFederationIssuersResource: Sendable {
 
     func _retrieve(_ federationIssuerID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<FederationIssuer> {
         try requireNonEmpty(federationIssuerID, "federation_issuer_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.retrieve", spanRoute: "/v1/organizations/federation_issuers/{federation_issuer_id}", spanAttributes: ["anthropic.organization.federation_issuer.id": federationIssuerID])
         return try await client.requestResponse(FederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -153,7 +153,7 @@ public struct OrganizationFederationIssuersResource: Sendable {
         try body.set("jwks_polling_disabled", jwksPollingDisabled)
         try body.set("max_jwt_lifetime_seconds", maxJwtLifetimeSeconds)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}", ["federation_issuer_id": federationIssuerID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.update", spanRoute: "/v1/organizations/federation_issuers/{federation_issuer_id}", spanAttributes: ["anthropic.organization.federation_issuer.id": federationIssuerID])
         return try await client.requestResponse(FederationIssuer.self, options, stream: _mode == .stream)
     }
 
@@ -189,7 +189,7 @@ public struct OrganizationFederationIssuersResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_issuers", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_issuers", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.list", spanRoute: "/v1/organizations/federation_issuers")
         return try await client.requestPageResponse(PageCursor<FederationIssuer>.self, options, stream: _mode == .stream)
     }
 
@@ -221,7 +221,7 @@ public struct OrganizationFederationIssuersResource: Sendable {
 
     func _archive(_ federationIssuerID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<FederationIssuer> {
         try requireNonEmpty(federationIssuerID, "federation_issuer_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}/archive", ["federation_issuer_id": federationIssuerID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_issuers/{federation_issuer_id}/archive", ["federation_issuer_id": federationIssuerID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.issuers.archive", spanRoute: "/v1/organizations/federation_issuers/{federation_issuer_id}/archive", spanAttributes: ["anthropic.organization.federation_issuer.id": federationIssuerID])
         return try await client.requestResponse(FederationIssuer.self, options, stream: _mode == .stream)
     }
 

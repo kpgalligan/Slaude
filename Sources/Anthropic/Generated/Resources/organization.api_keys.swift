@@ -31,7 +31,7 @@ public struct OrganizationAPIKeysResource: Sendable {
 
     func _retrieve(_ apiKeyID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<APIKey> {
         try requireNonEmpty(apiKeyID, "api_key_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/api_keys/{api_key_id}", ["api_key_id": apiKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/api_keys/{api_key_id}", ["api_key_id": apiKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.retrieve", spanRoute: "/v1/organizations/api_keys/{api_key_id}", spanAttributes: ["anthropic.organization.api_key.id": apiKeyID])
         return try await client.requestResponse(APIKey.self, options, stream: _mode == .stream)
     }
 
@@ -60,7 +60,7 @@ public struct OrganizationAPIKeysResource: Sendable {
         var body = ParamsBuilder()
         try body.set("name", name)
         try body.set("status", status)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/api_keys/{api_key_id}", ["api_key_id": apiKeyID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/api_keys/{api_key_id}", ["api_key_id": apiKeyID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.update", spanRoute: "/v1/organizations/api_keys/{api_key_id}", spanAttributes: ["anthropic.organization.api_key.id": apiKeyID])
         return try await client.requestResponse(APIKey.self, options, stream: _mode == .stream)
     }
 
@@ -102,7 +102,7 @@ public struct OrganizationAPIKeysResource: Sendable {
         try query.set("limit", limit)
         try query.set("status", status)
         try query.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/api_keys", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/api_keys", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.api_keys.list", spanRoute: "/v1/organizations/api_keys")
         return try await client.requestPageResponse(Page<APIKey>.self, options, stream: _mode == .stream)
     }
 
