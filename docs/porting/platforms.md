@@ -120,8 +120,6 @@ Sync/async twins are ported once (the async variant). Beyond that:
 | --- | --- |
 | `test_aws.py`, `test_bedrock.py`, `test_bedrock_mantle.py`: `test_sigv4_signing_runs_off_event_loop*`; `test_google_cloud.py::test_sync_token_provider_on_async_client_runs_off_event_loop` | Python threading / `asyncify`; Swift signing and token providers are already async. |
 | `test_google_cloud.py::test_async_token_provider_on_sync_client_rejected_clearly` | There is no sync client; providers are async closures. |
-| `test_bedrock.py::test_beta_tool_runner_routes_through_invoke[_async]`, `test_vertex.py::test_beta_tool_runner_routes_through_raw_predict` (both classes), and the `tool_runner` name of `test_beta_messages_helpers_are_bound` (Bedrock, Vertex) | The tool runner (`beta.messages.toolRunner`) is ported separately. The request rewriting these check is covered for `create` / `parse` / `stream` / `count_tokens` by `messagesHelpersRouteThroughInvoke` / `messagesHelpersRouteThroughRawPredict`. |
-| `test_bedrock_mantle.py::TestUserProfileID` `beta_tool_runner` parametrization | Same: the tool runner is ported separately. |
 | `test_stainless_helpers.py::test_count_tokens_takes_a_tool_object` | Python duck typing (`tools=` taking objects with `to_dict()`); Swift tools are typed params. |
 | `test_stainless_helpers.py::test_caller_tag_is_appended_not_clobbered`, `test_file_upload_tag_is_appended_not_clobbered` | Adapted, not ported 1:1: Swift values cannot carry Python's hidden `_stainless_helper` attribute and the generated resources do not collect tags, so the tests pass the helper header through `extraHeaders` and check the append-not-clobber behaviour on the wire. |
 | `test_vertex.py::test_refresh_without_google_auth_raises_actionable_error`, `test_google_cloud.py::test_refresh_without_google_auth_raises_actionable_error` | `MissingDependencyError` for the optional `google-auth` package; Swift has no optional dependency (`lib/_extras/_common.py` is not ported for the same reason). |
@@ -138,7 +136,9 @@ Ported in adapted form:
   `callable(getattr(...))` is a compile-time fact in Swift, so the tests call `create`, `parse` and
   `stream` (and Vertex's `count_tokens`) on `beta.messages` and `messages` and check the routing,
   auth and body rewriting of each request (`messagesHelpersRouteThroughInvoke`,
-  `messagesHelpersRouteThroughRawPredict`).
+  `messagesHelpersRouteThroughRawPredict`); `tool_runner` is checked by `betaToolRunnerRoutesThroughInvoke` /
+  `betaToolRunnerRoutesThroughRawPredict` (the ports of `test_beta_tool_runner_routes_through_*`, sync and async
+  merged), and the Bedrock Mantle `TestUserProfileID` cases include `MantleSend.betaToolRunner`.
 * `test_stainless_helpers.py::test_parse_sends_single_header_line`: `tools=` gets a `BetaToolParam`
   (Swift has no duck-typed `to_dict()` tools).
 * `test_google_cloud.py::test_base_credential_chain_never_engages`: instead of monkeypatching

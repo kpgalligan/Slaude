@@ -13,8 +13,11 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 | `BetaAsyncRunnableToolset` | `open class BetaRunnableToolset` (override `toolsetName`, `toDict()`, `call(context:name:input:)`) |
 | `ToolError` and the toolset refusals | `open class ToolError: Error` and subclasses; `ToolsetUsageError` family derive from `AnthropicError` |
 | `BetaToolLike` / `to_tool_params` | `protocol BetaToolLike` (function tools, builtin tools, toolsets, `BetaToolUnionParam`, `BetaToolParam` and a raw `JSONValue` definition conform) / `toToolParams` |
-| `client.beta.messages.tool_runner(...)` | `client.beta.messages.toolRunner(...)` (extension on `BetaMessagesResource`) → `BetaToolRunner` |
-| `BetaAsyncToolRunner` | `actor BetaToolRunner: AsyncSequence` (`for try await message in runner`, `untilDone()`, `generateToolCallResponse()`, `setMessagesParams`, `appendMessages`, `addTools`, `removeTools`, `compactBeforeNextTurn`, `close()`, `init(params:tools:client:)`) |
+| `client.beta.messages.tool_runner(...)` | `client.beta.messages.toolRunner(...)` (extension on `BetaMessagesResource`) → `BetaToolRunner`; with `outputFormat: T.self` → `BetaParsedToolRunner<T>` |
+| `tool_runner(stream=True, run_tools_eagerly=...)` | `client.beta.messages.streamingToolRunner(..., runToolsEagerly:)` → `BetaStreamingToolRunner<Never>` (`<T>` with `outputFormat: T.self`), and `thread.streamingToolRunner(...)` on a `BetaMessageThread` — a separate method, as `create(stream=True)` is `createStreaming(...)`; `runToolsEagerly` without streaming does not compile |
+| `BaseToolRunner` / `BetaAsyncToolRunner` / `BetaAsyncStreamingToolRunner` | one generic `actor BaseBetaToolRunner<Item, Output>: AsyncSequence` and three aliases: `BetaToolRunner` (yields `BetaMessage`), `BetaParsedToolRunner<Output>` (yields `ParsedBetaMessage<Output>`) and `BetaStreamingToolRunner<Output>` (yields `BetaMessageStream<Output>`). Shared: `for try await item in runner`, `untilDone()`, `generateToolCallResponse()`, `setMessagesParams`, `appendMessages`, `addTools`, `removeTools`, `compactBeforeNextTurn`, `close()`, `params`; each alias has its `init(params:tools:client:...)` (`outputFormat:` for the parsed and streaming ones). The streaming runner adds `deferToolCall(_:)` / `deferToolCall(id:)` and `deferredToolCalls` |
+| `EagerToolCalls`, `_run_tools_while_streaming` | internal `EagerToolCalls` and the runner's `runToolsWhileStreaming`, hooked into the handed-out stream (`BetaMessageStreamHooks` on `BetaMessageStream`: called with each event before it is handed out, and once when the events end — Python replaces `stream._iterator` with wrapping generators) |
+| `_memories.py` (`SessionMemoryStores`, `MemoryDeleteMode`, the constants) | `actor SessionMemoryStores(_:workdir:syncInterval:syncDeletions:)` (`download(_:)`, `syncIfDue()`, `finish()`, `flushWrites()`, `dispose()`, `roots`, `readOnlyRoots`), `enum MemoryDeleteMode`, `SessionMemoryError`, `DEFAULT_MEMORY_SYNC_INTERVAL`, `MIN_MEMORY_SYNC_INTERVAL`, `MEMORY_FLUSH_TIMEOUT`, `MARKER_PATH`, `DELETE_CORROBORATION_SECONDS`. The memory endpoints go through internal `protocol SessionMemoriesAPI` (the generated `BetaMemoryStoresMemoriesResource`, or a fake); `anyio` task groups and capacity limiters are task groups with a bounded number of children |
 | `lib/threads` `ThreadState` / `BetaAsyncMessageThread` (sending half) | internal `ThreadState` / `MessageThread` in `Lib/Tools/Threads/`; `MessageThreadsUnsupported` marks a client without message threads (`_supports_message_threads = False`) |
 | `SessionToolRunner` / `client.beta.sessions.events.tool_runner(...)` | `final class SessionToolRunner: AsyncSequence` of `DispatchedToolCall` / `client.beta.sessions.events.toolRunner(...)`; events are handled as JSON through `protocol SessionEventsAPI` (the generated resource, or a fake) |
 | `BetaAsyncAbstractMemoryTool` / `BetaAsyncLocalFilesystemMemoryTool` (`anthropic.tools.memory`) | `open class BetaAbstractMemoryTool` / `BetaLocalFilesystemMemoryTool(basePath:)` (POSIX I/O: exact bytes, `O_EXCL` 0600 files, 0700 directories regardless of umask, atomic replace with fsync, `..` and symlink escapes refused) |
@@ -59,24 +62,20 @@ Toolset differences from upstream, all forced by Swift's types:
 
 ## Deferred
 
-* **The streaming tool runner** (`tool_runner(stream=True)`, `BetaAsyncStreamingToolRunner`, `run_tools_eagerly`,
-  `defer_tool_call`, `deferred_tool_calls`): it hands out `BetaMessageStream`s, which `lib/streaming` (ported in
-  parallel) provides. `MessageThread.openStream` and `ThreadState.recordPartialReply` are ported and ready for it.
-  Deferred tests:
-  * `test_runners.py`: `test_streaming_call_sync`, `test_streaming_call_sync_events`, `test_tool_changes_when_streaming`,
-    `test_compact_before_next_turn_when_streaming_{sync,async}`, and the `streaming` / `streaming_eagerly` cases of
-    `test_a_runner_made_from_params_*`.
-  * `test_runner_eager_tools.py` (all 39 tests) and `test_runner_eager_toolsets.py` (all 16 tests).
-* **`output_format`** (a structured-output class parsed into `parsed_output`): belongs to `lib/_parse`. The runner
-  takes `outputConfig` with a JSON-schema format. Deferred: the `forced tool and output_format` case of
-  `test_compaction_request_leaves_off_reply_params_*` and the `two_output_formats` case of
-  `test_a_runner_made_from_params_raises_the_errors_of_tool_runner`.
-* **`_memories.py` (`SessionMemoryStores`, memory-store sync for the environment worker)** and its tests
-  (`memory_sync/`): not ported in this pass.
 * The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is ported in `Lib/Threads/` (see `threads-environments-sessions.md`).
-* `toolsets/test_runner.py::test_a_streamed_member_call_is_routed_to_the_toolset`: needs `stream=True` in the runner
-  (the streaming tool runner, ported separately).
 * `test_open_telemetry.py` belongs to the tracing port.
+* `memory_sync/test_e2e_memory.py` (17 tests) drives `SessionMemoryStores` through the real `EnvironmentWorker`; it
+  belongs with the environment worker's tests (`Lib/Environments/`, which does not use `SessionMemoryStores` yet).
+
+## Streaming runner and output format notes
+
+* A turn's stream is recorded on the thread (the whole reply, or the partial reply after a cut-off) when its events
+  run out or reading them fails, or when the runner moves on / is closed — `_end_turn` of the thread's stream
+  manager. The thread state is only touched on the runner's actor: the stream hooks call into it.
+* `close()` on a streaming runner closes the stream it handed out (the async generator's `aclose()` exiting the
+  `async with`), unless a tool runs inside a read of that stream (`_running_eager_tool`), which only stops the loop.
+* The runner's output format is part of its type: `setMessagesParams` keeps it (Python's params dict carries the
+  `output_format` class, so a replacement without it would drop it).
 
 ## Skipped tests (no Swift meaning)
 
@@ -93,7 +92,9 @@ Toolset differences from upstream, all forced by Swift's types:
 
 `test_runners.py`
 * `test_custom_message_handling`: `xfail` upstream.
-* `test_tool_runner_method_in_sync`: `assert_signatures_in_sync` reads Python signatures.
+* `test_tool_runner_method_in_sync`: `assert_signatures_in_sync` reads Python signatures. (That `toolRunner` and
+  `streamingToolRunner` send what a runner made from params sends is checked by
+  `aRunnerMadeFromParamsSendsTheRequestsOfToolRunner`, over the plain, streaming and eager runners.)
 * `test_tool_error_text_with_a_lone_surrogate_does_not_break_the_next_request`,
   `test_tool_error_content_with_a_lone_surrogate_does_not_break_the_next_request`,
   `test_tool_result_text_with_a_lone_surrogate_does_not_break_the_next_request`: a Swift `String` cannot hold an
@@ -107,6 +108,19 @@ Toolset differences from upstream, all forced by Swift's types:
 * `test_compact_before_next_turn_is_refused_beside_a_compaction_edit`, last leg, and the in-place `edits.append` in
   `test_compact_before_next_turn_on_the_compaction_response_is_ignored_sync`: they mutate a params list in place
   after handing it to the runner; Swift values are copied.
+
+`test_runner_eager_tools.py`
+* `test_the_option_needs_stream`: `runToolsEagerly` is only a parameter of the streaming runner, so combining it with
+  a plain runner does not compile.
+
+`memory_sync/`
+* `test_memory_sync.py::test_write_and_edit_tools_refuse_read_only_roots` checks the agent toolset's file tools; it
+  is not about the sync (and the `read_only_roots` of the agent toolset's context are the toolset port's).
+* The tests patch `LocalFileStore.put` / `hash_file` / `remove`, the module's `monotonic` and `_UPLOAD_CONCURRENCY`, and
+  wrap `_list_memories`; Swift tests set the internal `SessionMemoryHooks`, a `monotonic:` clock and
+  `setUploadConcurrency` instead, and wrap the fake resource's calls. `download` is driven with the session's
+  `memory_store` resources (`download(resources:)`), so the foreign `file` resource of
+  `test_prefix_items_and_foreign_resources_leave_no_trace` has no counterpart.
 
 `test_session_runner.py`
 * `test_sync_tool_runs_off_the_event_loop`: sync tools on a worker thread; Swift tools are async. The timeout for
@@ -197,7 +211,11 @@ shares and are ported as async tests.
 | Upstream file | Swift file | Ported |
 | --- | --- | --- |
 | `test_functions.py` | `FunctionsTests.swift` | 9 of 19 (+4 Swift-specific checks) |
-| `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift` | 71 of 82 test functions (twins counted; the 11 others are listed above), as 60 Swift tests |
+| `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift`, `StreamingRunnersTests.swift` | 76 of 82 test functions (twins counted; the 6 others, and the cases and legs left out, are listed above), every `plain` / `streaming` / `streaming_eagerly` and `output_format` case included |
+| `test_runner_eager_tools.py` | `RunnerEagerToolsTests.swift` (fixtures in `StreamingRunnerSupport.swift`) | 38 of 39 (sync/async merged) |
+| `test_runner_eager_toolsets.py` | `RunnerEagerToolsetsTests.swift` | 16 of 16 (the computer and browser toolsets of the timeline are `StreamingRunnerTimelineToolset`s; the `confirm` and `javascript_exec` tests use the SDK toolsets' fakes) |
+| `memory_sync/test_memory_sync.py` | `MemorySync/MemorySyncTests.swift` (fixtures in `MemorySyncSupport.swift`) | 22 of 23 |
+| `memory_sync/test_delete_discipline.py`, `test_final_flush.py`, `test_folder_trust.py`, `test_keep_only_copy.py`, `test_lost_response.py`, `test_two_pass.py` | `MemorySync/MemorySync*Tests.swift` | 10 of 10, 8 of 8, 14 of 14, 7 of 7, 10 of 10, 6 of 6 |
 | `memory_tools/test_filesystem.py` | `MemoryToolTests.swift` | the 41 async tests (as 33 Swift tests, some parametrized) + 2 |
 | `test_file_store.py` | `FileStoreTests.swift` | 29 of 31 (+ SHA-256 vectors) |
 | `test_files.py` | `FileStoreTests.swift` (`FilesTests`) | 2 of 2 (+1) |
@@ -216,7 +234,7 @@ shares and are ported as async tests.
 | `toolsets/test_computer_pipeline.py` | `Toolsets/ToolsetComputerTests.swift` (`ToolsetComputerPipelineTests`) | 27 of 29 (twins merged) |
 | `toolsets/test_computer_interface.py` | `Toolsets/ToolsetComputerTests.swift` (`ToolsetComputerInterfaceTests`) | 15 of 16 |
 | `toolsets/test_computer_registry.py`, `test_computer_surface.py` | `Toolsets/ToolsetComputerTests.swift` (`ToolsetComputerRegistryTests`) | 7 of 7, 4 of 6 |
-| `toolsets/test_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetRunnerRoutingTests`) | 17 of 22 (twins merged; 1 deferred on streaming) |
+| `toolsets/test_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetRunnerRoutingTests`), `StreamingRunnersTests.swift` | 18 of 22 (twins merged; the streamed member call in `StreamingRunnersTests`) |
 | `toolsets/test_browser_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetBrowserRunnerTests`) | 12 of 19 |
 | `toolsets/test_computer_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetComputerRunnerTests`) | 7 of 7 |
 | `test_agent_toolset.py` | `AgentToolsetTests.swift` | 72 of 73 (related cases merged, as 49 Swift tests) |
@@ -227,4 +245,6 @@ per-test subclasses become closures on the fakes (`memberBodies`, `executeHook`,
 classes cannot capture a test's variables.
 
 No core or generated files were changed. Outside `Lib/Tools/Toolsets/` and `AgentToolset.swift`, the toolset port added
-`ToolError.cause` (`BetaFunctions.swift`).
+`ToolError.cause` (`BetaFunctions.swift`). The streaming runner added the internal `BetaMessageStreamHooks` to
+`Lib/Streaming/BetaMessageStream.swift`, and an injectable `SessionRunnerClock` (`SessionRunnerTimings.clock`) lets the
+session runner's retry-window tests run on a virtual clock.

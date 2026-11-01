@@ -130,4 +130,62 @@ import Testing
         #expect(try await runner.next() == nil)
         #expect(mock.calls == 1)
     }
+
+    /// `toolsets/test_runner.py::test_a_streamed_member_call_is_routed_to_the_toolset`: the streaming runner
+    /// accumulates the `tool_use` from events; `toolset_name` must survive that and route the block to the toolset,
+    /// and a same-named plain tool in the same turn still goes to the function tool.
+    @Test func aStreamedMemberCallIsRoutedToTheToolset() async throws {
+        let turn = messageResponse(id: "msg_tool_use", content: [
+            ["type": "tool_use", "id": "toolu_member", "name": "navigate", "input": ["url": "u"], "toolset_name": "browser"],
+            ["type": "tool_use", "id": "toolu_custom", "name": "navigate", "input": ["url": "v"]],
+        ], stopReason: "tool_use")
+        let mock = MessagesMock(replies: [streamingRunnerSSE(of: turn), streamingRunnerSSE(of: endTurnResponse())])
+        let toolset = ToolsetEchoBrowser()
+        let navigate = BetaFunctionTool(name: "navigate", description: "Custom tool that shares a browser member's name.",
+                                        inputSchema: ["type": "object", "properties": ["url": ["type": "string"]]]) { input in
+            .string("custom:\(input["url"]?.stringValue ?? "")")
+        }
+        let runner = try mock.client().beta.messages.streamingToolRunner(
+            maxTokens: 1024, messages: [toolsUserMessage("Open example.com")], model: "claude-haiku-4-5", tools: [toolset, navigate])
+
+        var results: [JSONValue] = []
+        for try await stream in runner {
+            try await stream.untilDone()
+            if let response = try await runner.generateToolCallResponseJSON() { results += response["content"]?.arrayValue ?? [] }
+        }
+
+        #expect(toolset.calls.map(\.0) == ["navigate"] && toolset.calls.first?.1 == ["url": "u"])
+        #expect(results.map { [$0["tool_use_id"] ?? .null, $0["toolset_name"] ?? .null, $0["content"] ?? .null] } == [
+            ["toolu_member", "browser", #"navigate:{"url": "u"}"#],
+            ["toolu_custom", nil, "custom:v"],
+        ])
+    }
+}
+
+/// A `Message` response body as the stream events the API sends for it (`_sse`): each block starts empty and a
+/// `tool_use` block's input arrives as one `input_json_delta`.
+func streamingRunnerSSE(of message: JSONValue) -> MessagesMock.Reply {
+    var start = message
+    start["content"] = []
+    start["stop_reason"] = nil
+    var events: [JSONValue] = [["type": "message_start", "message": start]]
+    for (index, block) in (message["content"]?.arrayValue ?? []).enumerated() {
+        var empty = block
+        var delta: JSONValue?
+        if block["type"] == "tool_use" {
+            empty["input"] = [:]
+            let partial = String(decoding: (try? JSONValue.serialize(block["input"] ?? [:])) ?? Data(), as: UTF8.self)
+            delta = ["type": "input_json_delta", "partial_json": .string(partial)]
+        } else if block["type"] == "text" {
+            empty["text"] = ""
+            delta = ["type": "text_delta", "text": block["text"] ?? ""]
+        }
+        events.append(["type": "content_block_start", "index": .int(index), "content_block": empty])
+        if let delta { events.append(["type": "content_block_delta", "index": .int(index), "delta": delta]) }
+        events.append(["type": "content_block_stop", "index": .int(index)])
+    }
+    events.append(["type": "message_delta", "delta": ["stop_reason": message["stop_reason"] ?? .null, "stop_sequence": nil],
+                   "usage": ["output_tokens": 1]])
+    events.append(["type": "message_stop"])
+    return .sse(events.map(streamingRunnerSSE).joined())
 }
