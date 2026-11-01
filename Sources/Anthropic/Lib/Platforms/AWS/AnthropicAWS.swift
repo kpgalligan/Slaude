@@ -125,11 +125,15 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
         }
     }
 
-    open override func copy(apiKey: String? = nil, authToken: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
+    open override func copy(apiKey: String? = nil, authToken: String? = nil, credentials: (any AccessTokenProvider)?? = nil,
+                            config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                             timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
                             transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
     {
+        if credentials != nil || config != nil || profile != nil {
+            throw ArgumentTypeError("AnthropicAWS.copy() does not accept `credentials`, `config` or `profile`")
+        }
         let c: AnthropicAWS = try copy(apiKey: apiKey, authToken: authToken, webhookKey: webhookKey, baseURL: baseURL,
                                        timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders,
                                        setDefaultHeaders: setDefaultHeaders, defaultQuery: defaultQuery,

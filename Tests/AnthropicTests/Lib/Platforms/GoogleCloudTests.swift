@@ -337,7 +337,9 @@ private func send(_ client: Anthropic, extraHeaders: Headers? = nil, userProfile
         let client = try gc(project: "my-project", location: "us-central1", workspaceID: "wrkspc_x", tokenProvider: tok("tok"))
         let clone: AnthropicGoogleCloud = try client.copy()
         #expect(clone.baseURL.absoluteString == derivedBaseURL)
-        #expect(try client.copy() is AnthropicGoogleCloud)
+        // Through the base class's `copy`, the copy is still the platform client.
+        let base = try (client as Anthropic).copy()
+        #expect(base is AnthropicGoogleCloud)
     }
 
     @Test func copyLowerTierCredentialTakesEffect() async throws {

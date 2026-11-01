@@ -211,11 +211,15 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
     }
 
     /// The first-party credential arguments are rejected: this client authenticates with GCP tokens.
-    open override func copy(apiKey: String? = nil, authToken: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
+    open override func copy(apiKey: String? = nil, authToken: String? = nil, credentials: (any AccessTokenProvider)?? = nil,
+                            config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                             timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
                             transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
     {
+        if credentials != nil || config != nil || profile != nil {
+            throw ArgumentTypeError("AnthropicGoogleCloud.copy() does not accept `credentials`, `config` or `profile`")
+        }
         if apiKey != nil || authToken != nil {
             throw ArgumentTypeError("AnthropicGoogleCloud.copy() does not accept `api_key` or `auth_token`; it authenticates with GCP credentials.")
         }

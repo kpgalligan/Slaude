@@ -276,7 +276,7 @@ func sendMessage(_ client: Anthropic) async throws -> JSONValue {
 }
 
 /// Records what the credentials subsystem logs (`caplog`).
-final class LogRecorder: @unchecked Sendable {
+final class CredentialsLogRecorder: @unchecked Sendable {
     private let lock = NSLock()
     private var _records: [(CredentialsLog.Level, String)] = []
 
@@ -288,8 +288,8 @@ final class LogRecorder: @unchecked Sendable {
 
 /// Runs `body` capturing the credentials log, with a fresh one-shot warning registry (the
 /// `_reset_shadow_one_shot` fixture).
-func withCapturedLogs<T>(_ body: (LogRecorder) async throws -> T) async rethrows -> T {
-    let recorder = LogRecorder()
+func withCapturedLogs<T>(_ body: (CredentialsLogRecorder) async throws -> T) async rethrows -> T {
+    let recorder = CredentialsLogRecorder()
     return try await CredentialsLog.$taskHandler.withValue({ recorder.append($0, $1) }) {
         try await CredentialsLog.$taskWarnOnceRegistry.withValue(WarnOnceRegistry()) {
             try await body(recorder)
