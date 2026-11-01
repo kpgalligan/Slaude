@@ -783,26 +783,25 @@ final class ToolsetStatelessBrowser: BetaAbstractBrowserToolset20260801, @unchec
         let release = ToolsetSignal()
         let events = ToolsBox<[String]>([])
         let browser = try ToolsetFakeBrowser()
+        // Each call notes its end inside the member, before it settles: `close()` returning after both notes is what
+        // waiting for the accepted calls means. (Noting it in the calling task instead races `close()`'s own task.)
         browser.memberBodies["get_page_text"] = { _, _, _ in
             entered.fire()
             await release.wait()
+            events.mutate { $0.append("call done") }
             return .text("text")
         }
-        let first = Task {
-            _ = try await call(browser, "get_page_text")
-            events.mutate { $0.append("first done") }
-        }
+        let first = Task { _ = try await call(browser, "get_page_text") }
         await entered.wait()
-        let queued = Task {
-            _ = try await call(browser, "get_page_text")
-            events.mutate { $0.append("queued done") }
-        }
+        let queued = Task { _ = try await call(browser, "get_page_text") }
         try await Task.sleep(nanoseconds: 200_000_000)
         let closer = Task {
             try await browser.close()
             events.mutate { $0.append("closed") }
         }
-        try await Task.sleep(nanoseconds: 100_000_000)
+        // `close()` marks the toolset closed before it waits; wait for that rather than for a fixed time.
+        let start = Date()
+        while !browser.isClosed && Date().timeIntervalSince(start) < 20 { try await Task.sleep(nanoseconds: 1_000_000) }
         #expect(!events.value.contains("closed"))  // still waiting: a call is in flight and another is queued
         // arrives after close(): refused, never queued
         await #expect(throws: ToolsetClosedError.self) { try await call(browser, "get_page_text") }
@@ -810,7 +809,7 @@ final class ToolsetStatelessBrowser: BetaAbstractBrowserToolset20260801, @unchec
         try await first.value
         try await queued.value
         try await closer.value
-        #expect(events.value.prefix(2).sorted() == ["first done", "queued done"] && events.value.last == "closed")
+        #expect(events.value == ["call done", "call done", "closed"])
     }
 
     @Test func closeFromInsideAMemberDoesNotWaitForItself() async throws {

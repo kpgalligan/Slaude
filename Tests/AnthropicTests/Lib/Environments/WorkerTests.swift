@@ -197,8 +197,10 @@ func envLogText(_ capture: ToolDiagnostics.Capture) -> String {
     capture.records.map(\.message).joined(separator: "\n")
 }
 
-/// Runs `body` with a time limit (`asyncio.wait_for(..., timeout=5)`).
-func envWithTimeout<T: Sendable>(_ seconds: Double = 5, _ body: @escaping @Sendable () async throws -> T) async throws -> T {
+/// Runs `body` with a time limit (`asyncio.wait_for(..., timeout=5)`). The limit only stops a hung test, so it is
+/// generous: a full parallel `swift test` keeps the cooperative pool busy for many seconds, and upstream's 5s bound
+/// assumes a test runs alone on its event loop.
+func envWithTimeout<T: Sendable>(_ seconds: Double = 60, _ body: @escaping @Sendable () async throws -> T) async throws -> T {
     try await withToolTimeout(seconds, body)
 }
 

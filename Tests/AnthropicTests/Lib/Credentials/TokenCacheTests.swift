@@ -12,7 +12,11 @@ func provider(_ body: @escaping @Sendable (Bool) async throws -> AccessToken) ->
 }
 
 /// Polls `condition` until it holds or `timeout` passes; returns whether it held.
-func eventually(timeout: TimeInterval = 2, _ condition: @Sendable () -> Bool) async -> Bool {
+///
+/// The bound only stops a broken test from hanging: it returns as soon as the condition holds, so it is generous. A
+/// full parallel `swift test` keeps the cooperative pool busy for many seconds, and a task can wait that long for its
+/// turn.
+func eventually(timeout: TimeInterval = 30, _ condition: @Sendable () -> Bool) async -> Bool {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {
         if condition() { return true }
@@ -21,8 +25,9 @@ func eventually(timeout: TimeInterval = 2, _ condition: @Sendable () -> Bool) as
     return condition()
 }
 
-/// Runs `body` with a time limit, failing the test (rather than hanging) on a deadlock.
-func withDeadline<T: Sendable>(_ seconds: TimeInterval = 5, _ body: @escaping @Sendable () async throws -> T) async throws -> T {
+/// Runs `body` with a time limit, failing the test (rather than hanging) on a deadlock. Generous for the reason
+/// `eventually` is.
+func withDeadline<T: Sendable>(_ seconds: TimeInterval = 60, _ body: @escaping @Sendable () async throws -> T) async throws -> T {
     try await withThrowingTaskGroup(of: T?.self) { group in
         group.addTask { try await body() }
         group.addTask {
@@ -250,11 +255,10 @@ func withDeadline<T: Sendable>(_ seconds: TimeInterval = 5, _ body: @escaping @S
         let leader = Task { try await cache.getToken() }
         #expect(await eventually { started.value })
 
-        let t0 = Date()
-        let observed = try await cache.getToken()
-        let elapsed = Date().timeIntervalSince(t0)
-        #expect(observed == "a")
-        #expect(elapsed < 1.0, "advisory caller waited for leader (\(elapsed)s)")
+        // The leader is held until after this call returns, so a caller that waited for it would never return: the
+        // deadline fails the test instead (no wall-clock bound, which a busy parallel run would blow).
+        let observed = try await withDeadline { try await cache.getToken() }
+        #expect(observed == "a", "advisory caller waited for leader")
 
         release.set()
         _ = try await leader.value
