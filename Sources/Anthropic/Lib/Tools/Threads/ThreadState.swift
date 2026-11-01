@@ -539,9 +539,6 @@ final class ThreadState: @unchecked Sendable {
     }
 }
 
-let STAINLESS_HELPER_HEADER = "x-stainless-helper"
-let STAINLESS_HELPER_METHOD_HEADER = "x-stainless-helper-method"
-let STAINLESS_STREAM_HELPER_HEADER = "x-stainless-stream-helper"
 
 /// `headers` with the threads beta appended to a caller-set `anthropic-beta` header, which would otherwise replace
 /// the one `create()` builds from `betas`.

@@ -3,7 +3,7 @@ import Testing
 @testable import Anthropic
 
 /// A thread-safe box for state a tool closure changes.
-final class Box<T>: @unchecked Sendable {
+final class ToolsBox<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var _value: T
     init(_ value: T) { _value = value }
@@ -114,7 +114,7 @@ let weatherSchema: [String: JSONValue] = [
 ]
 
 /// The `get_weather` tool the runner tests use; `calls` counts its runs.
-func weatherTool(name: String = "get_weather", calls: Box<Int>? = nil,
+func toolsWeatherTool(name: String = "get_weather", calls: ToolsBox<Int>? = nil,
                  run: (@Sendable (WeatherInput) async throws -> BetaFunctionToolResult?)? = nil) -> BetaFunctionTool
 {
     BetaFunctionTool(name: name, description: "Lookup the weather for a given city.", inputSchema: weatherSchema) {
@@ -126,7 +126,7 @@ func weatherTool(name: String = "get_weather", calls: Box<Int>? = nil,
 }
 
 /// A tool that records its runs by name (`_recording_tool`).
-func recordingTool(_ name: String, _ calls: Box<[String]>, label: String? = nil) -> BetaFunctionTool {
+func recordingTool(_ name: String, _ calls: ToolsBox<[String]>, label: String? = nil) -> BetaFunctionTool {
     BetaFunctionTool(name: name, description: "Run \(name).",
                           inputSchema: ["additionalProperties": false, "properties": [:], "type": "object"]) { _ in
         calls.mutate { $0.append(label ?? name) }
@@ -134,7 +134,7 @@ func recordingTool(_ name: String, _ calls: Box<[String]>, label: String? = nil)
     }
 }
 
-func userMessage(_ text: String) -> BetaMessageParam {
+func toolsUserMessage(_ text: String) -> BetaMessageParam {
     .user(BetaUserMessageParam(content: .string(text)))
 }
 

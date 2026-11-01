@@ -143,7 +143,7 @@ private func onlyFilesAndDirs(_ root: String) -> Bool {
 }
 
 @Suite struct SkillsTests {
-    let tmp = TempDir()
+    let tmp = ToolsTempDir()
 
     private func write(_ bytes: [UInt8], _ name: String = "skill.archive") throws -> String {
         let path = tmp.join(name)
@@ -340,7 +340,7 @@ private func onlyFilesAndDirs(_ root: String) -> Bool {
 
     @Test func downloadRetrievesByConfiguredVersionAndDownloadsByReturnedID() async throws {
         let archive = makeTarGz([("pdf/SKILL.md", "# PDF")])
-        let paths = Box<[String]>([])
+        let paths = ToolsBox<[String]>([])
         let transport = MockTransport { request in
             paths.mutate { $0.append(request.url.path) }
             if request.url.path.hasSuffix("/content") {

@@ -35,15 +35,15 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
     do {
         try await body()
         Issue.record("expected ENOENT", sourceLocation: sourceLocation)
-    } catch let e as FileSystemError {
+    } catch let e as ToolFileSystemError {
         #expect(e.isNotFound, "\(e)", sourceLocation: sourceLocation)
     } catch {
-        Issue.record("expected FileSystemError, got \(error)", sourceLocation: sourceLocation)
+        Issue.record("expected ToolFileSystemError, got \(error)", sourceLocation: sourceLocation)
     }
 }
 
 @Suite struct FileStoreTests {
-    let tmp = TempDir()
+    let tmp = ToolsTempDir()
 
     func store() async throws -> FileStore { try await createdStore(tmp.join("store")) }
 
@@ -181,9 +181,9 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
         let locked = tmp.join("store", "locked")
         chmod(locked, 0)
         defer { chmod(locked, 0o700) }
-        await #expect(throws: FileSystemError.self) { _ = try await store.hashtree() }
-        await #expect(throws: FileSystemError.self) { _ = try await store.ls() }
-        await #expect(throws: FileSystemError.self) { _ = try await store.findSymlinks() }
+        await #expect(throws: ToolFileSystemError.self) { _ = try await store.hashtree() }
+        await #expect(throws: ToolFileSystemError.self) { _ = try await store.ls() }
+        await #expect(throws: ToolFileSystemError.self) { _ = try await store.findSymlinks() }
     }
 
     @Test func hashtreeRefusesASymlinkedPrefix() async throws {
@@ -197,7 +197,7 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
 
     @Test func hashFileHashesOneFileAndSharesTheCache() async throws {
         let store = try await store()
-        let hashed = Box<[String]>([])
+        let hashed = ToolsBox<[String]>([])
         await store.setHashingHooks(trustMarginNs: -1_000_000_000_000_000, onHashFile: { name in hashed.mutate { $0.append(name) } })
         try await store.put("a.md", "alpha")
         #expect(try await store.hashFile("a.md") == sha("alpha"))
@@ -305,7 +305,7 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
 
     @Test func hashtreeRehashesOnlyWhatChanged() async throws {
         let store = try await store()
-        let hashed = Box<[String]>([])
+        let hashed = ToolsBox<[String]>([])
         await store.setHashingHooks(trustMarginNs: -1_000_000_000_000_000, onHashFile: { name in hashed.mutate { $0.append(name) } })
         try await store.put("a.md", "alpha")
         try await store.put("b.md", "bravo")
@@ -331,7 +331,7 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
 
     @Test func hashtreeDistrustsFreshStamps() async throws {
         let store = try await store()
-        let hashed = Box<[String]>([])
+        let hashed = ToolsBox<[String]>([])
         await store.setHashingHooks(onHashFile: { name in hashed.mutate { $0.append(name) } })
         try await store.put("racy.md", "AAAAAA")
         let stamp = statTimesNs(try #require(FileOps.statInfo(tmp.join("store", "racy.md")))).1
@@ -391,8 +391,8 @@ private func expectNotFound(sourceLocation: SourceLocation = #_sourceLocation, _
     }
 }
 
-@Suite struct FilesTests {
-    let tmp = TempDir()
+@Suite struct ToolsFilesTests {
+    let tmp = ToolsTempDir()
 
     @Test func readTextExactKeepsCRLFAndLoneCR() throws {
         let path = tmp.join("f.txt")

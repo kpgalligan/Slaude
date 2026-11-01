@@ -284,15 +284,3 @@ public func acloseRunnableTool(_ tool: any BetaRunnableTool) async {
     }
 }
 
-/// Python's `type(value).__name__` for a JSON value.
-func pythonTypeName(_ value: JSONValue) -> String {
-    switch value {
-    case .null: return "NoneType"
-    case .bool: return "bool"
-    case .int: return "int"
-    case .double: return "float"
-    case .string: return "str"
-    case .array: return "list"
-    case .object: return "dict"
-    }
-}

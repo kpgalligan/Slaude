@@ -104,7 +104,7 @@ open class BetaLocalFilesystemMemoryTool: BetaAbstractMemoryTool, @unchecked Sen
     private func readContent(_ fullPath: String, _ memoryPath: String) throws -> String {
         do {
             return try FileOps.readTextExact(fullPath)
-        } catch let e as FileSystemError where e.isNotFound {
+        } catch let e as ToolFileSystemError where e.isNotFound {
             throw ToolError("The file \(memoryPath) no longer exists (may have been deleted or renamed concurrently).")
         }
     }
@@ -165,7 +165,7 @@ open class BetaLocalFilesystemMemoryTool: BetaAbstractMemoryTool, @unchecked Sen
         try FileOps.secureMkdir(FileOps.parent(fullPath))
         do {
             try FileOps.createExclusive(fullPath, Data(command.fileText.utf8))
-        } catch let e as FileSystemError where e.isExists {
+        } catch let e as ToolFileSystemError where e.isExists {
             throw ToolError("File \(command.path) already exists")
         }
         return .string("File created successfully at: \(command.path)")
@@ -241,7 +241,7 @@ open class BetaLocalFilesystemMemoryTool: BetaAbstractMemoryTool, @unchecked Sen
             } else {
                 throw ToolError("The path \(command.path) does not exist")
             }
-        } catch let e as FileSystemError where e.isNotFound {
+        } catch let e as ToolFileSystemError where e.isNotFound {
             throw ToolError("The path \(command.path) does not exist")
         }
         return .string("Successfully deleted \(command.path)")
@@ -255,7 +255,7 @@ open class BetaLocalFilesystemMemoryTool: BetaAbstractMemoryTool, @unchecked Sen
         try FileOps.secureMkdir(FileOps.parent(newPath))
         do {
             try FileOps.renamePath(oldPath, newPath)
-        } catch let e as FileSystemError where e.isNotFound {
+        } catch let e as ToolFileSystemError where e.isNotFound {
             throw ToolError("The path \(command.oldPath) does not exist")
         }
         return .string("Successfully renamed \(command.oldPath) to \(command.newPath)")

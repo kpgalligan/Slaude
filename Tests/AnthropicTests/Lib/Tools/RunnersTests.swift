@@ -25,7 +25,7 @@ private func text(of message: BetaMessage) -> String? {
     @Test func basicCall() async throws {
         let mock = try snapshotMock("b38bbf6c-9a76-40ca-b09d-7a3911776e0f")
         let first = mock.bodiesServed()
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool()]).untilDone()
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool()]).untilDone()
         #expect(message.stopReason == .endTurn)
         #expect(message.id == first[1]["id"]?.stringValue)
         #expect(text(of: message)?.contains("San Francisco") == true)
@@ -35,7 +35,7 @@ private func text(of message: BetaMessage) -> String? {
         let bodies = mock.bodies
         #expect(bodies[0]["thread"] == ["type": "create"])
         #expect(bodies[0]["messages"] == [["role": "user", "content": "What is the weather in SF?"]])
-        #expect(bodies[0]["tools"] == [try weatherTool().toToolParam()])
+        #expect(bodies[0]["tools"] == [try toolsWeatherTool().toToolParam()])
         let toolUseID = first[0]["content"]?[0]?["id"] ?? .null
         #expect(bodies[1]["thread"] == ["type": "continue", "previous_message_id": first[0]["id"] ?? .null])
         #expect(bodies[1]["tools"] == nil)
@@ -52,8 +52,8 @@ private func text(of message: BetaMessage) -> String? {
     @Test func toolCallError() async throws {
         let mock = try snapshotMock("10e53c1d-51be-4c64-b5bf-99adb3fa4719")
         let served = mock.bodiesServed()
-        let called = Box(false)
-        let tool = weatherTool { input in
+        let called = ToolsBox(false)
+        let tool = toolsWeatherTool { input in
             if !called.value {
                 called.value = true
                 throw RuntimeError("Unexpected error, try again")
@@ -73,8 +73,8 @@ private func text(of message: BetaMessage) -> String? {
 
     @Test func toolCallCaching() async throws {
         let mock = try snapshotMock("a8ac789b-f856-48cd-9ff3-d5f36799e432")
-        let calls = Box(0)
-        let tool = weatherTool { input in
+        let calls = ToolsBox(0)
+        let tool = toolsWeatherTool { input in
             calls.mutate { $0 += 1 }
             if calls.value > 1 { throw RuntimeError("This tool should not be called again") }
             return .string(getWeather(input.location, input.units))
@@ -92,7 +92,7 @@ private func text(of message: BetaMessage) -> String? {
     @Test func maxIterations() async throws {
         let mock = try snapshotMock("e075a6c2-de4d-4125-9709-f0e178058190")
         let served = mock.bodiesServed()
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool()], messages: [[
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool()], messages: [[
             "role": "user",
             "content": "What's the weather in San Francisco, New York, London, Tokyo and Paris?If you need to use tools, call only one tool at a time. Wait for the tool'sresponse before making another call. Never call multiple tools at once.",
         ]], maxIterations: 2)
@@ -137,7 +137,7 @@ private func text(of message: BetaMessage) -> String? {
 
     @Test func basicCallAsync() async throws {
         let mock = try snapshotMock("64fe7974-681a-4023-9848-b32ba39c8664", dir: "__module__")
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool()]).untilDone()
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool()]).untilDone()
         #expect(message.stopReason == .endTurn)
         #expect(mock.calls == 2)
     }
@@ -174,8 +174,8 @@ private let webSearch: JSONValue = ["type": "web_search_20250305", "name": "web_
 @Suite struct RunnerStopReasonTests {
     @Test func refusalEndsRunnerWithoutExecutingTools() async throws {
         let mock = MessagesMock([refusalWithToolUse()])
-        let calls = Box(0)
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool(calls: calls)]).untilDone()
+        let calls = ToolsBox(0)
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls)]).untilDone()
         #expect(message.stopReason == .refusal)
         #expect(calls.value == 0)
         #expect(mock.calls == 1)
@@ -183,7 +183,7 @@ private let webSearch: JSONValue = ["type": "web_search_20250305", "name": "web_
 
     @Test func pauseTurnResumesRunner() async throws {
         let mock = MessagesMock([pausedServerToolUse(), endTurnResponse()])
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool(), webSearch], thread: false).untilDone()
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool(), webSearch], thread: false).untilDone()
         #expect(message.stopReason == .endTurn)
         #expect(mock.calls == 2)
         #expect(mock.lastBody["messages"]?.arrayValue?.last == pausedAssistantTurn)
@@ -210,7 +210,7 @@ private let webSearch: JSONValue = ["type": "web_search_20250305", "name": "web_
 
     @Test func compactionResumesRunner() async throws {
         let mock = MessagesMock([compactionResponse(), endTurnResponse()])
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool()], thread: false).untilDone()
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool()], thread: false).untilDone()
         #expect(message.stopReason == .endTurn)
         #expect(mock.calls == 2)
         #expect(mock.lastBody["messages"]?.arrayValue?.last == compactionAssistantTurn)
@@ -220,8 +220,8 @@ private let webSearch: JSONValue = ["type": "web_search_20250305", "name": "web_
         let mock = MessagesMock([messageResponse(id: "msg_max_tokens", content: [[
             "type": "tool_use", "id": "toolu_max_tokens", "name": "get_weather", "input": sfInput,
         ]], stopReason: "max_tokens")])
-        let calls = Box(0)
-        let message = try await weatherRunner(try mock.client(), tools: [weatherTool(calls: calls)]).untilDone()
+        let calls = ToolsBox(0)
+        let message = try await weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls)]).untilDone()
         #expect(message.stopReason == .maxTokens)
         #expect(calls.value == 0)
         #expect(mock.calls == 1)
@@ -244,9 +244,9 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
             toolUseResponse("get_weather", "toolu_change"), endTurnResponse(),
             toolUseResponse("get_weather", "toolu_change"), endTurnResponse(),
         ])
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let removed = try await expectWarning("Tool 'get_weather' not found in tool runner") {
-            try await runToolUse(mock, tools: [weatherTool(calls: calls)], messages: [
+            try await runToolUse(mock, tools: [toolsWeatherTool(calls: calls)], messages: [
                 ["role": "user", "content": "What is the weather in SF?"],
                 ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
             ])
@@ -261,8 +261,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolAdditionReEnablesRemovedTool() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_change"), endTurnResponse()])
-        let calls = Box(0)
-        let results = try await runToolUse(mock, tools: [weatherTool(calls: calls)], messages: [
+        let calls = ToolsBox(0)
+        let results = try await runToolUse(mock, tools: [toolsWeatherTool(calls: calls)], messages: [
             ["role": "user", "content": "What is the weather in SF?"],
             ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
             ["role": "system", "content": [toolReferenceBlock("tool_addition", "get_weather")]],
@@ -273,8 +273,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolAdditionByValueReEnablesRemovedTool() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_change"), endTurnResponse()])
-        let calls = Box(0)
-        let tool = weatherTool(calls: calls)
+        let calls = ToolsBox(0)
+        let tool = toolsWeatherTool(calls: calls)
         let results = try await runToolUse(mock, tools: [tool], messages: [
             ["role": "user", "content": "What is the weather in SF?"],
             ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
@@ -286,8 +286,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolRemovalRoutesCallDownUnknownToolPathOnAThread() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_change"), endTurnResponse()])
-        let calls = Box(0)
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool(calls: calls)], messages: [
+        let calls = ToolsBox(0)
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls)], messages: [
             ["role": "user", "content": "What is the weather in SF?"],
             ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
         ])
@@ -301,8 +301,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
             toolUseResponse("get_time", "toolu_time", input: ["timezone": "UTC"]), toolUseResponse("get_weather", "toolu_weather"),
             endTurnResponse(),
         ])
-        let calls = Box(0)
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool(calls: calls), getTime],
+        let calls = ToolsBox(0)
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls), getTime],
                                        messages: [["role": "user", "content": "What time is it, and what is the weather in SF?"]])
         var results: [JSONValue] = []
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
@@ -319,8 +319,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolRemovalViaAppendMessagesSameTurn() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box(0)
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool(calls: calls)])
+        let calls = ToolsBox(0)
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls)])
         var results: [JSONValue] = []
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
             for try await message in runner {
@@ -340,12 +340,12 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
             toolUseResponse("get_time", "toolu_time", input: ["timezone": "UTC"]), toolUseResponse("get_weather", "toolu_weather"),
             endTurnResponse(),
         ])
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let replacement: [JSONValue] = [
             ["role": "user", "content": "What time is it, and what is the weather in SF?"],
             ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
         ]
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool(calls: calls), getTime], messages: [replacement[0]])
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls), getTime], messages: [replacement[0]])
         var results: [JSONValue] = []
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
             for try await message in runner {
@@ -365,8 +365,8 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolAdditionViaAppendMessagesReEnablesRemovedTool() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box(0)
-        let runner = try weatherRunner(try mock.client(), tools: [weatherTool(calls: calls)], messages: [
+        let calls = ToolsBox(0)
+        let runner = try weatherRunner(try mock.client(), tools: [toolsWeatherTool(calls: calls)], messages: [
             ["role": "user", "content": "What is the weather in SF?"],
             ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]],
         ])
@@ -389,9 +389,9 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
             ]], stopReason: "compaction"),
             toolUseResponse("get_weather", "toolu_change"), endTurnResponse(),
         ])
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let results = try await expectWarning("Tool 'get_weather' not found in tool runner") {
-            try await runToolUse(mock, tools: [weatherTool(calls: calls)], messages: [["role": "user", "content": "What is the weather in SF?"]])
+            try await runToolUse(mock, tools: [toolsWeatherTool(calls: calls)], messages: [["role": "user", "content": "What is the weather in SF?"]])
         }
         #expect(calls.value == 0)
         #expect(results == [notFoundResult("toolu_change")])
@@ -401,9 +401,9 @@ private let getTime = BetaFunctionTool(name: "get_time", description: "Lookup th
 
     @Test func toolRemovalInCompactionToolChangesRoutesCallDownUnknownToolPath() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_change"), endTurnResponse()])
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let results = try await expectWarning("Tool 'get_weather' not found in tool runner") {
-            try await runToolUse(mock, tools: [weatherTool(calls: calls)], messages: [
+            try await runToolUse(mock, tools: [toolsWeatherTool(calls: calls)], messages: [
                 ["role": "assistant", "content": [[
                     "type": "compaction", "content": "Earlier turns, summarized.",
                     "tool_changes": [["type": "tool_removal", "tool": ["type": "tool_reference", "name": "get_weather"]]],

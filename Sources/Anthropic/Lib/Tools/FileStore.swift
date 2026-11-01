@@ -11,7 +11,7 @@ import Foundation
     import Darwin
 #endif
 
-/// A refused operation: input the store will not act on. OS errors propagate as `FileSystemError`.
+/// A refused operation: input the store will not act on. OS errors propagate as `ToolFileSystemError`.
 public struct FileStoreError: Error, CustomStringConvertible, Equatable, Sendable {
     public static let ESCAPES_ROOT = "escapes the store root"
     public static let IS_A_SYMLINK = "is a symlink"
@@ -99,7 +99,7 @@ public actor FileStore {
         }
         for directory in missing.reversed() {
             if mkdir(directory, 0o700) != 0 && errno != EEXIST {
-                throw FileSystemError(code: errno, path: directory, operation: "mkdir")
+                throw ToolFileSystemError(code: errno, path: directory, operation: "mkdir")
             }
         }
     }
@@ -134,7 +134,7 @@ public actor FileStore {
     public func get(_ relPath: String) throws -> Data? {
         let dest = try resolveUnderRoot(relPath)
         let fd: Int32
-        do { fd = try openRegularFile(relPath, dest) } catch let e as FileSystemError where e.isNotFound { return nil }
+        do { fd = try openRegularFile(relPath, dest) } catch let e as ToolFileSystemError where e.isNotFound { return nil }
         defer { close(fd) }
         let data = try readAll(fd, dest)
         try requireUTF8(relPath, data)
@@ -197,7 +197,7 @@ public actor FileStore {
         if (st.st_mode & S_IFMT) == S_IFDIR {
             try? FileOps.removeTree(dest)
         } else if unlink(dest) != 0 && errno != ENOENT {
-            throw FileSystemError(code: errno, path: dest, operation: "unlink")
+            throw ToolFileSystemError(code: errno, path: dest, operation: "unlink")
         }
     }
 
@@ -226,7 +226,7 @@ public actor FileStore {
         for part in String(directory.dropFirst(rootPath.count + 1)).split(separator: "/") {
             current += "/" + part
             if mkdir(current, 0o700) != 0 && errno != EEXIST {
-                throw FileSystemError(code: errno, path: current, operation: "mkdir")
+                throw ToolFileSystemError(code: errno, path: current, operation: "mkdir")
             }
         }
     }
@@ -236,18 +236,18 @@ public actor FileStore {
         let random = (0..<8).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
         let tmp = FileOps.parent(dest) + "/.fs-\(random).tmp"
         let fd = Glibc_open(tmp, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, mode)
-        if fd < 0 { throw FileSystemError(code: errno, path: tmp, operation: "open") }
+        if fd < 0 { throw ToolFileSystemError(code: errno, path: tmp, operation: "open") }
         do {
             try data.withUnsafeBytes { raw in
                 var offset = 0
                 while offset < raw.count {
                     let n = write(fd, raw.baseAddress!.advanced(by: offset), raw.count - offset)
-                    if n <= 0 { throw FileSystemError(code: errno, path: tmp, operation: "write") }
+                    if n <= 0 { throw ToolFileSystemError(code: errno, path: tmp, operation: "write") }
                     offset += n
                 }
             }
             close(fd)
-            if rename(tmp, dest) != 0 { throw FileSystemError(code: errno, path: dest, operation: "rename") }
+            if rename(tmp, dest) != 0 { throw ToolFileSystemError(code: errno, path: dest, operation: "rename") }
         } catch {
             close(fd)
             unlink(tmp)
@@ -260,7 +260,7 @@ public actor FileStore {
         let fd = Glibc_open(dest, O_RDONLY | O_NOFOLLOW | O_NONBLOCK, 0)
         if fd < 0 {
             if errno == ELOOP || errno == EMLINK { throw FileStoreError(FileStoreError.IS_A_SYMLINK, relPath) }
-            throw FileSystemError(code: errno, path: dest, operation: "open")
+            throw ToolFileSystemError(code: errno, path: dest, operation: "open")
         }
         var st = stat()
         if fstat(fd, &st) != 0 || (st.st_mode & S_IFMT) != S_IFREG {
@@ -275,7 +275,7 @@ public actor FileStore {
         var buffer = [UInt8](repeating: 0, count: 1 << 20)
         while true {
             let n = read(fd, &buffer, buffer.count)
-            if n < 0 { throw FileSystemError(code: errno, path: path, operation: "read") }
+            if n < 0 { throw ToolFileSystemError(code: errno, path: path, operation: "read") }
             if n == 0 { return data }
             data.append(buffer, count: n)
         }
@@ -289,7 +289,7 @@ public actor FileStore {
         var buffer = [UInt8](repeating: 0, count: 1 << 20)
         while true {
             let n = read(fd, &buffer, buffer.count)
-            if n < 0 { throw FileSystemError(code: errno, path: path, operation: "read") }
+            if n < 0 { throw ToolFileSystemError(code: errno, path: path, operation: "read") }
             if n == 0 { break }
             hasher.update(buffer[0..<n])
         }
@@ -304,7 +304,7 @@ public actor FileStore {
         if let cached = hashes[rel], cached.mtimeNs == mtime, cached.ctimeNs == ctime, cached.size == size {
             sha = cached.sha
         } else {
-            do { sha = try hashFileContents(full) } catch let e as FileSystemError {
+            do { sha = try hashFileContents(full) } catch let e as ToolFileSystemError {
                 if e.isNotFound || e.code == ELOOP || e.code == EMLINK { return nil }
                 throw e
             } catch is FileStoreError {
@@ -334,7 +334,7 @@ public actor FileStore {
     /// vanished mid-walk is skipped; any other error propagates.
     private func walk(_ directory: String, _ visit: (String, stat) throws -> Void) throws {
         let names: [String]
-        do { names = try FileOps.listDirectory(directory) } catch let e as FileSystemError where e.isNotFound { return }
+        do { names = try FileOps.listDirectory(directory) } catch let e as ToolFileSystemError where e.isNotFound { return }
         for name in names.sorted() {
             let full = directory + "/" + name
             guard let st = FileOps.lstatInfo(full) else { continue }

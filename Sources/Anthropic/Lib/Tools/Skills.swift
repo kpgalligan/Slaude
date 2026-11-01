@@ -179,7 +179,7 @@ private func downloadAndExtract(_ client: Anthropic, skillID: String, versionID:
     let temp = parent + "/.skill-\(UUID().uuidString.lowercased()).archive"
     defer { unlink(temp) }
     let fd = open(temp, O_CREAT | O_EXCL | O_WRONLY, 0o600)
-    if fd < 0 { throw FileSystemError(code: errno, path: temp, operation: "open") }
+    if fd < 0 { throw ToolFileSystemError(code: errno, path: temp, operation: "open") }
     close(fd)
     try await client.beta.skills.versions.withStreamingResponse.download(versionID, skillID: skillID) { (response: APIResponse<BinaryResponse>) in
         let handle = try FileHandle(forWritingTo: URL(fileURLWithPath: temp))

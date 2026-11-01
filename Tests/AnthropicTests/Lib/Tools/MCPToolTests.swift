@@ -20,7 +20,7 @@ private func expectUnsupported(_ match: String, sourceLocation: SourceLocation =
 /// Quacks like the `call_tool` part of `mcp.ClientSession`, recording each call.
 final class FakeMCPSession: MCPClientSession, @unchecked Sendable {
     let result: MCPCallToolResult
-    let calls = Box<[JSONValue]>([])
+    let calls = ToolsBox<[JSONValue]>([])
 
     init(result: MCPCallToolResult = MCPCallToolResult(content: [.text("tool output")])) { self.result = result }
 
@@ -104,7 +104,7 @@ final class FakeMCPSession: MCPClientSession, @unchecked Sendable {
 }
 
 @Suite struct MCPMessageTests {
-    @Test func userMessage() throws {
+    @Test func toolsUserMessage() throws {
         let result = try JSONValue.from(mcpMessage(MCPPromptMessage(role: "user", content: .text("hello"))))
         #expect(result["role"] == "user")
         #expect(result["content"] == [["type": "text", "text": "hello"]])
@@ -247,7 +247,7 @@ final class FakeMCPSession: MCPClientSession, @unchecked Sendable {
         let mock = MessagesMock([toolUseResponse("calc", "toolu_1", input: ["x": 1]), endTurnResponse()])
         let client = FakeMCPSession(result: MCPCallToolResult(content: [.text("42")]))
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("go")], model: "claude-haiku-4-5",
+            maxTokens: 1024, messages: [toolsUserMessage("go")], model: "claude-haiku-4-5",
             tools: [mcpTool(MCPTool(name: "calc", inputSchema: ["type": "object"]), client: client)], thread: false)
         _ = try await runner.untilDone()
         #expect(mock.requests.first?.headers["x-stainless-helper"] == "BetaToolRunner, mcp_tool")

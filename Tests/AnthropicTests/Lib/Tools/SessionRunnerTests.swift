@@ -147,8 +147,8 @@ private func run(_ events: FakeSessionEvents, tools: [any BetaRunnableTool], max
 private func drive(_ runner: SessionToolRunner, for seconds: TimeInterval, atLeast: Int = 0, limit: TimeInterval = 20)
     async throws -> (items: [DispatchedToolCall], finished: Bool)
 {
-    let seen = Box<[DispatchedToolCall]>([])
-    let done = Box(false)
+    let seen = ToolsBox<[DispatchedToolCall]>([])
+    let done = ToolsBox(false)
     let task = Task {
         for try await call in runner { seen.mutate { $0.append(call) } }
         done.value = true
@@ -170,7 +170,7 @@ private func resultText(_ item: DispatchedToolCall) -> String {
     (item.result?["content"]?.arrayValue ?? []).filter { $0["type"] == "text" }.compactMap { $0["text"]?.stringValue }.joined()
 }
 
-private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable (BetaToolInput) async throws -> BetaFunctionToolResult? {
+private func counting(_ counter: ToolsBox<Int>, _ value: String = "ran") -> @Sendable (BetaToolInput) async throws -> BetaFunctionToolResult? {
     { _ in
         counter.mutate { $0 += 1 }
         return .string(value)
@@ -232,7 +232,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func skipsAlreadyAnsweredEvents() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "inc"), terminated()],
                                        listEvents: [toolUse("tu_1", "inc"), toolResult("tu_1")])
         let items = try await run(events, tools: [fakeTool("inc", counting(calls, "done"))])
@@ -274,7 +274,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func skipsAlreadyAnsweredCustomTool() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [customToolUse("ctu_1", "get_weather"), terminated()],
                                        listEvents: [customToolUse("ctu_1", "get_weather"), customToolResult("ctu_1")])
         let items = try await run(events, tools: [fakeTool("get_weather", counting(calls, "sunny"))])
@@ -283,7 +283,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func skipsUnownedBuiltinAndCustomToolsByDefault() async throws {
-        let ran = Box(0)
+        let ran = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [
             toolUse("evt_99", "not_ours"), customToolUse("cevt_99", "app_backend_tool"), toolUse("tu_ok", "echo"), terminated(),
         ])
@@ -323,7 +323,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     // MARK: Confirmation gating
 
     @Test func askToolBlocksWithoutConfirmation() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "ask"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 0)
@@ -332,7 +332,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func askToolExecutesAfterAllowConfirmation() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "ask"), confirmation("tu_1", "allow"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 1)
@@ -343,7 +343,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func askToolDeniedNeverExecutes() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "ask"), confirmation("tu_1", "deny"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 0)
@@ -356,7 +356,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func preDeniedToolNeverExecutes() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "deny"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 0)
@@ -365,7 +365,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func confirmationInHistoryReleasesAskCall() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [terminated()],
                                        listEvents: [toolUse("tu_1", "gated", permission: "ask"), confirmation("tu_1", "allow")])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
@@ -386,7 +386,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     @Test(arguments: [true, false])
     func heldAskCallKeepsRunnerAlive(inHistory: Bool) async throws {
         // `in_history: true` is `test_held_ask_call_keeps_runner_alive`, `false` `test_live_idle_while_call_held_keeps_runner_alive`.
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let script = [toolUse("tu_1", "gated", permission: "ask"), idleEndTurn()]
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : script, listEvents: inHistory ? script : [])
         let (_, finished) = try await drive(runner(events, tools: [fakeTool("gated", counting(calls))], maxIdle: 0.1), for: 0.8)
@@ -396,7 +396,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func reconnectDoesNotDoubleDispatchHeldCall() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let gated = toolUse("tu_1", "gated", permission: "ask")
         let events = FakeSessionEvents(
             streams: [.events([gated], raiseAfter: 1, raiseWith: APIConnectionError(request: nil)), .events([terminated()])],
@@ -410,7 +410,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func reconcileConfirmationReleasesCallHeldFromLiveStream() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(
             streams: [
                 .events([toolUse("tu_1", "gated", permission: "ask")], raiseAfter: 1, raiseWith: APIConnectionError(request: nil)),
@@ -443,7 +443,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func unrecognisedVerdictFailsClosed() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "ask"), confirmation("tu_1", "escalate"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 0, "only an explicit allow may release a gated call")
@@ -452,7 +452,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func unrecognisedPermissionFailsClosed() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let tool = fakeTool("gated", counting(calls))
         let first = FakeSessionEvents(streamEvents: [toolUse("tu_1", "gated", permission: "ask_strict"), terminated()])
         #expect(try await run(first, tools: [tool]).isEmpty)
@@ -465,7 +465,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func preDeniedToolIgnoresStrayAllowVerdict() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [confirmation("tu_1", "allow"), toolUse("tu_1", "gated", permission: "deny"), terminated()])
         let items = try await run(events, tools: [fakeTool("gated", counting(calls))])
         #expect(calls.value == 0)
@@ -474,7 +474,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func ungatedToolWithStrayDenyVerdictResolvesAsDenied() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [confirmation("tu_1", "deny"), toolUse("tu_1", "echo"), terminated()])
         let items = try await run(events, tools: [fakeTool("echo", counting(calls))])
         #expect(calls.value == 0)
@@ -484,7 +484,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
 
     @Test(arguments: [false, true])
     func denyAfterEndTurnResumesIdleStop(inHistory: Bool) async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let script = [toolUse("tu_1", "gated", permission: "ask"), idleEndTurn(), confirmation("tu_1", "deny")]
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : script, listEvents: inHistory ? script : [])
         let (items, finished) = try await drive(runner(events, tools: [fakeTool("gated", counting(calls))], maxIdle: 0.05), for: 20)
@@ -506,8 +506,8 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
 
     @Test func reconcileReleasedCallNotCutShortByIdle() async throws {
         let maxIdle = 0.4
-        let calls = Box(0)
-        let postedAt = Box<Date?>(nil)
+        let calls = ToolsBox(0)
+        let postedAt = ToolsBox<Date?>(nil)
         let slow = fakeTool("gated") { _ in
             calls.mutate { $0 += 1 }
             try await Task.sleep(nanoseconds: 600_000_000)
@@ -566,14 +566,14 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     // MARK: Tool cleanup
 
     @Test func runsToolCloseHookOnExit() async throws {
-        let closed = Box(0)
+        let closed = ToolsBox(0)
         let tool = fakeTool("echo", close: { closed.mutate { $0 += 1 } }) { _ in "ok" }
         _ = try await run(FakeSessionEvents(streamEvents: [toolUse("tu_1", "echo"), terminated()]), tools: [tool])
         #expect(closed.value == 1)
     }
 
     @Test func runsContextManagerToolCleanupOnExit() async throws {
-        let seen = Box<[String]>([])
+        let seen = ToolsBox<[String]>([])
         let tool = BetaFunctionTool(name: "echo", inputSchema: ["type": "object"], enter: {
             seen.mutate { $0.append("enter") }
             let f: BetaFunctionTool.Function = { input in .string("echo:\(input["command"]?.stringValue ?? "None")") }
@@ -651,7 +651,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     @Test func toolTimeoutFiresForAToolThatIgnoresCancellation() async throws {
         var timings = SessionRunnerTimings()
         timings.toolTimeout = 0.05
-        let release = Box(false)
+        let release = ToolsBox(false)
         let blocking = fakeTool("slow") { _ in
             while !release.value { usleep(10_000) }
             return "late"
@@ -688,7 +688,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func reconcileListErrorDoesNotDispatchPartial() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [terminated()], listEvents: [toolUse("tu_1", "inc")], listRaises: apiStatusError(500))
         let items = try await run(events, tools: [fakeTool("inc", counting(calls, "done"))])
         #expect(items.isEmpty)
@@ -705,7 +705,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     }
 
     @Test func untilDoneDrivesRunnerToCompletion() async throws {
-        let calls = Box(0)
+        let calls = ToolsBox(0)
         let events = FakeSessionEvents(streamEvents: [toolUse("tu_1", "echo"), terminated()])
         try await runner(events, tools: [fakeTool("echo", counting(calls, "ok"))]).untilDone()
         #expect(calls.value == 1)
@@ -745,7 +745,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
 @Suite struct SessionRunnerHTTPTests {
     @Test(arguments: [true, false])
     func environmentKeyAuthenticatesTheRunnersRequests(withKey: Bool) async throws {
-        let requests = Box<[HTTPRequest]>([])
+        let requests = ToolsBox<[HTTPRequest]>([])
         let toolUse = #"{"type":"agent.tool_use","id":"tu_1","name":"echo","input":{},"processed_at":"2026-01-01T00:00:00Z"}"#
         let end = #"{"type":"session.status_terminated","id":"ev_2","processed_at":"2026-01-01T00:00:00Z"}"#
         let transport = MockTransport { request in

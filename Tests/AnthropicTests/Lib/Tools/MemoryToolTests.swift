@@ -11,7 +11,7 @@ import Testing
 #endif
 
 /// A fresh temporary directory, removed when the value is released.
-final class TempDir: @unchecked Sendable {
+final class ToolsTempDir: @unchecked Sendable {
     let path: String
     init() {
         path = FileManager.default.temporaryDirectory.appendingPathComponent("slaude-\(UUID().uuidString)").path
@@ -56,7 +56,7 @@ private func text(_ result: BetaFunctionToolResult) -> String {
 }
 
 @Suite struct LocalFilesystemMemoryToolTests {
-    let dir = TempDir()
+    let dir = ToolsTempDir()
     var tool: BetaLocalFilesystemMemoryTool { BetaLocalFilesystemMemoryTool(basePath: dir.path) }
 
     private func create(_ tool: BetaLocalFilesystemMemoryTool, _ path: String, _ text: String) async throws {
@@ -311,7 +311,7 @@ private func text(_ result: BetaFunctionToolResult) -> String {
         // `test_symlink_validation_reject_symlink_pointing_outside_memories`,
         // `..._reject_creating_files_through_symlink_pointing_outside`,
         // `..._reject_parent_directory_that_is_symlink_pointing_outside`.
-        let outside = TempDir()
+        let outside = ToolsTempDir()
         try "sensitive data".write(toFile: outside.join("secret.txt"), atomically: false, encoding: .utf8)
         let tool = self.tool
         try FileManager.default.createDirectory(atPath: tool.memoryRoot, withIntermediateDirectories: true)

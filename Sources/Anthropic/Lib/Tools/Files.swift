@@ -17,7 +17,7 @@ let DIR_CREATE_MODE: mode_t = 0o700
 let READ_STREAM_CHUNK_BYTES = 64 * 1024
 
 /// A POSIX error from a file primitive, with its `errno`.
-struct FileSystemError: Error, CustomStringConvertible {
+struct ToolFileSystemError: Error, CustomStringConvertible {
     let code: Int32
     let path: String
     let operation: String
@@ -28,8 +28,8 @@ struct FileSystemError: Error, CustomStringConvertible {
 }
 
 enum FileOps {
-    private static func fail(_ op: String, _ path: String) -> FileSystemError {
-        FileSystemError(code: errno, path: path, operation: op)
+    private static func fail(_ op: String, _ path: String) -> ToolFileSystemError {
+        ToolFileSystemError(code: errno, path: path, operation: op)
     }
 
     static func lstatInfo(_ path: String) -> stat? {
@@ -94,7 +94,7 @@ enum FileOps {
             while offset < raw.count {
                 let n = write(fd, raw.baseAddress!.advanced(by: offset), raw.count - offset)
                 if n < 0 { throw fail("write", path) }
-                if n == 0 { throw FileSystemError(code: EIO, path: path, operation: "write") }
+                if n == 0 { throw ToolFileSystemError(code: EIO, path: path, operation: "write") }
                 offset += n
             }
         }
@@ -371,12 +371,12 @@ func readLineRange(_ path: String, filePath: String, startLine: Int, endLine: In
     var lines = LineRangeCollector(filePath: filePath, startLine: startLine, endLine: endLine, limit: limit)
     if lines.rangeIsEmpty { return "" }
     let fd = open(path, O_RDONLY)
-    if fd < 0 { throw FileSystemError(code: errno, path: path, operation: "open") }
+    if fd < 0 { throw ToolFileSystemError(code: errno, path: path, operation: "open") }
     defer { close(fd) }
     var buffer = [UInt8](repeating: 0, count: READ_STREAM_CHUNK_BYTES)
     while true {
         let n = read(fd, &buffer, buffer.count)
-        if n < 0 { throw FileSystemError(code: errno, path: path, operation: "read") }
+        if n < 0 { throw ToolFileSystemError(code: errno, path: path, operation: "read") }
         if n == 0 { break }
         try lines.collect(from: Data(buffer[0..<n]))
         if lines.rangeIsCollected { break }

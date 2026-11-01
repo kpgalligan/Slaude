@@ -26,7 +26,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 @Suite struct RunnerToolChangesTests {
     @Test func addToolsSendsTheDefinitionWithTheNextRequest() async throws {
         let mock = MessagesMock([callsTool("get_time", "toolu_time"), callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         try await runWithToolChanges(mock, tools: [getTime], script: ["msg_toolu_time": { try await $0.addTools(getWeather) }])
@@ -42,7 +42,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 
     @Test func toolChangesMadeBeforeTheFirstRequestFollowATrailingAssistantMessage() async throws {
         let mock = MessagesMock([callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getWeather = recordingTool("get_weather", calls)
         try await runWithToolChanges(mock, tools: [], script: [:], beforeFirstRequest: { try await $0.addTools(getWeather) },
                                      messages: [compactionAssistantTurn])
@@ -52,7 +52,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 
     @Test func toolRemovalAppliesWhenTheHistoryHasASystemMessageWithoutContent() async throws {
         let mock = MessagesMock([callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let history: [JSONValue] = [
             ["role": "user", "content": "What is the weather in SF?"],
             ["role": "system", "output_config": ["effort": "low"]],
@@ -68,7 +68,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
     @Test(arguments: ["tool", "name"])
     func removeToolsStopsACallAlreadyInTheTurn(removeBy: String) async throws {
         let mock = MessagesMock([callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getWeather = recordingTool("get_weather", calls)
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
             try await runWithToolChanges(mock, tools: [getWeather], script: ["msg_toolu_weather": { runner in
@@ -89,7 +89,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
             callsTool("get_time", "toolu_time"), callsTool("get_time", "toolu_time_again"), callsTool("get_weather", "toolu_weather"),
             endTurnResponse(),
         ])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
@@ -119,7 +119,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
     @Test(arguments: ["add_then_remove", "remove_then_add"])
     func toolChangesInOneTurnAreSentTogetherInCallOrder(order: String) async throws {
         let mock = MessagesMock([callsTool("get_time", "toolu_time"), callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         let add = addition(try getWeather.toToolParam())
@@ -151,7 +151,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
         let mock = MessagesMock([
             callsTool("get_weather", "toolu_weather"), callsTool("get_weather", "toolu_weather_again"), endTurnResponse(),
         ])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let old = recordingTool("get_weather", calls, label: "old get_weather")
         let new = recordingTool("get_weather", calls, label: "new get_weather")
         try await runWithToolChanges(mock, tools: [old], script: ["msg_toolu_weather": { try await $0.addTools(new) }])
@@ -162,7 +162,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
     @Test func aCallAlreadyInTheTurnGetsTheInputErrorOfTheToolAddedUnderItsName() async throws {
         struct City: Decodable { var city: String }
         let mock = MessagesMock([callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let old = recordingTool("get_weather", calls)
         let new = BetaFunctionTool(
             name: "get_weather", description: "Lookup the weather for a given city.",
@@ -184,7 +184,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 
     @Test func aRemovedToolAddedBackWhileHandlingACallToItIsRun() async throws {
         let mock = MessagesMock([callsTool("get_time", "toolu_time"), callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         try await runWithToolChanges(mock, tools: [getTime, getWeather], script: [
@@ -202,7 +202,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 
     @Test func aRawDefinitionIsSentAsGivenAndNeverRun() async throws {
         let mock = MessagesMock([callsTool("get_time", "toolu_time"), callsTool("get_weather", "toolu_weather"), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         let rawGetWeather: JSONValue = [
@@ -226,7 +226,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
             pausedServerToolUseResponse, callsTool("get_weather", "toolu_weather"), callsTool("get_time", "toolu_time"),
             endTurnResponse(),
         ])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         try await expectWarning("Tool 'get_weather' not found in tool runner") {
@@ -253,7 +253,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
             callsTool("get_time", "toolu_time"), compactedResponse(), callsTool("get_forecast", "toolu_forecast"),
             callsTool("get_weather", "toolu_weather"), endTurnResponse(),
         ])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         let getForecast = recordingTool("get_forecast", calls)
@@ -280,7 +280,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
         let mock = MessagesMock([
             callsTool("get_time", "toolu_time"), compactedResponse(), callsTool("get_weather", "toolu_weather"), endTurnResponse(),
         ])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         try await runWithToolChanges(mock, tools: [getTime, getWeather], script: [
@@ -299,7 +299,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 
     @Test(arguments: ["end_turn", "max_iterations"])
     func toolChangesPendingWhenTheRunEndsAreNotSent(endedBy: String) async throws {
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getTime = recordingTool("get_time", calls)
         let getWeather = recordingTool("get_weather", calls)
         let swap: @Sendable (BetaToolRunner) async throws -> Void = { runner in
@@ -323,8 +323,8 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
     @Test func aToolThatReturnsNoneSendsANullToolResult() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_none"), endTurnResponse()])
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
-            tools: [weatherTool { _ in nil }], thread: false)
+            maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
+            tools: [toolsWeatherTool { _ in nil }], thread: false)
         let results = try await collectToolResults(runner)
         #expect(mock.calls == 2, "the follow-up request carrying the tool_result was sent")
         #expect(results.count == 1)
@@ -338,11 +338,11 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
         let mock = MessagesMock([])
         let toolset = EchoToolset(family: "browser")
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("hi")], model: "claude-haiku-4-5", tools: [toolset], thread: false)
+            maxTokens: 1024, messages: [toolsUserMessage("hi")], model: "claude-haiku-4-5", tools: [toolset], thread: false)
         await #expect(throws: ToolsetsFixedError.self) { try await runner.addTools(toolset) }
         await #expect(throws: ToolsetsFixedError.self) { try await runner.addTools(JSONValue.object(["type": "browser_toolset_20260801"])) }
         await #expect(throws: ToolsetContractError.self) {
-            try await runner.addTools(recordingTool("browser", Box([])))
+            try await runner.addTools(recordingTool("browser", ToolsBox([])))
         }
         await #expect(throws: ToolsetsFixedError.self) { try await runner.removeTools("browser") }
         await #expect(throws: ToolsetsFixedError.self) { try await runner.removeTools(toolset) }
@@ -353,7 +353,7 @@ private func messages(_ body: JSONValue, last n: Int) -> [JSONValue] {
 /// A toolset that answers each member call with its name and input (`EchoBrowserToolset`).
 final class EchoToolset: BetaRunnableToolset, @unchecked Sendable {
     let family: String
-    let calls = Box<[String]>([])
+    let calls = ToolsBox<[String]>([])
     var fail: Set<String> = []
 
     init(family: String) { self.family = family }

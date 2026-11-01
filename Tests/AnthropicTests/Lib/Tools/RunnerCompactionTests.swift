@@ -36,7 +36,7 @@ private func compactRunner(_ client: Anthropic, betas: [AnthropicBetaParam]? = n
                            thread: Bool? = nil) throws -> BetaToolRunner
 {
     try client.beta.messages.toolRunner(
-        maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [weatherTool()],
+        maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [toolsWeatherTool()],
         maxIterations: maxIterations, contextManagement: contextManagement.map { .some($0) }, thread: thread, betas: betas)
 }
 
@@ -161,7 +161,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
         let mock = MessagesMock([compactedResponse(), endTurnResponse()])
         let runner = try compactRunner(try mock.client())
         // An edit made before the compaction request is part of what gets summarized.
-        try await runner.appendMessages(userMessage("And in NYC?"))
+        try await runner.appendMessages(toolsUserMessage("And in NYC?"))
         try await runner.compactBeforeNextTurn()
         let final = try await runner.untilDone()
         #expect(final.stopReason == .endTurn)
@@ -196,13 +196,13 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
 
     @Test func aToolRemovedInTheHistoryStaysRemovedAfterCompaction() async throws {
         let mock = MessagesMock([compactedResponse(), toolUseResponse("get_weather", "toolu_1", input: [:]), endTurnResponse()])
-        let calls = Box<[String]>([])
+        let calls = ToolsBox<[String]>([])
         let getWeather = BetaFunctionTool(name: "get_weather", description: "Lookup the weather.", inputSchema: ["type": "object"]) { _ in
             calls.mutate { $0.append("get_weather") }
             return "sunny"
         }
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [getWeather])
+            maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [getWeather])
         try await runner.appendMessages(json: ["role": "system", "content": [toolReferenceBlock("tool_removal", "get_weather")]])
         try await runner.compactBeforeNextTurn()
         try await expectWarning("Tool 'get_weather' not found in tool runner") { try await runner.untilDone() }
@@ -224,7 +224,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
     func compactionWithoutASummaryKeepsTheHistoryAndWarns(content: [JSONValue], stopReason: String) async throws {
         let mock = MessagesMock([responseWithoutASummary(content, stopReason), toolUseResponse("get_weather", "toolu_1"), endTurnResponse()])
         let runner = try compactRunner(try mock.client(), thread: false)
-        try await runner.appendMessages(userMessage("And in NYC?"))
+        try await runner.appendMessages(toolsUserMessage("And in NYC?"))
         try await runner.compactBeforeNextTurn()
         var yielded = 0
         let (_, capture) = try await ToolDiagnostics.capture {
@@ -264,7 +264,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
             if message.stopReason == .toolUse {
                 try await runner.compactBeforeNextTurn()
             } else if message.stopReason == .compaction {
-                try await expectValueError("Message params can't be changed") { try await runner.appendMessages(userMessage("And in NYC?")) }
+                try await expectValueError("Message params can't be changed") { try await runner.appendMessages(toolsUserMessage("And in NYC?")) }
                 try await expectValueError("while the conversation is being compacted") {
                     try await runner.setMessagesParams { params in
                         var p = params
@@ -291,7 +291,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
         await #expect(throws: InternalServerError.self) {
             for try await _ in runner { try await runner.compactBeforeNextTurn() }
         }
-        try await runner.appendMessages(userMessage("And in NYC?"))
+        try await runner.appendMessages(toolsUserMessage("And in NYC?"))
         var rest: [BetaMessage] = []
         for try await message in runner { rest.append(message) }
         #expect(rest.isEmpty)
@@ -314,7 +314,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
             _ = try BetaToolRunner(params: [
                 "max_tokens": 1024, "model": "claude-haiku-4-5",
                 "messages": [["role": "user", "content": "What is the weather in SF?"]], "compaction": ["type": "summarize"],
-            ], tools: [weatherTool()], client: client)
+            ], tools: [toolsWeatherTool()], client: client)
         }
     }
 
@@ -358,7 +358,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
         forecast["content"] = [["type": "text", "text": #"{"summary": "Sunny"}"#]]
         let mock = MessagesMock([compactedResponse(), forecast])
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [weatherTool()],
+            maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [toolsWeatherTool()],
             fallbacks: fallbacks.isNull ? nil : .some(try fallbacks.decode(as: BetaFallbacksParam.self)),
             outputConfig: try JSONValue.object(["effort": "low", "format": Self.forecastFormat]).decode(),
             stopSequences: ["STOP"], system: "Be brief.", toolChoice: try toolChoice.decode(as: BetaToolChoiceParam.self), betas: ["compact-2026-09-04"])
@@ -397,7 +397,7 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
     @Test func runnerSendsNoBetaHeaderWhenGivenNoBetas() async throws {
         let mock = MessagesMock([toolUseResponse("get_weather", "toolu_weather"), endTurnResponse()])
         let runner = try mock.client().beta.messages.toolRunner(
-            maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [weatherTool()],
+            maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [toolsWeatherTool()],
             outputConfig: try JSONValue.object(["format": Self.forecastFormat]).decode(), thread: false)
         _ = try await runner.untilDone()
         #expect(mock.bodies.map { $0["output_config"]?["format"] } == [Self.forecastFormat, Self.forecastFormat])
@@ -427,7 +427,7 @@ private func weatherThenBrowserReplies() -> [JSONValue] {
 }
 
 private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable {
-    let calls = Box<[JSONValue]>([])
+    let calls = ToolsBox<[JSONValue]>([])
     override var toolsetName: String { "browser" }
     override var helperTag: String? { "browser-toolset" }
     override func toDict() throws -> JSONValue { ["type": "browser_toolset_20260801"] }
@@ -454,7 +454,7 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
                                       transport: try mock.client().transport, environment: [:])
                 : try mock.client()
             let browser = TaggedEchoToolset()
-            _ = try await makeRunner(client, weatherTool(), browser).untilDone()
+            _ = try await makeRunner(client, toolsWeatherTool(), browser).untilDone()
             #expect(browser.calls.value == [["open", ["url": "a.test"]]])
             return mock.requests.map { request in
                 var headers: [String: String] = [:]
@@ -467,7 +467,7 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
 
         let fromToolRunner = try await requests { client, weather, browser in
             try client.beta.messages.toolRunner(
-                maxTokens: 1024, messages: [userMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
+                maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
                 tools: [weather, browser, webSearchWithMaxUses], maxIterations: 5, system: "Be brief.",
                 thread: threading == "thread_false" ? false : nil, betas: ["inline-tools-2026-09-15"], extraHeaders: ["x-example": "yes"])
         }
@@ -492,7 +492,7 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
     @Test func aRunnerMadeFromParamsSendsTheirToolDefinitionsAndRunsItsTools() async throws {
         let replies = weatherThenBrowserReplies()
         let mock = MessagesMock([replies[0], replies[2]])
-        let tool = weatherTool()
+        let tool = toolsWeatherTool()
         var definition = try tool.toToolParam()
         definition["cache_control"] = ["type": "ephemeral"]
         var params = weatherFields
@@ -507,9 +507,9 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
         let client = try mockClient()
         var params = weatherFields
         params["thread"] = ["type": "create"]
-        params["tools"] = [try weatherTool().toToolParam()]
+        params["tools"] = [try toolsWeatherTool().toToolParam()]
         do {
-            _ = try BetaToolRunner(params: params, tools: [weatherTool()], client: client)
+            _ = try BetaToolRunner(params: params, tools: [toolsWeatherTool()], client: client)
             Issue.record("expected a TypeError")
         } catch let e as ArgumentTypeError {
             #expect(e.message.hasPrefix("`thread` cannot be set in the params of a tool runner, got {'type': 'create'}."))

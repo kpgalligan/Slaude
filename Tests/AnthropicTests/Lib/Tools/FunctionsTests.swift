@@ -126,7 +126,7 @@ import Testing
 
 @Suite struct ContextManagerToolTests {
     @Test func asyncContextManagerToolLazyEnterAndCleanup() async throws {
-        let seen = Box<[String]>([])
+        let seen = ToolsBox<[String]>([])
         let schema: [String: JSONValue] = ["type": "object", "properties": ["value": ["type": "string"]], "required": ["value"]]
         let echo = BetaFunctionTool(name: "echo", description: "Echo the value.", inputSchema: schema, enter: {
             seen.mutate { $0.append("enter") }
@@ -150,7 +150,7 @@ import Testing
     }
 
     @Test func closeHookRuns() async throws {
-        let closed = Box(false)
+        let closed = ToolsBox(false)
         let tool = BetaFunctionTool(name: "t", inputSchema: ["type": "object"], close: { closed.value = true }) { _ in nil }
         await acloseRunnableTool(tool)
         #expect(closed.value)
