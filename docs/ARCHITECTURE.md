@@ -21,6 +21,7 @@ structs.
 | `Sources/Anthropic/Core/` | Port of `_base_client`, `_streaming`, `_qs`, `_exceptions`, `pagination`, ... | hand-ported |
 | `Sources/Anthropic/Client.swift` | Port of `_client.AsyncAnthropic` | hand-ported |
 | `Sources/Anthropic/Lib/` | Port of `anthropic/lib/**` (helpers, tool runners, platform clients) | hand-ported |
+| `Sources/Anthropic/Lib/Platforms/`, `Lib/Crypto/` | AWS / Bedrock / Vertex / Google Cloud / Foundry clients, SigV4, pure-Swift SHA-256 / HMAC / CRC32 / RSA (see `docs/porting/platforms.md`) | hand-ported |
 | `Tests/AnthropicTests/Generated/` | One file per `tests/api_resources/**.py` | **generated** |
 | `Tests/AnthropicTests/Support/` | Test helpers (`MockRoute`, ...) | hand-written |
 | `Tests/AnthropicTests/Core/`, `Tests/AnthropicTests/Lib/` | Ports of the other upstream tests | hand-ported |

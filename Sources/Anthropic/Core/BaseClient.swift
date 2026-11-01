@@ -98,7 +98,7 @@ open class BaseClient: @unchecked Sendable {
 
     /// The base URL requests are made against (always ending in `/`). Settable, like Python's
     /// `client.base_url = ...`.
-    public var baseURL: URL {
+    open var baseURL: URL {
         get { stateLock.withLock { _baseURL } }
         set { stateLock.withLock { _baseURL = BaseClient.enforceTrailingSlash(newValue) } }
     }
