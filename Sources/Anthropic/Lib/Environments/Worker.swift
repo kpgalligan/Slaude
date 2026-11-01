@@ -2,8 +2,6 @@
 // hand-written `AsyncWork.worker(...)` of `resources/beta/environments/work.py`: the self-hosted environment
 // worker, the composition of the control-plane poller, the per-session `AgentToolContext` (skills download), the
 // session's memory-store sync (`SessionMemoryStores`) and the per-session tool runner.
-//
-// Not ported here (see docs/porting/threads-environments-sessions.md): the OpenTelemetry work spans.
 
 import Foundation
 
@@ -252,7 +250,7 @@ struct EnvironmentWorkerHooks: Sendable {
         return SessionToolRunner(
             events: ResourceSessionEvents(resource: scoped.beta.sessions.events), sessionID: run.sessionID, tools: run.tools,
             maxIdle: run.maxIdle, extraHeaders: run.extraHeaders, timings: SessionRunnerTimings(),
-            sendRetryWindow: run.sendRetryWindow
+            sendRetryWindow: run.sendRetryWindow, spanClient: scoped, conversationEvents: sessionConversationEvents(scoped, bearer: true)
         ).run()
     }
     var heartbeat = HeartbeatTimings()
@@ -414,6 +412,10 @@ public final class EnvironmentWorker: Sendable {
 
     /// Poll the environment and serve each claimed session until cancelled. One item that fails is logged and
     /// skipped; cancellation ends the loop.
+    ///
+    /// Each work item has the poller's OpenTelemetry span, `anthropic.environment.work`, when the client has spans. It
+    /// is the current span while the item is handled, so the spans of the worker's requests and tools for the item are
+    /// its children. `handleItem()` has no such span.
     public func run() async throws {
         guard let environmentID, let environmentKey else {
             throw ValueError("EnvironmentWorker.run: environment_id and environment_key are required to poll for work")
@@ -421,15 +423,26 @@ public final class EnvironmentWorker: Sendable {
         // Poll / ack / stop go through a Bearer-only sub-client tagged with the poller's helper telemetry; each
         // item builds its own `environments-worker` sub-client for the heartbeat and force-stop.
         let pollClient = try hooks.scopedClient(client, environmentKey, .environmentsWorkPoller)
+        // The poller starts the span of each item; the worker handles the item with it current, and ends it first.
+        let workSpan = WorkSpan()
         let poller = EnvironmentWorkPoller(work: hooks.workAPI(pollClient), environmentID: environmentID, workerID: workerID,
-                                           autoStop: false, extraHeaders: extraHeaders)
+                                           blockMs: POLL_BLOCK_MS, reclaimOlderThanMs: nil, drain: false, autoStop: false,
+                                           extraHeaders: extraHeaders, hooks: EnvironmentPollerHooks(), workSpan: workSpan)
         let items = hooks.workItems?(poller) ?? AsyncThrowingStream { try await poller.next() }
         for try await item in items {
             let lease = EnvironmentLease()
             do {
-                try await serve(EnvironmentWorkItem(item), environmentKey: environmentKey, lease: lease)
+                try await asCurrentSpan(workSpan.span) {
+                    try await serve(EnvironmentWorkItem(item), environmentKey: environmentKey, lease: lease)
+                }
+                workSpan.end(finished: lease.kept)
             } catch {
-                if error is CancellationError || Task.isCancelled { throw error }
+                if error is CancellationError || Task.isCancelled {
+                    workSpan.end(error: CancellationError())
+                    throw error
+                }
+                // An error after the lease is gone is a side effect of losing it, not a failed item.
+                workSpan.end(error: lease.kept ? error : nil, finished: lease.kept)
                 // One bad item fails that item, not the worker: the teardown already stopped or released it.
                 workerLog.error("work item failed work_id=\(item.id) error=\(helperErrorString(error))")
             }

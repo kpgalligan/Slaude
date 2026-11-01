@@ -28,6 +28,7 @@ extension BaseClient {
     public func withToolUseSpan<R>(toolUseID: String, toolName: String, description: String? = nil, input: JSONValue?,
                                    toolsetName: String? = nil, agentTool: Bool = false, mcpTool: Bool = false, sessionID: String? = nil,
                                    sessionThreadID: String? = nil, conversationID: String? = nil,
+                                   isolation: isolated (any Actor)? = #isolation,
                                    _ body: (ToolRun) async throws -> R) async rethrows -> R
     {
         let run = ToolRun()
@@ -48,7 +49,7 @@ extension BaseClient {
             "gen_ai.tool.type": "function",
         ]))
         defer { endToolUseSpan(span, input: input, run: run) }
-        return try await TracingContext.withSpan(span) { try await body(run) }
+        return try await asCurrentSpan(span) { try await body(run) }
     }
 
     /// Ends the span with the run's result. An error result fails it with `tool_error`, and none leaves its status
@@ -68,6 +69,29 @@ extension BaseClient {
         }
         span.end()
     }
+}
+
+/// The `gen_ai.tool.description` of a tool's span (`tool_description`): a function tool's description, or the one of a
+/// builtin tool's definition. Other tools, toolsets among them, have none.
+func toolSpanDescription(_ tool: AnyObject) -> String? {
+    var description: String?
+    if let function = tool as? BetaFunctionTool {
+        description = function.description
+    } else if let builtin = tool as? BetaBuiltinFunctionTool {
+        description = (try? builtin.toDict())?["description"]?.stringValue
+    }
+    // A function tool without a description has an empty one.
+    return description?.isEmpty == false ? description : nil
+}
+
+/// Runs `body` with `span`, if any, current, without ending it when `body` returns (`as_current_span`). Without a span,
+/// the current span stays current.
+func asCurrentSpan<R>(_ span: (any Span)?, isolation: isolated (any Actor)? = #isolation,
+                      _ body: () async throws -> R) async rethrows -> R
+{
+    guard let span else { return try await body() }
+    // `withValue` runs its operation where it is called, on `isolation`.
+    return try await TracingContext.$current.withValue(TracingContext.current.with(span: span)) { try await body() }
 }
 
 /// Sets the status of a tool runner's span, if it has one: `OK`, or what `error` makes it (`set_tool_runner_status`).

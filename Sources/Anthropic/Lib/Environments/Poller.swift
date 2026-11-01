@@ -22,19 +22,29 @@ public protocol EnvironmentWorkAPI: Sendable {
     func stop(_ workID: String, environmentID: String, force: Bool?, extraHeaders: Headers?) async throws
     func heartbeat(_ workID: String, environmentID: String, expectedLastHeartbeat: String,
                    extraHeaders: Headers?) async throws -> BetaSelfHostedWorkHeartbeatResponse
+    /// The client whose options say whether each work item has a span, and whose tracer starts it (`work._client`).
+    /// `nil`, the default, gives the items no spans.
+    var spanClient: BaseClient? { get }
+}
+
+extension EnvironmentWorkAPI {
+    public var spanClient: BaseClient? { nil }
 }
 
 /// `EnvironmentWorkAPI` over the generated `client.beta.environments.work` resource.
 struct ResourceEnvironmentWork: EnvironmentWorkAPI {
     let resource: BetaEnvironmentsWorkResource
 
+    var spanClient: BaseClient? { resource.client }
+
     func poll(_ environmentID: String, blockMs: Int?, reclaimOlderThanMs: Int?, workerID: String,
               extraHeaders: Headers?) async throws -> BetaSelfHostedWork?
     {
         let block: Int?? = blockMs.map { .some($0) } ?? .none
         let reclaim: Int?? = reclaimOlderThanMs.map { .some($0) } ?? .none
+        // Read raw: the method's type is not optional, and a call with a span would parse the body into it.
         let response = try await resource._poll(environmentID, blockMs: block, reclaimOlderThanMs: reclaim, anthropicWorkerID: workerID,
-                                                extraHeaders: extraHeaders, _mode: .parsed)
+                                                extraHeaders: extraHeaders, _mode: .raw)
         // An empty poll answers `null` (Python's `Optional[BetaSelfHostedWork]`).
         let data = try await response.read()
         if data.allSatisfy({ $0 == 0x20 || $0 == 0x0A || $0 == 0x0D || $0 == 0x09 }) { return nil }
@@ -148,6 +158,9 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
     public let autoStop: Bool
     public let extraHeaders: Headers?
     var hooks: EnvironmentPollerHooks
+    /// The span of the item handed out last. A consumer that gives the poller its own, as the environment worker
+    /// does, handles the item with its span current and ends the span first, with how the handling went.
+    let workSpan: WorkSpan
 
     private let lock = NSLock()
     private var outstanding: BetaSelfHostedWork?
@@ -177,8 +190,9 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
     }
 
     init(work: any EnvironmentWorkAPI, environmentID: String, workerID: String?, blockMs: Int?, reclaimOlderThanMs: Int?,
-         drain: Bool, autoStop: Bool, extraHeaders: Headers?, hooks: EnvironmentPollerHooks)
+         drain: Bool, autoStop: Bool, extraHeaders: Headers?, hooks: EnvironmentPollerHooks, workSpan: WorkSpan = WorkSpan())
     {
+        self.workSpan = workSpan
         self.work = work
         self.environmentID = environmentID
         self.workerID = workerID ?? defaultWorkerID()
@@ -197,6 +211,7 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
             let work = self.work, environmentID = self.environmentID, extraHeaders = self.extraHeaders
             Task { await stopAfterBody(work, item, environmentID: environmentID, extraHeaders: extraHeaders) }
         }
+        workSpan.end()
     }
 
     public struct AsyncIterator: AsyncIteratorProtocol {
@@ -224,10 +239,24 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
             outstanding = nil
             return item
         }
-        if let item { await stopAfterBody(work, item, environmentID: environmentID, extraHeaders: extraHeaders) }
+        await finishWithItem(item)
+    }
+
+    /// The consumer is done with the item handed out last: stop it (with `autoStop`) in its span, then end the span.
+    private func finishWithItem(_ item: BetaSelfHostedWork?) async {
+        if let item {
+            await asCurrentSpan(workSpan.span) {
+                await stopAfterBody(work, item, environmentID: environmentID, extraHeaders: extraHeaders)
+            }
+        }
+        workSpan.end()
     }
 
     /// The next claimed and ack'd work item, or `nil` once a drain finds the queue empty.
+    ///
+    /// Each item has an `anthropic.environment.work` span when the client has spans. The poller starts it when a poll
+    /// returns the item, and ends it with status `OK` when the consumer asks for the next item or closes the poller.
+    /// The item's requests (ack, stop) are its children; the span is not current in the consumer's code.
     public func next() async throws -> BetaSelfHostedWork? {
         let previous: BetaSelfHostedWork? = lock.withLock {
             let item = outstanding
@@ -235,7 +264,7 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
             return item
         }
         // The loop body is done with the previous item.
-        if let previous { await stopAfterBody(work, previous, environmentID: environmentID, extraHeaders: extraHeaders) }
+        await finishWithItem(previous)
         if lock.withLock({ finished }) { return nil }
         if !started {
             started = true
@@ -280,21 +309,33 @@ public final class EnvironmentWorkPoller: AsyncSequence, @unchecked Sendable {
                 continue
             }
             idle.onClaim()
+            if let client = work.spanClient {
+                workSpan.start(client, environmentID: item.environmentID, workID: item.id, sessionID: item.data.id)
+            }
             pollerLog.info("claimed work work_id=\(item.id) work_type=\(item.data.type)")
             do {
-                try await work.ack(item.id, environmentID: environmentID, extraHeaders: extraHeaders)
+                try await asCurrentSpan(workSpan.span) {
+                    try await work.ack(item.id, environmentID: environmentID, extraHeaders: extraHeaders)
+                }
             } catch let error where HelperRetry.isTransient(error) {
                 if HelperRetry.isFatalStatusError(error) {
                     pollerLog.error("ack failed permanently; force-stopping work_id=\(item.id) error=\(helperErrorString(error))")
-                    await forceStopQuietly(work, item.id, environmentID: environmentID, extraHeaders: extraHeaders)
+                    await asCurrentSpan(workSpan.span) {
+                        await forceStopQuietly(work, item.id, environmentID: environmentID, extraHeaders: extraHeaders)
+                    }
+                    workSpan.end(error: error)
                     continue
                 }
                 ackAttempt += 1
                 let wait = HelperRetry.backoff(attempt: ackAttempt, cap: POLL_BACKOFF_CAP) + HelperRetry.jitter(0, 1)
                 pollerLog.warning(
                     "ack failed, backing off work_id=\(item.id) attempt=\(ackAttempt) backoff=\(String(format: "%.1f", wait))s error=\(helperErrorString(error))")
+                workSpan.end(error: error)
                 try await hooks.sleep(wait)
                 continue
+            } catch {
+                workSpan.end(error: error)
+                throw error
             }
             ackAttempt = 0
             if autoStop { lock.withLock { outstanding = item } }

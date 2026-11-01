@@ -1,6 +1,6 @@
-// The spans of `lib/_tracing/_tools.py` and `lib/_tracing/_work.py`. Their upstream tests drive the tool runners and
-// the environment worker (tests/lib/tools/test_open_telemetry.py), which are not ported yet; these check the helpers
-// that those runners call.
+// The spans of `lib/_tracing/_tools.py` and `lib/_tracing/_work.py`: Swift-only checks of the helpers that the runners
+// call. Their upstream tests, which drive the runners, the poller and the worker, are ported in
+// `Lib/Tools/ToolRunnerSpanTests.swift`, `SessionRunnerSpanTests.swift` and `Lib/Environments/*SpanTests.swift`.
 
 import Foundation
 import Testing

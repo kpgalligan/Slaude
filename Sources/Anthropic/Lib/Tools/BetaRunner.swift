@@ -172,6 +172,15 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
     private var finished = false
     private var loopStopReason: BetaStopReason?
 
+    /// Whether the run has started: the first `next()` starts it, and with it the `anthropic.messages.tool_runner`
+    /// span (Python's `__run__` generator, which starts when it is first iterated).
+    private var runStarted = false
+    /// Whether the run has started and not ended yet, so that its span is still open.
+    private var runOpen = false
+    /// The span of the run, which a tool that runs while the application reads a reply is a child of too. `nil`
+    /// without a tracer.
+    private var toolRunnerSpan: (any Span)?
+
     /// What the loop does when it is next asked for an item.
     private enum PendingStep {
         /// Handle the reply of a turn that was handed out.
@@ -214,6 +223,53 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
 
     /// The next item, or `nil` once the loop is done.
     public func next() async throws -> Item? {
+        if !runStarted && !closed && !finished {
+            runStarted = true
+            runOpen = true
+            toolRunnerSpan = startRunSpan()
+        }
+        guard runOpen else { return try await step() }
+        do {
+            // The runner's own code runs with its span current. Each step enters the span again, because the
+            // application resumes the runner from its own context; the item is handed out outside it.
+            let item = try await asCurrentSpan(toolRunnerSpan) { try await step() }
+            // A closed runner stops here too, and closing leaves the status unset.
+            if item == nil { endRun(error: nil) }
+            return item
+        } catch {
+            endRun(error: error)
+            throw error
+        }
+    }
+
+    /// Starts the span of the run (`_start_tool_runner_span`), with the params that its first request takes.
+    private func startRunSpan() -> (any Span)? {
+        let params = thread.state.params.fields
+        let jsonOutput = params["output_config"]?["format"]?["type"] == "json_schema" || thread.state.outputFormat != nil
+        return thread.client.startToolRunnerSpan(model: params["model"]?.stringValue ?? "", jsonOutput: jsonOutput)
+    }
+
+    /// Ends the run's span, once: `OK` when the loop ran to its end, what `error` makes it, or unset for a closed
+    /// runner and a cancellation.
+    private func endRun(error: Error?) {
+        guard runOpen else { return }
+        runOpen = false
+        if let error {
+            setToolRunnerStatus(toolRunnerSpan, error: error)
+        } else if !closed {
+            setToolRunnerStatus(toolRunnerSpan)
+        }
+        endToolRunnerSpan(toolRunnerSpan)
+    }
+
+    deinit {
+        // A runner dropped while its loop is open ends the span with no status, as Python's event loop closes an
+        // abandoned generator.
+        if runOpen { toolRunnerSpan?.end() }
+    }
+
+    /// One step of the loop: the next item, or `nil` once the loop is done.
+    private func step() async throws -> Item? {
         do {
             while true {
                 if closed { finished = true }
@@ -252,7 +308,9 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
         guard !runningEagerTool, let step = pending else { return }
         pending = nil
         finished = true
+        // Closing the request is the runner's code too, so it comes before the span ends, with its status unset.
         abandon(step)
+        endRun(error: nil)
     }
 
     /// Close the request of a step that is not resumed.
@@ -822,7 +880,7 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
             }
             let result: JSONValue
             if let tool {
-                result = try await runTool(tool, toolUse)
+                result = try await runToolInSpan(tool, toolUse)
             } else {
                 ToolDiagnostics.warn(
                     "Tool '\(toolUse.name)' not found in tool runner. "
@@ -854,6 +912,19 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
         }
     }
 
+    /// Runs `tool` for the call `toolUse` in the call's span (`_tool_use_span`). The result the runner sends back, an
+    /// error result too, is made inside it.
+    func runToolInSpan(_ tool: any BetaRunnableTool, _ toolUse: BetaToolUseBlock) async throws -> JSONValue {
+        try await thread.client.withToolUseSpan(
+            toolUseID: toolUse.id, toolName: toolUse.name, description: toolSpanDescription(tool), input: .object(toolUse.input),
+            toolsetName: toolUse.toolsetName, mcpTool: tool.helperTag == "mcp_tool"
+        ) { run in
+            let result = try await runTool(tool, toolUse)
+            run.result = result
+            return result
+        }
+    }
+
     func runToolsetMember(_ toolUse: BetaToolUseBlock) async throws -> JSONValue {
         guard let toolset = toolsetFor(toolUse) else {
             return toolsetResultBlock(
@@ -861,7 +932,14 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
                 .string("Error: Toolset '\(quotedName(toolUse.toolsetName))' member '\(quotedName(toolUse.name))' not found"),
                 isError: true)
         }
-        return try await toolset.toolResultJSON(toolUse)
+        // A toolset has no description.
+        return try await thread.client.withToolUseSpan(
+            toolUseID: toolUse.id, toolName: toolUse.name, input: .object(toolUse.input), toolsetName: toolUse.toolsetName
+        ) { run in
+            let result = try await toolset.toolResultJSON(toolUse)
+            run.result = result
+            return result
+        }
     }
 
     /// Called with each event of a streamed reply as the reader asks for it (`_run_tools_while_streaming`): runs the
@@ -886,7 +964,8 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
                 if !calls.waitingToolsets.contains(family) {
                     runningEagerTool = true
                     defer { runningEagerTool = false }
-                    let memberResult = try await runToolsetMember(movedOnFrom)
+                    // The application resumed the reply from its own context, as it resumes the loop.
+                    let memberResult = try await asCurrentSpan(toolRunnerSpan) { try await runToolsetMember(movedOnFrom) }
                     calls.record(movedOnFrom, memberResult)
                     if memberResult["is_error"] == true { calls.waitingToolsets.insert(family) }
                 }
@@ -894,7 +973,8 @@ public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence
                 // A call to a tool the runner doesn't have gets its error result with the tool response.
                 runningEagerTool = true
                 defer { runningEagerTool = false }
-                calls.record(movedOnFrom, try await runTool(tool, movedOnFrom))
+                let result = try await asCurrentSpan(toolRunnerSpan) { try await runToolInSpan(tool, movedOnFrom) }
+                calls.record(movedOnFrom, result)
             }
         }
         calls.movedOnFrom = calls.track(event)

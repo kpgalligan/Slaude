@@ -41,6 +41,11 @@ reports `swift`.
   end, a failure, `close()`, and dropping the response (`deinit`) report how the body ended. `Stream` calls `begin`,
   `item` and `end` on it. `MessageStream` / `BetaMessageStream` give their snapshots to the span's `StreamedMessage`
   (`share_message_snapshot`), and withhold them when an event cannot be accumulated.
+* The tool runners, the Sessions tool runner, the toolsets they run, the work poller and the environment worker start
+  the spans of `ToolAndWorkSpans.swift` where upstream's do (see `tools.md` and `threads-environments-sessions.md`).
+  `asCurrentSpan` is `as_current_span`: it makes a span current for a block without ending it, keeps the current span
+  when there is none, and takes the caller's actor (`#isolation`), as `withToolUseSpan` does, so a runner's actor runs
+  its own code inside it.
 * `FinalRequestOptions` gained `spanQueryParams`, `spanContentQueryParams`, `spanAttributes`, `spanBodyAttributes` and
   `spanCreatedID`; `ParamsBuilder.keys` is every query parameter the method declares.
 
@@ -79,6 +84,8 @@ reports `swift`.
 | `TestContent` | `OpenTelemetryContentTests.swift` | |
 | `TestResourceIds`, `TestMalformedResponses`, `TestMalformedCountsAndBatches`, `TestTracingFailures`, tripwires | `OpenTelemetryResourceTests.swift` | |
 | (`_tools.py`, `_work.py` helpers) | `TracingWorkAndToolSpanTests.swift` | Swift-only checks of the helpers that the runners call |
+| `tests/lib/tools/test_open_telemetry.py` | `Lib/Tools/ToolRunnerSpanTests.swift`, `SessionRunnerSpanTests.swift` | 69 of 71, as 54 Swift tests |
+| span tests of `tests/lib/environments/test_poller_method.py`, `test_worker.py` | `Lib/Environments/PollerSpanTests.swift`, `WorkerSpanTests.swift` | 5 of 6, 6 of 6 (see `threads-environments-sessions.md`) |
 
 Only the async variants are ported (`SYNC_AND_ASYNC` parametrizations run once; a sync test whose async twin exists is
 the twin). Sync-only upstream tests are ported against the async client.
@@ -87,8 +94,23 @@ the twin). Sync-only upstream tests are ported against the async client.
 
 ### `tests/lib/tools/test_open_telemetry.py`
 
-Skipped whole: it drives the tool runners, which another agent is porting concurrently. The span helpers that the runners
-call are ported (`ToolAndWorkSpans.swift`) and checked in `TracingWorkAndToolSpanTests.swift`.
+69 of 71 are ported (`ToolRunnerSpanTests`, `SessionRunnerSpanTests`); a sync test and its async twin are one Swift test.
+
+| Test | Reason |
+| --- | --- |
+| `test_tool_content_that_json_cannot_hold_is_not_recorded` | A circular `dict`; a `JSONValue` cannot be circular. |
+| `test_thread_status_event_types_all_tell_the_primary_thread` | A tripwire over pydantic type hints; the generated Swift enums cannot be enumerated at runtime. |
+| `test_all_of_the_runners_code_runs_in_the_tool_runner_span` (and async) (half) | `instrument` monkeypatches the runner's private `_append_tool_results` / `_register_compaction_response`; the rest (each step in a context of its own, the runner's requests and tool in its span) is ported. |
+| `test_closing_the_async_streaming_runner_from_another_task_ends_its_loop`, `..._twice_at_once_closes_it_once`, `..._during_a_compaction_closes_its_stream` (halves) | `slow_stream_closes` monkeypatches `AsyncStream.close` to suspend; a Swift stream closes synchronously, inside the runner's actor, so there is no close in progress to observe. The spans are ported. |
+| `test_async_runners_that_are_open_when_the_event_loop_ends_have_no_status` | Ported as runners dropped while open (`streamingRunnersThatAreDroppedWhileOpenHaveNoStatus`): the runner's `deinit` ends the span, as the event loop's closing of the generators does. |
+| `test_async_runner` | The twin of `test_tool_runner_and_tool_spans`, which runs the async runner here. |
+
+Upstream's session-runner tests give a stand-in client `_tracer` / `_otel`; here the runner over `FakeSessionEvents` is
+given a client with spans (`spanClient`). `test_client_that_sends_a_threads_results_has_the_clients_other_options` reads
+the copy's option from `sessionConversationEvents`, which the runner calls (upstream reads the runner's private
+`_events_by_conversation`). In `test_block_sent_as_its_json_is_recorded_by_its_type`, the text of a block sent as JSON
+has its keys sorted (`pythonJSONDumps`), as everywhere in the session runner. The `other` output format of
+`test_output_type_is_json_when_the_runner_sets_a_json_output_format` has an empty schema, which the Swift param requires.
 
 ### `tests/test_open_telemetry.py`
 

@@ -63,7 +63,34 @@ Toolset differences from upstream, all forced by Swift's types:
 ## Deferred
 
 * The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is ported in `Lib/Threads/` (see `threads-environments-sessions.md`).
-* `test_open_telemetry.py` belongs to the tracing port.
+
+## OpenTelemetry spans
+
+The spans of `lib/_tracing/_tools.py` (`ToolAndWorkSpans.swift`) are wired in as upstream's runners call them; the
+tests (`test_open_telemetry.py`) are listed in `tracing.md`.
+
+* `BaseBetaToolRunner` (`BetaRunner.swift`) starts `anthropic.messages.tool_runner` on its first `next()` (Python's
+  `__run__` generator starts when first iterated), and runs each step of the loop with it current, handing the item
+  out outside it. It ends `OK` when the loop runs to its end, with the error's status when a step throws, and unset
+  when the runner is closed (`close()` ends it after closing the request of the step it abandons), cancelled, or
+  dropped while open (`deinit`, as Python's event loop closes an abandoned generator). A tool's span
+  (`runToolInSpan`) and a toolset member's span (in `runToolsetMember`, only for a toolset that the runner has) wrap
+  the run and the result block made of it; a tool that runs while the application reads a reply
+  (`runToolsEagerly`) runs with the runner's span current. `generateToolCallResponse()` called by the application
+  runs the tools in the application's context.
+* The thread's requests (`sendCreate`, `sendCreateStreaming`) now pass `spanRoute`, `spanBodyAttributes` and the
+  `beta` qualifier, as `client.beta.messages.create(...)` does, so the runner's `anthropic.messages.create` spans have
+  `http.route` and the request attributes (`gen_ai.output.type`, ...).
+* `SessionToolRunner` has a `spanClient` (the runner's scoped client, or `nil` for a runner over `events:` alone)
+  and runs each owned tool in `anthropic.tool_use` (an `agent.tool_use` event) or `anthropic.custom_tool_use`, with
+  the event's `toolset_name`, Session and thread, and the conversation ID that the client's option sets, else the
+  event's thread, else the primary thread. The span records the result content as `_to_session_content` gives it
+  (`toSessionContentRecorded`: a block sent as its JSON text is recorded as the block). The result of a call whose
+  conversation ID the option does not set is sent by a copy of the client with that ID (`_events_for`,
+  `sessionConversationEvents`, cached per run); a Bearer-only copy goes through `ScopedClient.copyScopedClient(_:openTelemetry:)`.
+  `sessionScopedClient` with an environment key now uses `ScopedClient.copyWithBearerAuth` (upstream's
+  `_copy_client_with_bearer_auth`), so an `Authorization` / `X-Api-Key` custom header or the API key of the client
+  no longer rides along.
 
 ## Streaming runner and output format notes
 
@@ -244,6 +271,7 @@ shares and are ported as async tests.
 | `toolsets/test_browser_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetBrowserRunnerTests`) | 12 of 19 |
 | `toolsets/test_computer_runner.py` | `Toolsets/ToolsetRunnerTests.swift` (`ToolsetComputerRunnerTests`) | 7 of 7 |
 | `test_agent_toolset.py` | `AgentToolsetTests.swift` | 72 of 73 (related cases merged, as 49 Swift tests) |
+| `test_open_telemetry.py` | `ToolRunnerSpanTests.swift`, `SessionRunnerSpanTests.swift` (helpers in `ToolSpanSupport.swift`) | see `tracing.md` |
 
 The fakes of `toolsets/_fakes.py`, `_computer_fakes.py` and `_stubs.py` are in `Toolsets/ToolsetTestSupport.swift`
 (`ToolsetWorld` / `ToolsetFakeBrowser`, `ToolsetDesktop` / `ToolsetFakeDesktop`, `ToolsetEchoBrowser`); Python's

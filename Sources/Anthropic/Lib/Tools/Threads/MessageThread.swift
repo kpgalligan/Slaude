@@ -114,7 +114,8 @@ func sendCreate(_ client: BaseClient, _ arguments: CreateArguments) async throws
     }
     let options = try client.makeRequestOptions(
         method: "post", url: "/v1/messages", body: body, headers: headers, extraQuery: arguments.options.extraQuery,
-        extraBody: arguments.options.extraBody, timeout: timeout, mode: .parsed, spanName: "anthropic.messages.create")
+        extraBody: arguments.options.extraBody, timeout: timeout, mode: .parsed, spanName: "anthropic.messages.create",
+        spanRoute: "/v1/messages", spanBodyAttributes: messagesCreateRequestAttributes, qualifiers: ["beta": "true"])
     return try await client.requestResponse(BetaMessage.self, options).parse()
 }
 
@@ -126,6 +127,7 @@ func sendCreateStreaming(_ client: BaseClient, _ arguments: CreateArguments) asy
     let options = try client.makeRequestOptions(
         method: "post", url: "/v1/messages", body: body, headers: headers, extraQuery: arguments.options.extraQuery,
         extraBody: arguments.options.extraBody, timeout: arguments.options.timeout, mode: .parsed,
-        spanName: "anthropic.messages.create")
+        spanName: "anthropic.messages.create", spanRoute: "/v1/messages", spanBodyAttributes: messagesCreateRequestAttributes,
+        qualifiers: ["beta": "true"])
     return try await client.requestStreamResponse(BetaRawMessageStreamEvent.self, options).parse()
 }

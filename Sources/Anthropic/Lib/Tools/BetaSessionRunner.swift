@@ -153,25 +153,35 @@ func endsTurn(_ event: JSONValue) -> Bool {
 
 /// Bridges Messages-API tool-result content to the Sessions-API content union (`_to_session_content`): text,
 /// image, document and search_result blocks pass through; anything else is stringified. `nil` reads `(no output)`.
-func toSessionContent(_ content: JSONValue) -> [JSONValue] {
+func toSessionContent(_ content: JSONValue) -> [JSONValue] { toSessionContentRecorded(content).sent }
+
+/// `_to_session_content`: the content to send, and the content that the tool's span records, in which a stringified
+/// block stays the block itself.
+func toSessionContentRecorded(_ content: JSONValue) -> (sent: [JSONValue], recorded: [JSONValue]) {
     switch content {
-    case .null: return toSessionContent("(no output)")
-    case .string(let s): return [["type": "text", "text": .string(s.isEmpty ? "(no output)" : s)]]
+    case .null: return toSessionContentRecorded("(no output)")
+    case .string(let s):
+        let textOnly: [JSONValue] = [["type": "text", "text": .string(s.isEmpty ? "(no output)" : s)]]
+        return (textOnly, textOnly)
     case .array(let blocks):
         var out: [JSONValue] = []
+        var recorded: [JSONValue] = []
         for block in blocks {
             switch block["type"]?.stringValue {
             case "text":
                 let text = block["text"]?.stringValue ?? ""
                 out.append(["type": "text", "text": .string(text.isEmpty ? "(no output)" : text)])
+                recorded.append(out[out.count - 1])
             case "image", "document", "search_result":
                 out.append(block)
+                recorded.append(block)
             default:
                 out.append(["type": "text", "text": .string(pythonJSONDumps(block))])
+                recorded.append(block)
             }
         }
-        return out.isEmpty ? toSessionContent("(no output)") : out
-    default: return toSessionContent(.string(content.description))
+        return out.isEmpty ? toSessionContentRecorded("(no output)") : (out, recorded)
+    default: return toSessionContentRecorded(.string(content.description))
     }
 }
 
@@ -247,18 +257,28 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
     let timings: SessionRunnerTimings
     /// Override for the send retry window, re-read before every retry (the environment worker's lease TTL).
     let sendRetryWindow: @Sendable () -> TimeInterval?
+    /// The client whose options say whether each tool run has a span, and whose tracer starts it. `nil` for a runner
+    /// over events alone, whose runs have no spans.
+    let spanClient: BaseClient?
+    /// The events endpoints of a copy of the client whose spans have `conversationID` (`_events_for`): the result
+    /// of a tool call of a Session thread is sent with the thread's ID as the conversation ID of its request's span.
+    let conversationEvents: (@Sendable (_ conversationID: String) throws -> any SessionEventsAPI)?
 
     /// - Parameters:
     ///   - environmentKey: Authenticates the runner's requests with this Bearer credential (a self-hosted
     ///     environment key) in place of the client's own.
     ///   - extraHeaders: Headers threaded into every event stream / list / send request.
+    ///
+    /// Each tool run has an `anthropic.tool_use` (agent-toolset tool) or `anthropic.custom_tool_use` span when the
+    /// client has spans.
     public convenience init(client: Anthropic, sessionID: String, tools: [any BetaRunnableTool],
                             maxIdle: TimeInterval? = DEFAULT_MAX_IDLE, environmentKey: String? = nil,
                             extraHeaders: Headers? = nil) throws
     {
         let scoped = try sessionScopedClient(client, environmentKey: environmentKey)
         self.init(events: ResourceSessionEvents(resource: scoped.beta.sessions.events), sessionID: sessionID, tools: tools,
-                  maxIdle: maxIdle, extraHeaders: extraHeaders)
+                  maxIdle: maxIdle, extraHeaders: extraHeaders, timings: SessionRunnerTimings(), sendRetryWindow: { nil },
+                  spanClient: scoped, conversationEvents: sessionConversationEvents(scoped, bearer: environmentKey != nil))
     }
 
     /// A runner over any implementation of the events endpoints.
@@ -270,7 +290,8 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
     }
 
     init(events: any SessionEventsAPI, sessionID: String, tools: [any BetaRunnableTool], maxIdle: TimeInterval?,
-         extraHeaders: Headers?, timings: SessionRunnerTimings, sendRetryWindow: @escaping @Sendable () -> TimeInterval?)
+         extraHeaders: Headers?, timings: SessionRunnerTimings, sendRetryWindow: @escaping @Sendable () -> TimeInterval?,
+         spanClient: BaseClient? = nil, conversationEvents: (@Sendable (String) throws -> any SessionEventsAPI)? = nil)
     {
         self.events = events
         self.sessionID = sessionID
@@ -279,6 +300,8 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
         self.extraHeaders = extraHeaders
         self.timings = timings
         self.sendRetryWindow = sendRetryWindow
+        self.spanClient = spanClient
+        self.conversationEvents = conversationEvents
     }
 
     public func makeAsyncIterator() -> AsyncThrowingStream<DispatchedToolCall, Error>.AsyncIterator {
@@ -321,9 +344,21 @@ public final class SessionToolRunner: AsyncSequence, Sendable {
 func sessionScopedClient(_ client: Anthropic, environmentKey: String?) throws -> Anthropic {
     let helper: Headers = [STAINLESS_HELPER_HEADER: "session-tool-runner"]
     if let environmentKey {
-        return try client.copy(authToken: environmentKey, defaultHeaders: helper)
+        // Bearer-only: the client's API key and any `Authorization` / `X-Api-Key` custom header are left out.
+        return try ScopedClient.copyWithBearerAuth(client, authToken: environmentKey, helper: .sessionToolRunner)
     }
     return try client.copy(defaultHeaders: helper)
+}
+
+/// The events endpoints of a copy of the runner's client `scoped` whose option has `conversationID`, and the client's
+/// other OpenTelemetry options. A copy of a Bearer-only client sends the same Bearer alone.
+func sessionConversationEvents(_ scoped: Anthropic, bearer: Bool) -> @Sendable (String) throws -> any SessionEventsAPI {
+    { conversationID in
+        var option = scoped.openTelemetry
+        option.conversationID = conversationID
+        let copy = bearer ? try ScopedClient.copyScopedClient(scoped, openTelemetry: option) : try scoped.copy(openTelemetry: option)
+        return ResourceSessionEvents(resource: copy.beta.sessions.events)
+    }
 }
 
 extension BetaSessionsEventsResource {
@@ -352,8 +387,12 @@ actor SessionRunCore {
     private var answered = Set<String>()
     private var confirmations: [String: String] = [:]
     private var awaitingConfirmation = OrderedDict<JSONValue>()
+    /// The session's primary thread, whose tool events name no thread (`_note_primary_thread`). The live stream tells
+    /// it only while `historyRead`: after a history read that failed, its events may start mid-log.
     private var primaryThreadID: String?
     private var historyRead = false
+    /// The events endpoints of the copies of the client that `eventsFor` makes, by conversation ID.
+    private var eventsByConversation: [String: any SessionEventsAPI] = [:]
     private var stopped = false
     private var stopWaiters: [CheckedContinuation<Void, Never>] = []
     /// An error that ends the run and reaches the consumer.
@@ -654,10 +693,28 @@ actor SessionRunCore {
         var isError = false
         var sent = false
         if let tool = toolsByName[name] {
-            let resultEvent = await callTool(tool, event)
+            let resultEvent: JSONValue
+            let threadID = event["session_thread_id"].flatMap { $0.isNull ? nil : $0.stringValue }.flatMap { $0.isEmpty ? nil : $0 }
+            // An event of the primary thread names no thread.
+            let conversationID = threadID ?? primaryThreadID
+            if let spanClient = runner.spanClient {
+                resultEvent = await spanClient.withToolUseSpan(
+                    toolUseID: id, toolName: name, description: toolSpanDescription(tool), input: event["input"] ?? [:],
+                    // The event types do not declare the field yet, so an event that has it gives it.
+                    toolsetName: event["toolset_name"]?.stringValue, agentTool: event["type"] == "agent.tool_use",
+                    sessionID: runner.sessionID, sessionThreadID: threadID, conversationID: conversationID
+                ) { run in
+                    let (resultEvent, recorded) = await callTool(tool, event)
+                    run.content = .array(recorded)
+                    run.result = resultEvent
+                    return resultEvent
+                }
+            } else {
+                resultEvent = await callTool(tool, event).event
+            }
             result = resultEvent
             isError = resultEvent["is_error"] == true
-            sent = await sendResult(resultEvent, toolUseID: id)
+            sent = await sendResult(resultEvent, toolUseID: id, conversationID: conversationID)
         } else {
             // A name this runner is not registered for belongs to the other client servicing the session: post no
             // result, do not mark it answered, and leave the id pending for its owner.
@@ -668,8 +725,9 @@ actor SessionRunCore {
                                          posted: sent, confirmation: confirmation))
     }
 
-    /// Runs `tool` for `event` and builds the result event, turning a timeout or an error into an error result.
-    private func callTool(_ tool: any BetaRunnableTool, _ event: JSONValue) async -> JSONValue {
+    /// Runs `tool` for `event` and builds the result event, turning a timeout or an error into an error result. Also
+    /// returns the result's content as the tool's span records it.
+    private func callTool(_ tool: any BetaRunnableTool, _ event: JSONValue) async -> (event: JSONValue, recorded: [JSONValue]) {
         let name = event["name"]?.stringValue ?? ""
         let input = event["input"] ?? [:]
         let timeout = runner.timings.toolTimeout
@@ -688,19 +746,36 @@ actor SessionRunCore {
             content = toolErrorContent(error)
             isError = true
         }
-        return buildResultEvent(event, toSessionContent(content), isError: isError)
+        let (sent, recorded) = toSessionContentRecorded(content)
+        return (buildResultEvent(event, sent, isError: isError), recorded)
+    }
+
+    /// The events endpoints that send the result of a tool call whose span has `conversationID` (`_events_for`).
+    ///
+    /// The spans of its requests have the conversation ID of the tool's span. When the client's options set none, that
+    /// is the ID of the call's thread, and a copy of the client that sets it sends the result. The copy has the
+    /// client's other OpenTelemetry options.
+    private func eventsFor(_ conversationID: String?) -> any SessionEventsAPI {
+        guard let conversationID, let client = runner.spanClient, let makeEvents = runner.conversationEvents,
+              client.tracer != nil, client.otel.conversationID == nil
+        else { return runner.events }
+        if let events = eventsByConversation[conversationID] { return events }
+        guard let events = try? makeEvents(conversationID) else { return runner.events }
+        eventsByConversation[conversationID] = events
+        return events
     }
 
     /// Posts `result` back to the session, retrying transient failures with jittered exponential backoff until the
-    /// send retry window elapses.
-    private func sendResult(_ result: JSONValue, toolUseID: String) async -> Bool {
+    /// send retry window elapses. `conversationID` is the ID of the thread of the tool call, when the runner knows it.
+    private func sendResult(_ result: JSONValue, toolUseID: String, conversationID: String?) async -> Bool {
+        let events = eventsFor(conversationID)
         let start = now()
         var lastError: Error?
         var attempt = 0
         while true {
             attempt += 1
             do {
-                try await runner.events.sendEvents(runner.sessionID, events: [result], extraHeaders: runner.extraHeaders)
+                try await events.sendEvents(runner.sessionID, events: [result], extraHeaders: runner.extraHeaders)
                 answered.insert(toolUseID)
                 return true
             } catch {

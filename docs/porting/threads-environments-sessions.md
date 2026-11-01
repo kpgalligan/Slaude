@@ -62,16 +62,22 @@ each dispatched tool call. The teardown closes the context first, then (after a 
 `flushWrites()`, each bounded by `MEMORY_FLUSH_TIMEOUT` with a warning when cut off, then `dispose()`; the heartbeat
 keeps the lease until it is done.
 
+OpenTelemetry work spans (`WorkSpan`, `as_current_span` of `lib/_tracing/_work.py`): the poller starts the
+`anthropic.environment.work` span of each item a poll returns, from the client of its work API
+(`EnvironmentWorkAPI.spanClient`, the resource's client; `nil` for a fake, whose items have no spans), and sends the
+item's ack and stop with it current. A failed ack ends it with the error (a cancellation leaves it unset); otherwise it
+ends `OK` when the consumer asks for the next item or closes the poller (and when the poller is released). The span is
+not current in the consumer's code. `run()` gives its poller its own `WorkSpan` (an internal `init` parameter), serves
+each item with the span current, and ends it first: `OK`, with the item's error, or unset when the lease was lost or
+rejected, or the run was cancelled. `handleItem()` has no span. The poll now reads its response raw: the generated
+method's type is not optional, and a call with a span parses the body into it, which an empty poll's `null` cannot be.
+
 ### Sessions (`Sources/Anthropic/Lib/Sessions/Accumulate.swift`)
 
 | Upstream | Swift |
 | --- | --- |
 | `AccumulatedEvent` | `typealias AccumulatedEvent = BetaManagedAgentsAgentMessageEvent` |
 | `accumulate_managed_agents_event(accumulated, event)` | `accumulateManagedAgentsEvent(_:_:)` over a `BetaManagedAgentsStreamSessionEvents`, plus overloads for the `BetaManagedAgentsAgentMessageEvent` (non-optional result), `BetaManagedAgentsStartEvent` and `BetaManagedAgentsDeltaEvent` |
-
-## Not ported here
-
-* **OpenTelemetry work spans** (`WorkSpan`, `as_current_span`): belong to the tracing port.
 
 ## Tests
 
@@ -84,8 +90,8 @@ keeps the lease until it is done.
 | `threads/test_thread_tool_runner.py` | `Lib/Threads/ThreadsRunnerTests.swift`, `ThreadsAsyncTests.swift` | 32 of 35 (non-streaming cases of `RESPONSE_KINDS`) |
 | `threads/test_tool_runner_threading.py` | `Lib/Threads/ThreadsRunnerThreadingTests.swift` | 34 of 37 (non-streaming cases of `RESPONSE_KINDS`; `RUNNER_MODES` and `LOOP_BODIES` as arguments) |
 | `environments/test_poller.py` | `Lib/Environments/PollerTests.swift` (`EnvRetryHelpersTests`) | 4 of 4 |
-| `environments/test_poller_method.py` | `Lib/Environments/PollerTests.swift` | 27 of 33: every test but the 6 span tests (a sync `iter_work` test and its async twin are one Swift test; sync-only ones run async); +3 Swift checks (`poller(...)` over HTTP, `close()`, the default worker id) |
-| `environments/test_worker.py` | `Lib/Environments/WorkerTests.swift` | 28 of 36 (+1: the poll client of `run()`) |
+| `environments/test_poller_method.py` | `Lib/Environments/PollerTests.swift`, `PollerSpanTests.swift` (the span tests, over HTTP with a client that has spans) | 32 of 33 (a sync `iter_work` test and its async twin are one Swift test; sync-only ones run async); +3 Swift checks (`poller(...)` over HTTP, `close()`, the default worker id) |
+| `environments/test_worker.py` | `Lib/Environments/WorkerTests.swift`, `WorkerSpanTests.swift` (the span tests: the real poller over a work API that answers its polls, `EnvSpanPolledWork`) | 34 of 36 (+1: the poll client of `run()`) |
 | `tools/memory_sync/test_e2e_memory.py` | `Lib/Tools/MemorySync/MemorySyncE2ETests.swift` | 17 of 17 (see `tools.md`) |
 | `sessions/test_accumulate.py` | `Lib/Sessions/AccumulateTests.swift` | 15 of 15 |
 
@@ -119,7 +125,9 @@ The worker tests run the worker with its real scoped clients over a mock transpo
 * `test_heartbeat_keeps_beating_while_a_sync_tool_blocks`: Swift tools are async.
 
 `environments/test_poller_method.py`
-* The sync `iter_work` tests are the twins of the async ones.
+* The sync `iter_work` tests are the twins of the async ones (the `sync` case of each span test too).
+* `test_a_work_item_without_data_is_acked_and_given_with_a_span`: `BetaSelfHostedWork.data` is required in the
+  generated type, so a poll that answers an item with `data: null` does not decode, and there is no item to give.
 
 ### Deferred
 
@@ -132,14 +140,3 @@ The worker tests run the worker with its real scoped clients over a mock transpo
 * **`output_format` on the tool runner** (deferred in `tools.md`): `test_runner_output_format_sends_the_callers_betas_every_turn`.
   `test_runner_over_a_typed_thread_parses_the_final_message` is ported for its non-streaming case by parsing the
   runner's final message with the thread's output format (the Swift runner yields `BetaMessage`).
-* **Tracing** (`Lib/Tracing`): the OpenTelemetry span tests, `test_poller_method.py`
-  (`test_each_work_item_has_a_span_until_the_next_item`, `test_work_span_ends_ok_when_the_consumer_stops_polling`,
-  `test_work_span_fails_when_the_item_cannot_be_acked`,
-  `test_work_span_has_no_status_when_polling_is_interrupted_during_the_ack`,
-  `test_a_work_item_without_data_is_acked_and_given_with_a_span`, `test_tracing_that_fails_leaves_the_poller_as_it_is`)
-  and `test_worker.py` (`test_environment_worker_handles_an_item_in_its_span`,
-  `test_environment_worker_ends_the_span_ok_when_the_item_is_stopped`,
-  `test_environment_worker_fails_the_span_of_an_item_that_it_cannot_handle`,
-  `test_environment_worker_leaves_the_span_unset_when_it_loses_the_lease`,
-  `test_environment_worker_leaves_the_span_unset_when_losing_the_lease_raises_an_error`,
-  `test_environment_worker_leaves_the_span_unset_when_it_is_stopped`).

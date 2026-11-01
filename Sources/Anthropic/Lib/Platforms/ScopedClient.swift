@@ -33,9 +33,9 @@ public enum ScopedClient {
     }
 
     /// A copy of a client `copyWithBearerAuth` made, sending the same Bearer alone
-    /// (`copy_scoped_client`).
-    public static func copyScopedClient<C: Anthropic>(_ scoped: C) throws -> C {
-        guard let copy = try scoped.copy(setDefaultHeaders: stripAuth(scoped.customHeaders)) as? C else {
+    /// (`copy_scoped_client`). `openTelemetry` replaces the client's option, as it does in `copy`.
+    public static func copyScopedClient<C: Anthropic>(_ scoped: C, openTelemetry: OpenTelemetryOptions? = nil) throws -> C {
+        guard let copy = try scoped.copy(setDefaultHeaders: stripAuth(scoped.customHeaders), openTelemetry: openTelemetry) as? C else {
             throw AnthropicError("copy() of \(type(of: scoped)) did not return the same client type")
         }
         copy.apiKey = nil
