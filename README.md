@@ -13,7 +13,7 @@ which it tracks version for version. Currently tracking **anthropic 2.3.0** (API
   streaming and eager tools), memory/computer/browser/agent toolsets, message threads, environment
   workers, credentials (profiles, workload identity federation), OpenTelemetry tracing, refusal
   fallbacks, webhooks, and the AWS, Bedrock, Vertex, Google Cloud and Azure Foundry clients.
-- ~3,700 tests in all. See [docs/porting/STATUS.md](docs/porting/STATUS.md) for the upstream → Swift
+- ~3,750 tests in all. See [docs/porting/STATUS.md](docs/porting/STATUS.md) for the upstream → Swift
   map and what (if anything) was skipped, and why.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the transformation works and how Python
