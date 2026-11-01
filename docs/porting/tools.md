@@ -21,6 +21,7 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 | `FileStore` / `LocalFileStore` | `actor FileStore` (`open`, `createRoot`, `put`, `get`, `ls`, `findSymlinks`, `hashtree`, `hashFile`, `move`, `remove`, `dispose`); SHA-256 is a small internal implementation (Foundation has none on Linux) |
 | `_files.py` | `FileOps.readTextExact`, `FileOps.atomicWrite`, `readLineRange`, `LineRangeCollector` |
 | `mcp.py` (`mcp_tool` / `async_mcp_tool`, `mcp_content`, `mcp_message`, `mcp_resource_to_content`, `mcp_resource_to_file`) | `mcpTool`, `mcpContent`, `mcpMessage`, `mcpResourceToContent`, `mcpResourceToFile` over small MCP value types (`MCPTool`, `MCPContentBlock`, `MCPResourceContents`, `MCPPromptMessage`, `MCPCallToolResult`, `MCPReadResourceResult`) and `protocol MCPClientSession` (no MCP client library is available). Only `mcpTool` carries its helper tag (`mcp_tool`): the value-type results can't carry `mcp_content` / `mcp_message` tags |
+| `_skills.py` (`download_session_skills`, `_extract_skill_archive`) | `downloadSessionSkills(_:workdir:session:)` (and `skills:` for explicit skill ids), `extractSkillArchive`; zip (stored / deflate), tar and tar.gz are read by small internal readers (`Archives.swift`: inflate, gunzip, zip and ustar/pax/GNU tar), since Foundation has no decompression on Linux. bzip2 / xz tarballs are refused |
 | `logging` / `warnings` in the helpers | `ToolDiagnostics` (log handler, `AnthropicWarnings` for warnings, task-local `capture` for tests) |
 
 Request fields and messages are held as JSON inside the runner, as Python holds them as dicts; the public API takes
@@ -100,6 +101,12 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
 * `test_async_mcp_tool_to_dict` is the twin of `test_mcp_tool_to_dict` (one Swift `mcpTool`). Test helpers built from
   the `mcp` package's pydantic models become the Swift MCP value types.
 
+`test_skills.py`
+* The archives upstream builds with `zipfile` / `tarfile` are built by small writers in the test (stored zip entries,
+  ustar members, gzip of stored deflate blocks); the inflater is checked separately against `zlib` output.
+* `test_download_retrieves_by_configured_version_and_downloads_by_returned_id` runs over a mock transport instead of
+  fake resource objects.
+
 Sync/async twins are ported once (async). Tests that exist only as `_sync` exercise behaviour the async runner
 shares and are ported as async tests.
 
@@ -113,4 +120,5 @@ shares and are ported as async tests.
 | `test_file_store.py` | `FileStoreTests.swift` | 29 of 31 (+ SHA-256 vectors) |
 | `test_files.py` | `FileStoreTests.swift` (`FilesTests`) | 2 of 2 (+1) |
 | `test_mcp_tool.py` | `MCPToolTests.swift` | 37 of 38 (+1 runner integration test) |
+| `test_skills.py` | `SkillsTests.swift` | 18 of 18 (parametrized pairs as one) + inflate vectors |
 | `test_session_runner.py` | `SessionRunnerTests.swift` | 55 of 59 (2 merged into one parametrized test, 1 via HTTP) |
