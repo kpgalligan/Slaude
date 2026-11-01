@@ -93,7 +93,7 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
                             transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
     {
         if credentials != nil || config != nil || profile != nil {
-            throw ArgumentTypeError("MutuallyExclusiveAuthError.copy() does not accept `credentials`, `config` or `profile`")
+            throw ArgumentTypeError("AnthropicFoundry.copy() does not accept `credentials`, `config` or `profile`")
         }
         let c: AnthropicFoundry = try copy(apiKey: apiKey, webhookKey: webhookKey, baseURL: baseURL, timeout: timeout,
                                            maxRetries: maxRetries, defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,

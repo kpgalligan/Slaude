@@ -209,6 +209,49 @@ private func eventStreamResponse(_ data: Data) -> @Sendable (HTTPRequest) -> HTT
         #expect(recorder.urls == ["https://bedrock-runtime.us-east-1.amazonaws.com/model/anthropic.claude-x/invoke-with-response-stream"])
     }
 
+    /// `test_beta_messages_helpers_are_bound`, plus the routing checks of
+    /// `test_beta_tool_runner_routes_through_invoke` for the helpers ported so far: `create`,
+    /// `parse` and `stream` (beta and stable) go through `/invoke` (`/invoke-with-response-stream`),
+    /// SigV4-signed, with the body rewritten.
+    @Test func messagesHelpersRouteThroughInvoke() async throws {
+        let frames = platformCityStreamEvents.map(eventStreamChunkFrame).reduce(Data(), +)
+        let recorder = RequestRecorder { req, _ in
+            req.url.path.hasSuffix("/invoke-with-response-stream") ? eventStreamResponse(frames)(req) : platformJSON(platformCityMessageJSON)(req)
+        }
+        let client = try bedrockClient(recorder)
+        let model: ModelParam = "anthropic.claude-haiku-4-5-20251001-v1:0"
+        let city = PlatformHelpersCity(city: "Paris")
+
+        _ = try await client.beta.messages.create(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model)
+        let betaParsed = try await client.beta.messages.parse(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model,
+                                                              outputFormat: PlatformHelpersCity.self)
+        let betaStream = try await client.beta.messages.stream(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model,
+                                                               outputFormat: PlatformHelpersCity.self)
+        let betaStreamed = try await betaStream.getFinalMessage()
+        let parsed = try await client.messages.parse(maxTokens: 256, messages: userMessages("weather in Paris?"), model: model,
+                                                     outputFormat: PlatformHelpersCity.self)
+        let stream = try await client.messages.stream(maxTokens: 256, messages: userMessages("weather in Paris?"), model: model,
+                                                      outputFormat: PlatformHelpersCity.self)
+        let streamed = try await stream.getFinalMessage()
+
+        #expect(betaParsed.parsedOutput == city)
+        #expect(betaStreamed.parsedOutput == city)
+        #expect(betaStreamed.stopReason == .endTurn)
+        #expect(parsed.parsedOutput == city)
+        #expect(streamed.parsedOutput == city)
+        let invoke = "/model/anthropic.claude-haiku-4-5-20251001-v1:0/invoke"
+        #expect(recorder.requests.map(\.url.path) == [invoke, invoke, invoke + "-with-response-stream", invoke, invoke + "-with-response-stream"])
+        for req in recorder.requests {
+            #expect(req.headers["Authorization"]?.hasPrefix("AWS4-HMAC-SHA256 ") == true)
+            #expect(req.headers["x-amz-date"] != nil)
+            #expect(req.headers["anthropic-version"] == nil)
+            let body = req.json
+            #expect(body["model"] == nil && body["stream"] == nil && body["output_format"] == nil)
+            #expect(body["anthropic_version"] == .string(ANTHROPIC_API_VERSION))
+        }
+        for i in 1...4 { #expect(recorder.requests[i].json["output_config"]?["format"]?["type"] == "json_schema") }
+    }
+
     static let throttlingMessage = "Too many requests, please wait before trying again."
 
     @Test(arguments: [

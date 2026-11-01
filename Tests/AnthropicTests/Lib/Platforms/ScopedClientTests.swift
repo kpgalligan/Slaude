@@ -23,6 +23,17 @@ private func parent(_ recorder: RequestRecorder? = nil, apiKey: String = "parent
         #expect(scoped.apiKey == nil)
     }
 
+    /// A parent with a credentials provider (e.g. workload identity): the sub-client uses the
+    /// explicit bearer as the one credential, not the provider's auth on top of it.
+    @Test func clearsInheritedCredentialsProvider() async throws {
+        let recorder = RequestRecorder { req, _ in platformJSON(agentJSON)(req) }
+        let p = try Anthropic(credentials: StaticToken("provider-token"), transport: recorder.transport, environment: [:])
+        let scoped = try ScopedClient.copyWithBearerAuth(p, authToken: "env-key", helper: .environmentsWorkPoller)
+        #expect(scoped.credentials == nil)
+        _ = try await scoped.beta.agents.withRawResponse.retrieve("agent_test")
+        #expect(recorder.requests[0].headers.values("authorization") == ["Bearer env-key"])
+    }
+
     @Test func stampsHelperTelemetryHeader() throws {
         let scoped = try ScopedClient.copyWithBearerAuth(try parent(), authToken: "env-key", helper: .environmentsWorker)
         #expect(scoped.customHeaders["x-stainless-helper"] == "environments-worker")
@@ -76,6 +87,28 @@ private func parent(_ recorder: RequestRecorder? = nil, apiKey: String = "parent
         let recorder = RequestRecorder { req, _ in platformJSON(agentJSON)(req) }
         let p = try Anthropic(apiKey: "parent-key", baseURL: "https://parent.example", defaultHeaders: ["anthropic-workspace-id": "wrkspc_parent"],
                               transport: recorder.transport, environment: [:])
+        let scoped = try ScopedClient.copyWithBearerAuth(p, authToken: "env-key", helper: .environmentsWorker)
+        _ = try await scoped.beta.agents.withRawResponse.retrieve("agent_test")
+        _ = try await ScopedClient.copyScopedClient(scoped).beta.agents.withRawResponse.retrieve("agent_test")
+        #expect(recorder.count == 2)
+        for req in recorder.requests {
+            #expect(req.url.host == "parent.example")
+            #expect(req.headers["anthropic-workspace-id"] == "wrkspc_parent")
+            #expect(req.headers.values("authorization") == ["Bearer env-key"])
+        }
+    }
+
+    /// `copy()` drops the base URL and headers that came with the parent's credential (here an
+    /// in-memory profile config), but the bearer is for the deployment and workspace the parent
+    /// talks to.
+    @Test func keepsTheHostAndHeadersOfTheParentsCredential() async throws {
+        let tmp = try TempDir()
+        let recorder = RequestRecorder { req, _ in platformJSON(agentJSON)(req) }
+        let p = try Anthropic(config: [
+            "base_url": "https://parent.example",
+            "workspace_id": "wrkspc_parent",
+            "authentication": ["type": "user_oauth", "credentials_path": .string(tmp.child("credentials.json").path)],
+        ], transport: recorder.transport, environment: ["HOME": tmp.home.path])
         let scoped = try ScopedClient.copyWithBearerAuth(p, authToken: "env-key", helper: .environmentsWorker)
         _ = try await scoped.beta.agents.withRawResponse.retrieve("agent_test")
         _ = try await ScopedClient.copyScopedClient(scoped).beta.agents.withRawResponse.retrieve("agent_test")

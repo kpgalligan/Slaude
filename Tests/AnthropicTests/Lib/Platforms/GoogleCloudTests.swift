@@ -157,6 +157,16 @@ private func send(_ client: Anthropic, extraHeaders: Headers? = nil, userProfile
         _ = client.beta
         _ = client.messages.batches
     }
+
+    /// The base client's "ANTHROPIC_API_KEY shadows the profile" warning is about its
+    /// auto-discovery chain, which never engages for this subclass.
+    @Test func noSpuriousEnvShadowWarning() async throws {
+        try await withCapturedLogs { logs in
+            _ = try gc(workspaceID: "wrkspc_x", tokenProvider: tok("tok"), baseURL: "https://example.test/",
+                       env: ["ANTHROPIC_API_KEY": "sk-ant-x", "ANTHROPIC_PROFILE": "dev"])
+            #expect(logs.records.isEmpty, "\(logs.text)")
+        }
+    }
 }
 
 @Suite struct GoogleCloudAuthTests {
@@ -391,7 +401,75 @@ private func send(_ client: Anthropic, extraHeaders: Headers? = nil, userProfile
     }
 }
 
+/// `_assert_credential_chain_off`.
+private func expectCredentialChainOff(_ client: AnthropicGoogleCloud, sourceLocation: SourceLocation = #_sourceLocation) {
+    #expect(client.isBaseClient == false, sourceLocation: sourceLocation)
+    #expect(client.credentials == nil, sourceLocation: sourceLocation)
+    #expect(client.apiKey == nil, sourceLocation: sourceLocation)
+    #expect(client.authToken == nil, sourceLocation: sourceLocation)
+}
+
+/// `profile_config_dir`: a fully resolvable Anthropic profile (config, OAuth credentials and a
+/// base URL) that the base client's credential chain would adopt if it ever ran.
+private func gcProfileConfigDir(_ tmp: TempDir) throws -> URL {
+    try writeProfile(tmp.url, "default", [
+        "version": "1.0",
+        "organization_id": "org_profile_should_not_leak",
+        "base_url": "https://profile-gateway.example.com",
+        "authentication": ["type": "user_oauth"],
+    ], [
+        "version": "1.0",
+        "type": "oauth_token",
+        "access_token": "profile-oauth-token-should-not-leak",
+        "refresh_token": "profile-refresh-token",
+        "expires_at": 4102444800000,
+    ])
+    return tmp.url
+}
+
 @Suite struct GoogleCloudIsolationTests {
+    /// The base client's credential auto-discovery is gated on `isBaseClient`. Python
+    /// monkeypatches `default_credentials` to fail; here the environment names a profile that does
+    /// not exist, so the chain would throw if it ran (the base client does).
+    @Test func baseCredentialChainNeverEngages() async throws {
+        let tmp = try TempDir()
+        let env = ["ANTHROPIC_CONFIG_DIR": tmp.path, "ANTHROPIC_PROFILE": "missing"]
+        await expectThrows(AnthropicError.self, matching: "missing") {
+            _ = try Anthropic(baseURL: "https://example.test/", environment: isolatedEnv(env))
+        }
+        let client = try gc(workspaceID: "wrkspc_x", tokenProvider: tok("tok"), baseURL: "https://example.test/", env: env)
+        expectCredentialChainOff(client)
+    }
+
+    /// An `ANTHROPIC_PROFILE` / `ANTHROPIC_CONFIG_DIR` pointing at a real on-disk profile must not
+    /// attach its base URL or OAuth token to this client's requests.
+    @Test func resolvableProfileCannotLeak() async throws {
+        let tmp = try TempDir()
+        let env = ["ANTHROPIC_CONFIG_DIR": try gcProfileConfigDir(tmp).path, "ANTHROPIC_PROFILE": "default"]
+        let recorder = RequestRecorder()
+        let client = try gc(recorder, project: "my-project", location: "us-central1", workspaceID: "wrkspc_x", tokenProvider: tok("gcp-token"),
+                            env: env)
+        expectCredentialChainOff(client)
+        try await send(client)
+        let req = recorder.requests[0]
+        #expect(req.url.host == "claude.googleapis.com")
+        #expect(!req.url.absoluteString.contains("profile-gateway.example.com"))
+        #expect(req.headers.values("authorization") == ["Bearer gcp-token"])
+        #expect(!"\(req.headers)".contains("profile-oauth-token-should-not-leak"))
+    }
+
+    @Test func resolvableProfileCannotLeakWithBaseURL() async throws {
+        let tmp = try TempDir()
+        let env = ["ANTHROPIC_CONFIG_DIR": try gcProfileConfigDir(tmp).path, "ANTHROPIC_PROFILE": "default"]
+        let recorder = RequestRecorder()
+        let client = try gc(recorder, workspaceID: "wrkspc_x", tokenProvider: tok("gcp-token"), baseURL: "https://example.test/", env: env)
+        expectCredentialChainOff(client)
+        try await send(client)
+        #expect(recorder.requests[0].url.host == "example.test")
+        #expect(recorder.requests[0].headers.values("authorization") == ["Bearer gcp-token"])
+        #expect(!"\(recorder.requests[0].headers)".contains("profile-oauth-token-should-not-leak"))
+    }
+
     @Test func noAPIKeyLeak() async throws {
         let recorder = RequestRecorder()
         let client = try gc(recorder, workspaceID: "wrkspc_x", tokenProvider: tok("tok"), baseURL: "https://example.test/",

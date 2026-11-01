@@ -89,6 +89,13 @@ conforming to `GoogleCredentials`, passing `tokenProvider:` / `accessToken:`, or
   subclass, and a fuller overload adds the platform options
   (`let c: AnthropicAWS = try client.copy(awsRegion: "us-west-2")`). Passing `apiKey:` /
   `authToken:` to `AnthropicGoogleCloud.copy` throws `ArgumentTypeError` (Python: `TypeError`).
+  The inherited `credentials:` / `config:` / `profile:` arguments: `AnthropicAWS.copy` accepts
+  `credentials: .some(nil)` (Python's `credentials=None`) as a no-op and throws `ArgumentTypeError`
+  for a real provider, as Python does; `config:` / `profile:` (which Python's AWS `copy` does not
+  take) and, on `AnthropicFoundry` / `AnthropicGoogleCloud` (whose Python `copy` has no
+  first-party `credentials` argument), any of the three throw `ArgumentTypeError`.
+* `ScopedClient.copyWithBearerAuth` keeps the parent's credential headers (a profile's
+  `anthropic-workspace-id`), like Python's `scoped._credential_headers = client._credential_headers`.
 * `AnthropicGoogleCloud.copy(workspaceID: .some(nil))` clears the workspace (Python's `workspace_id=None`).
 * Google token providers are `async` closures, so Python's sync/async-provider distinctions
   (`asyncify`, "awaitable returned to the sync client") have no counterpart.
@@ -111,22 +118,32 @@ Sync/async twins are ported once (the async variant). Beyond that:
 
 | Upstream test | Reason |
 | --- | --- |
-| `test_aws.py::test_ambient_first_party_credentials_do_not_warn`, `test_google_cloud.py::test_no_spurious_env_shadow_warning` | Python logging of the first-party credential chain (`lib/credentials`), which is not part of this port and does not log in Swift. |
-| `test_aws.py::test_copy_accepts_credentials_none_noop[_async]`, `test_copy_rejects_real_credentials_provider[_async]` | The Swift `Anthropic.copy` has no `credentials:` parameter (the credentials-provider port lives in `Lib/Credentials`). |
 | `test_aws.py`, `test_bedrock.py`, `test_bedrock_mantle.py`: `test_sigv4_signing_runs_off_event_loop*`; `test_google_cloud.py::test_sync_token_provider_on_async_client_runs_off_event_loop` | Python threading / `asyncify`; Swift signing and token providers are already async. |
 | `test_google_cloud.py::test_async_token_provider_on_sync_client_rejected_clearly` | There is no sync client; providers are async closures. |
-| `test_bedrock.py::test_beta_tool_runner_routes_through_invoke[_async]`, `test_vertex.py::test_beta_tool_runner_routes_through_raw_predict` (both classes), `test_bedrock.py::test_beta_messages_helpers_are_bound`, `test_vertex.py::test_beta_messages_helpers_are_bound` | The tool runner and `parse` / `stream` helpers are not part of this port (owned by the helpers port); the request rewriting they exercise is covered by the `create` tests. |
-| `test_bedrock_mantle.py::TestUserProfileID` `beta_parse` / `beta_tool_runner` / `stream` (`MessageStream`) parametrizations | Same: helpers not in this port. `stream` is covered with the raw `createStreaming`, plus `beta.messages.createStreaming`. |
-| `test_stainless_helpers.py::test_parse_*` (3 tests × sync/async) | `beta.messages.parse` helper not in this port. |
+| `test_bedrock.py::test_beta_tool_runner_routes_through_invoke[_async]`, `test_vertex.py::test_beta_tool_runner_routes_through_raw_predict` (both classes), and the `tool_runner` name of `test_beta_messages_helpers_are_bound` (Bedrock, Vertex) | The tool runner (`beta.messages.toolRunner`) is ported separately. The request rewriting these check is covered for `create` / `parse` / `stream` / `count_tokens` by `messagesHelpersRouteThroughInvoke` / `messagesHelpersRouteThroughRawPredict`. |
+| `test_bedrock_mantle.py::TestUserProfileID` `beta_tool_runner` parametrization | Same: the tool runner is ported separately. |
 | `test_stainless_helpers.py::test_count_tokens_takes_a_tool_object` | Python duck typing (`tools=` taking objects with `to_dict()`); Swift tools are typed params. |
 | `test_stainless_helpers.py::test_caller_tag_is_appended_not_clobbered`, `test_file_upload_tag_is_appended_not_clobbered` | Adapted, not ported 1:1: Swift values cannot carry Python's hidden `_stainless_helper` attribute and the generated resources do not collect tags, so the tests pass the helper header through `extraHeaders` and check the append-not-clobber behaviour on the wire. |
 | `test_vertex.py::test_refresh_without_google_auth_raises_actionable_error`, `test_google_cloud.py::test_refresh_without_google_auth_raises_actionable_error` | `MissingDependencyError` for the optional `google-auth` package; Swift has no optional dependency (`lib/_extras/_common.py` is not ported for the same reason). |
 | `test_google_cloud.py::test_bearer_token_not_in_debug_logs` | The Swift client does no debug logging of requests. |
-| `test_google_cloud.py::test_base_credential_chain_never_engages[_async]`, `test_resolvable_profile_cannot_leak[_async]` | Exercise the first-party credential chain (`ANTHROPIC_PROFILE`, `ANTHROPIC_CONFIG_DIR`, `default_credentials`), not in this port; the api-key / auth-token isolation they also check is covered by `GoogleCloudIsolationTests`. |
 | `test_google_cloud.py::test_api_key_and_auth_token_rejected` (both classes) | Enforced at compile time: the initializer has no such parameters. |
 | `*::test_user_profiles_not_available`, `test_bedrock_mantle.py::TestEndpointRestrictions` (`not hasattr`), `TestAsyncClient::test_async_client_has_same_restrictions` | Enforced at compile time: the properties do not exist on `AnthropicBedrock` / `AnthropicBedrockMantle` / `AnthropicVertex` / their beta resources. |
 | `test_bedrock.py::test_stream_skips_typeless_chunk[_async]` — the `events[1].to_dict()["amazon-bedrock-invocationMetrics"]` assertion | Typed Swift models do not keep unknown keys; the rest of the test is ported. |
-| `test_scoped_client.py::test_clears_inherited_credentials_provider` | No credentials provider on the Swift `Anthropic` in this port. |
-| `test_scoped_client.py::test_keeps_the_host_and_headers_of_the_parents_credential[_async]` | Uses a credentials `config=` profile (not in this port); ported as `keepsTheHostOfTheParent` with an explicit base URL and workspace header. |
 | `test_scoped_client.py::test_scoped_client_and_its_copy_keep_what_the_parent_read_from_the_environment`, and the `open_telemetry` assertions of `test_copy_of_a_scoped_client_keeps_its_bearer_alone` | OpenTelemetry options are not ported to Swift. |
 | `test_azure.py::test_copy` — `copied._client is client._client` | Ported as "the copy keeps the transport". |
+
+Ported in adapted form:
+
+* `test_bedrock.py::test_beta_messages_helpers_are_bound`, `test_vertex.py::test_beta_messages_helpers_are_bound`:
+  `callable(getattr(...))` is a compile-time fact in Swift, so the tests call `create`, `parse` and
+  `stream` (and Vertex's `count_tokens`) on `beta.messages` and `messages` and check the routing,
+  auth and body rewriting of each request (`messagesHelpersRouteThroughInvoke`,
+  `messagesHelpersRouteThroughRawPredict`).
+* `test_stainless_helpers.py::test_parse_sends_single_header_line`: `tools=` gets a `BetaToolParam`
+  (Swift has no duck-typed `to_dict()` tools).
+* `test_google_cloud.py::test_base_credential_chain_never_engages`: instead of monkeypatching
+  `default_credentials` to fail, the environment names a profile that does not exist, which makes
+  the chain throw (checked on a base `Anthropic`).
+* `test_aws.py::test_ambient_first_party_credentials_do_not_warn`,
+  `test_google_cloud.py::test_no_spurious_env_shadow_warning`: `caplog` is `CredentialsLog`
+  captured per task (`withCapturedLogs`).
