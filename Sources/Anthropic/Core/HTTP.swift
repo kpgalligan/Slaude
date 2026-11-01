@@ -23,7 +23,8 @@ public struct HTTPHeaders: Sendable, Hashable, Sequence, ExpressibleByDictionary
             let lower = name.lowercased()
             if let newValue {
                 if let idx = entries.firstIndex(where: { $0.name.lowercased() == lower }) {
-                    entries[idx] = (entries[idx].name, newValue)
+                    // Like `httpx.Headers.__setitem__`, the name keeps the casing it was last set with.
+                    entries[idx] = (name, newValue)
                     var i = entries.count - 1
                     while i > idx {
                         if entries[i].name.lowercased() == lower { entries.remove(at: i) }

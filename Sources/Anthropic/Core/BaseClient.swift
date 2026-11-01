@@ -20,51 +20,6 @@ public let MODEL_NONSTREAMING_TOKENS: [String: Int] = [
     "claude-opus-4-1@20250805": 8192,
 ]
 
-/// One HTTP attempt as seen by middleware (`_request.APIRequest`).
-public struct APIRequest: Sendable {
-    public var options: FinalRequestOptions
-    public var stream: Bool
-    public var retriesTaken: Int
-}
-
-/// A response flowing back through the middleware chain: the HTTP response plus the options it
-/// was sent with. Call `parse(as:)` to decode it.
-public struct RawAPIResponse: Sendable {
-    public let http: HTTPResponse
-    public let options: FinalRequestOptions
-    public let retriesTaken: Int
-    let client: BaseClient
-
-    public var statusCode: Int { http.statusCode }
-    public var headers: HTTPHeaders { http.headers }
-
-    public func parse<T: Decodable & Sendable>(as type: T.Type) async throws -> T {
-        try await client.decodeBody(T.self, from: http)
-    }
-}
-
-/// Invokes the rest of the middleware chain and, ultimately, a single HTTP attempt.
-public typealias CallNext = @Sendable (APIRequest) async throws -> RawAPIResponse
-
-/// Client-level middleware (`_middleware.Middleware`). The chain runs inside the retry loop,
-/// once per attempt, and sees every HTTP response including 4xx/5xx ones.
-public protocol Middleware: Sendable {
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse
-}
-
-/// A middleware built from a closure.
-public struct MiddlewareFunction: Middleware {
-    public let name: String
-    let body: @Sendable (APIRequest, CallNext) async throws -> RawAPIResponse
-    public init(name: String = "middleware", _ body: @escaping @Sendable (APIRequest, CallNext) async throws -> RawAPIResponse) {
-        self.name = name
-        self.body = body
-    }
-    public func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
-        try await body(request, next)
-    }
-}
-
 /// The operating system reported in `X-Stainless-OS`.
 func currentPlatform() -> String {
     #if os(iOS)
@@ -125,20 +80,41 @@ func swiftVersion() -> String {
 /// just like the Python platform clients override the `_`-prefixed methods.
 open class BaseClient: @unchecked Sendable {
     public let version: String
-    public let baseURL: URL
     public let maxRetries: Int
-    public let timeout: Timeout
     public internal(set) var timeoutOverridden: Bool
     public let customHeaders: Headers
     public let customQuery: Query
     public let transport: HTTPTransport
+    /// The client-level middleware, outermost first. To run extra middleware for some calls, derive
+    /// a client with `withMiddleware(...)` / `copy(middleware: client.middleware + [extra])`.
     public let middleware: [Middleware]
     /// The header that carries the idempotency key, if the API supports one.
     open var idempotencyHeader: String? { nil }
 
+    private let stateLock = NSLock()
+    private var _baseURL: URL
+    private var _timeout: Timeout
+    private var middlewareChain: CallNext? = nil
+
+    /// The base URL requests are made against (always ending in `/`). Settable, like Python's
+    /// `client.base_url = ...`.
+    public var baseURL: URL {
+        get { stateLock.withLock { _baseURL } }
+        set { stateLock.withLock { _baseURL = BaseClient.enforceTrailingSlash(newValue) } }
+    }
+
+    /// The client's default timeout. Assigning it counts as overriding the default.
+    public var timeout: Timeout {
+        get { stateLock.withLock { _timeout } }
+        set {
+            stateLock.withLock { _timeout = newValue }
+            timeoutOverridden = true
+        }
+    }
+
     /// Overridable sleep, so tests can observe retry delays without waiting.
     public var sleeper: @Sendable (TimeInterval) async throws -> Void = { seconds in
-        if seconds > 0 { try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000)) }
+        if seconds > 0 { try await Task.sleep(nanoseconds: UInt64(min(seconds, 1e9) * 1_000_000_000)) }
     }
 
     public init(version: String, baseURL: URL, maxRetries: Int = DEFAULT_MAX_RETRIES, timeout: Timeout? = nil,
@@ -146,14 +122,15 @@ open class BaseClient: @unchecked Sendable {
                 middleware: [Middleware]? = nil)
     {
         self.version = version
-        self.baseURL = BaseClient.enforceTrailingSlash(baseURL)
+        self._baseURL = BaseClient.enforceTrailingSlash(baseURL)
         self.maxRetries = maxRetries
         self.timeoutOverridden = timeout != nil
-        self.timeout = timeout ?? DEFAULT_TIMEOUT
+        self._timeout = timeout ?? DEFAULT_TIMEOUT
         self.customHeaders = customHeaders ?? [:]
         self.customQuery = customQuery ?? [:]
         self.transport = transport ?? URLSessionTransport()
         self.middleware = middleware ?? []
+        self.middlewareChain = buildMiddlewareChain()
     }
 
     static func enforceTrailingSlash(_ url: URL) -> URL {
@@ -361,32 +338,74 @@ open class BaseClient: @unchecked Sendable {
         }
     }
 
+    /// Whether an error thrown by an attempt should be retried, plus the HTTP response behind the
+    /// failure, if any, so retry timing can honour `retry-after` (`_should_retry_exception`).
+    ///
+    /// Errors thrown by middleware propagate as-is, except the ones that opt into the retry policy by
+    /// type: `RetryableError`, `APIStatusError` (subject to the status-code policy) and
+    /// `APIConnectionError` / `APITimeoutError`. The check walks each error's `ChainedError.cause`
+    /// chain, so wrapping a retryable failure preserves retries.
     func shouldRetryError(_ error: Error) -> (Bool, HTTPResponse?) {
-        if error is RetryableError { return (true, nil) }
-        if let e = error as? APIStatusError { return (shouldRetry(e.response), e.response) }
-        if error is APIConnectionError { return (true, nil) }
+        var current: Error? = error
+        var depth = 0
+        while let e = current, depth < 64 {
+            if e is RetryableError { return (true, nil) }
+            if let s = e as? APIStatusError { return (shouldRetry(s.response), s.response) }
+            if e is APIConnectionError { return (true, nil) }
+            current = (e as? ChainedError)?.cause
+            depth += 1
+        }
         return (false, nil)
     }
 
+    /// A copy of `options` with `extra_body` merged into the body (`_copy_and_prepare`), done once
+    /// before the retry loop so that hooks and middleware see the body as it is sent.
+    func copyAndPrepare(_ options: FinalRequestOptions) -> FinalRequestOptions {
+        var options = options
+        if options.method.lowercased() != "get", let extra = options.extraJSON {
+            switch options.jsonData {
+            case nil:
+                options.jsonData = .object(extra)
+                options.extraJSON = nil
+            case .object(var o)?:
+                for (k, v) in extra { o[k] = v }
+                options.jsonData = .object(o)
+                options.extraJSON = nil
+            default:
+                break // `buildRequest` reports the mismatch
+            }
+        }
+        return options
+    }
+
     /// Runs the retry loop and returns the successful response (`_request`).
-    public func sendRequest(_ inputOptions: FinalRequestOptions, stream: Bool) async throws -> RawAPIResponse {
-        var input = inputOptions
+    ///
+    /// With middleware, the chain runs once per attempt; a response it returns with an error status
+    /// stays on the retry path, and a short-circuited response is returned as is.
+    public func sendRequest(_ inputOptions: FinalRequestOptions, stream: Bool, castTo: Any.Type = JSONValue.self) async throws -> RawAPIResponse {
+        var input = copyAndPrepare(inputOptions)
         if input.idempotencyKey == nil && input.method.lowercased() != "get" {
+            // ensure the idempotency key is reused between retries
             input.idempotencyKey = idempotencyKey()
         }
+        let chain = middlewareChain
         let maxRetries = input.getMaxRetries(self.maxRetries)
         var retriesTaken = 0
         while true {
             let remaining = maxRetries - retriesTaken
-            var response: HTTPResponse
-            var prepared: FinalRequestOptions
+            let response: HTTPResponse
             do {
-                if middleware.isEmpty {
-                    (response, prepared) = try await attemptRequest(input, stream: stream, retriesTaken: retriesTaken)
-                } else {
-                    let raw = try await runMiddleware(APIRequest(options: input, stream: stream, retriesTaken: retriesTaken))
+                if let chain {
+                    let request = APIRequest(options: input, castTo: castTo, stream: stream, retriesTaken: retriesTaken, client: self)
+                    let raw = try await chain(request)
+                    if raw.isShortCircuit || raw.http.isSuccess { return raw }
                     response = raw.http
-                    prepared = raw.options
+                } else {
+                    let (r, prepared) = try await attemptRequest(input, stream: stream, retriesTaken: retriesTaken)
+                    if r.isSuccess {
+                        return RawAPIResponse(http: r, options: prepared, retriesTaken: retriesTaken, client: self)
+                    }
+                    response = r
                 }
             } catch {
                 let (retry, failed) = shouldRetryError(error)
@@ -396,9 +415,8 @@ open class BaseClient: @unchecked Sendable {
                 retriesTaken += 1
                 continue
             }
-            if response.isSuccess {
-                return RawAPIResponse(http: response, options: prepared, retriesTaken: retriesTaken, client: self)
-            }
+            // the attempt produced an error-status response, possibly inspected, replaced or passed
+            // through by middleware
             if remaining > 0 && shouldRetry(response) {
                 response.close()
                 try await sleepForRetry(retriesTaken: retriesTaken, maxRetries: maxRetries, options: input, response: response)
@@ -409,25 +427,11 @@ open class BaseClient: @unchecked Sendable {
         }
     }
 
-    func runMiddleware(_ request: APIRequest) async throws -> RawAPIResponse {
-        var chain: CallNext = { [self] req in
-            var options = req.options
-            if options.headers?[rawResponseHeader] == nil {
-                var h = options.headers ?? [:]
-                h[rawResponseHeader] = "raw"
-                options.headers = h
-            }
-            let (response, prepared) = try await self.attemptRequest(options, stream: req.stream, retriesTaken: req.retriesTaken)
-            return RawAPIResponse(http: response, options: prepared, retriesTaken: req.retriesTaken, client: self)
-        }
-        for m in middleware.reversed() {
-            let next = chain
-            chain = { req in try await m.handle(req, next: next) }
-        }
-        return try await chain(request)
-    }
-
     func makeStatusErrorFromResponse(_ response: HTTPResponse) async -> APIStatusError {
+        if response.isClosed && !response.isStreamConsumed {
+            // The body can't be read as the response was closed before it was.
+            return makeStatusError("Error code: \(response.statusCode)", body: nil, response: response)
+        }
         let text = ((try? await response.text()) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         var body: JSONValue? = .string(text)
         var message: String
@@ -446,12 +450,18 @@ open class BaseClient: @unchecked Sendable {
         try await sleeper(t)
     }
 
-    /// Seconds to wait before retrying, honouring `retry-after-ms` / `retry-after`.
-    public func calculateRetryTimeout(remainingRetries: Int, options: FinalRequestOptions, responseHeaders: HTTPHeaders?) -> TimeInterval {
+    /// Seconds to wait before retrying, honouring `retry-after-ms` / `retry-after`
+    /// (`_calculate_retry_timeout`). `now` is the current time, for evaluating HTTP-date values.
+    public func calculateRetryTimeout(remainingRetries: Int, options: FinalRequestOptions, responseHeaders: HTTPHeaders?,
+                                      now: Date = Date()) -> TimeInterval
+    {
         let maxRetries = options.getMaxRetries(self.maxRetries)
-        if let retryAfter = BaseClient.parseRetryAfterHeader(responseHeaders), retryAfter > 0 {
+        // If the API asks us to wait a certain amount of time, just do what it says.
+        if let retryAfter = BaseClient.parseRetryAfterHeader(responseHeaders, now: now), retryAfter > 0 {
+            // at most 2**32 milliseconds, like Python (where `time.sleep` raises above a platform limit)
             return min(retryAfter, 4_294_967.0)
         }
+        // Also cap retry count to 1000 to avoid any potential overflows with `pow`
         let nbRetries = min(maxRetries - remainingRetries, 1000)
         let sleepSeconds = min(INITIAL_RETRY_DELAY * pow(2.0, Double(nbRetries)), MAX_RETRY_DELAY)
         let jitter = 1 - 0.25 * Double.random(in: 0..<1)
@@ -460,17 +470,49 @@ open class BaseClient: @unchecked Sendable {
     }
 
     /// Seconds (not milliseconds) to wait, or `nil` when unspecified (`_parse_retry_after_header`).
-    public static func parseRetryAfterHeader(_ headers: HTTPHeaders?) -> TimeInterval? {
+    public static func parseRetryAfterHeader(_ headers: HTTPHeaders?, now: Date = Date()) -> TimeInterval? {
         guard let headers else { return nil }
-        if let ms = headers["retry-after-ms"], let v = Double(ms.trimmingCharacters(in: .whitespaces)) { return v / 1000 }
+        // First, the non-standard `retry-after-ms` header, more precise than `retry-after`.
+        if let ms = headers["retry-after-ms"], let v = parsePythonFloat(ms) { return v / 1000 }
         guard let header = headers["retry-after"] else { return nil }
-        if let v = Double(header.trimmingCharacters(in: .whitespaces)) { return v }
+        // Next, seconds (allowing nonstandard floats).
+        if let v = parsePythonFloat(header) { return v }
+        // Last, an HTTP date (`email.utils.parsedate_tz`).
+        guard let date = parseHTTPDate(header) else { return nil }
+        return date.timeIntervalSince(now)
+    }
+
+    /// `float(s)`: decimal and `inf`/`nan` forms, surrounding whitespace allowed.
+    static func parsePythonFloat(_ raw: String) -> Double? {
+        let s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.isEmpty { return nil }
+        let lower = s.lowercased()
+        // Swift also accepts hexadecimal floats, Python does not.
+        if lower.contains("0x") { return nil }
+        let allowed = Set("0123456789+-.e_")
+        if lower.allSatisfy({ allowed.contains($0) }) {
+            return Double(s.replacingOccurrences(of: "_", with: ""))
+        }
+        switch lower.trimmingCharacters(in: CharacterSet(charactersIn: "+-")) {
+        case "inf", "infinity", "nan": return Double(lower)
+        default: return nil
+        }
+    }
+
+    /// Parses an RFC 2822 / HTTP date, tolerating any leading day name like `parsedate_tz` does.
+    static func parseHTTPDate(_ raw: String) -> Date? {
+        var s = raw.trimmingCharacters(in: .whitespaces)
+        if let comma = s.firstIndex(of: ","), s[..<comma].allSatisfy({ $0.isLetter }) {
+            s = String(s[s.index(after: comma)...]).trimmingCharacters(in: .whitespaces)
+        }
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone(identifier: "GMT")
-        for fmt in ["EEE, dd MMM yyyy HH:mm:ss zzz", "EEE, dd MMM yyyy HH:mm:ss Z", "EEEE, dd-MMM-yy HH:mm:ss zzz", "EEE MMM d HH:mm:ss yyyy"] {
+        for fmt in ["d MMM yyyy HH:mm:ss zzz", "d MMM yyyy HH:mm:ss Z", "d MMM yyyy HH:mm:ss", "d-MMM-yy HH:mm:ss zzz",
+                    "EEE MMM d HH:mm:ss yyyy"]
+        {
             f.dateFormat = fmt
-            if let d = f.date(from: header) { return d.timeIntervalSinceNow }
+            if let d = f.date(from: s) { return d }
         }
         return nil
     }
@@ -500,10 +542,20 @@ open class BaseClient: @unchecked Sendable {
         }
     }
 
+    /// Parses a response body into `T` (`BaseAPIResponse._parse`): `String`, `Data`, `Bool`, `Int` and
+    /// `Double` are read from the raw text like Python's `str`/`bytes`/`bool`/`int`/`float`
+    /// `cast_to`; everything else is decoded from JSON.
     func decodeBody<T: Decodable>(_ type: T.Type, from response: HTTPResponse) async throws -> T {
         let data = try await response.read()
-        if T.self == String.self, (try? JSONValue.parse(data))?.stringValue == nil {
-            return String(decoding: data, as: UTF8.self) as! T
+        if T.self == String.self { return String(decoding: data, as: UTF8.self) as! T }
+        if T.self == Data.self { return data as! T }
+        if T.self == Bool.self { return (String(decoding: data, as: UTF8.self).lowercased() == "true") as! T }
+        if T.self == Int.self || T.self == Double.self {
+            let text = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+            if T.self == Int.self, let v = Int(text) { return v as! T }
+            if T.self == Double.self, let v = BaseClient.parsePythonFloat(text) { return v as! T }
+            throw APIResponseValidationError(response: response, body: .string(text),
+                                             message: "Could not parse \(pythonStringRepr(text)) as \(T.self)")
         }
         return try decodeData(T.self, data, response: response)
     }
@@ -514,8 +566,8 @@ open class BaseClient: @unchecked Sendable {
     public func requestResponse<T: Decodable & Sendable>(_ type: T.Type, _ options: FinalRequestOptions, stream: Bool = false,
                                                          postParser: (@Sendable (T) throws -> T)? = nil) async throws -> APIResponse<T>
     {
-        let raw = try await sendRequest(options, stream: stream)
-        return APIResponse(http: raw.http, options: raw.options, retriesTaken: raw.retriesTaken, client: self) { resp in
+        let raw = try await sendRequest(options, stream: stream, castTo: T.self)
+        return APIResponse(raw, client: self) { resp in
             let value = try await resp.client.decodeBody(T.self, from: resp.http)
             return try postParser?(value) ?? value
         }
@@ -523,9 +575,9 @@ open class BaseClient: @unchecked Sendable {
 
     /// A paginated response.
     public func requestPageResponse<P: AsyncPage>(_ type: P.Type, _ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<P> {
-        let raw = try await sendRequest(options, stream: stream)
+        let raw = try await sendRequest(options, stream: stream, castTo: P.self)
         let prepared = options
-        return APIResponse(http: raw.http, options: raw.options, retriesTaken: raw.retriesTaken, client: self) { resp in
+        return APIResponse(raw, client: self) { resp in
             var page = try await resp.client.decodeBody(P.self, from: resp.http)
             page.context = PageContext(client: resp.client, options: prepared)
             return page
@@ -538,35 +590,68 @@ open class BaseClient: @unchecked Sendable {
 
     /// A server-sent-event stream.
     public func requestStreamResponse<E: Decodable & Sendable>(_ type: E.Type, _ options: FinalRequestOptions) async throws -> APIResponse<Stream<E>> {
-        let raw = try await sendRequest(options, stream: true)
-        return APIResponse(http: raw.http, options: raw.options, retriesTaken: raw.retriesTaken, client: self) { resp in
+        let raw = try await sendRequest(options, stream: true, castTo: Stream<E>.self)
+        return APIResponse(raw, client: self) { resp in
             Stream<E>(response: resp.http, client: resp.client)
         }
     }
 
     /// A binary response.
     public func requestBinaryResponse(_ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<BinaryResponse> {
-        let raw = try await sendRequest(options, stream: stream)
-        return APIResponse(http: raw.http, options: raw.options, retriesTaken: raw.retriesTaken, client: self) { resp in
+        let raw = try await sendRequest(options, stream: stream, castTo: BinaryResponse.self)
+        return APIResponse(raw, client: self) { resp in
             BinaryResponse(response: resp.http)
         }
     }
 
-    /// Makes an arbitrary request to the API (`client.get` / `client.post` / ...).
-    public func request<T: Decodable & Sendable>(_ type: T.Type = T.self, method: String, path: String, body: JSONValue? = nil,
-                                                 query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> T
-    {
-        var o = FinalRequestOptions(method: method, url: path, jsonData: body)
+    /// The HTTP response itself (Python's `cast_to=httpx.Response`); its body is read unless `stream`.
+    public func requestHTTPResponse(_ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<HTTPResponse> {
+        let raw = try await sendRequest(options, stream: stream, castTo: HTTPResponse.self)
+        return APIResponse(raw, client: self) { resp in resp.http }
+    }
+
+    func makeOptions(method: String, path: String, body: JSONValue?, content: Data?, query: Query?, options: RequestOptions) -> FinalRequestOptions {
+        var o = FinalRequestOptions(method: method, url: path, jsonData: body, content: content)
         apply(options, to: &o, query: query.map { $0.sorted(by: { $0.key < $1.key }).map { ($0.key, $0.value) } })
-        return try await requestResponse(T.self, o).parse()
+        return o
+    }
+
+    /// Makes an arbitrary request to the API (`client.get` / `client.post` / ...). `content` sends raw
+    /// bytes as the body instead of JSON.
+    public func request<T: Decodable & Sendable>(_ type: T.Type = T.self, method: String, path: String, body: JSONValue? = nil,
+                                                 content: Data? = nil, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> T
+    {
+        try await requestResponse(T.self, makeOptions(method: method, path: path, body: body, content: content, query: query, options: options)).parse()
+    }
+
+    /// Makes an arbitrary request and returns the HTTP response itself (Python's `cast_to=httpx.Response`).
+    public func request(_ type: HTTPResponse.Type, method: String, path: String, body: JSONValue? = nil, content: Data? = nil,
+                        query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> HTTPResponse
+    {
+        try await requestHTTPResponse(makeOptions(method: method, path: path, body: body, content: content, query: query, options: options)).parse()
+    }
+
+    /// Makes an arbitrary streaming request (Python's `stream=True, stream_cls=AsyncStream[E]`).
+    public func requestStream<E: Decodable & Sendable>(_ type: E.Type, method: String, path: String, body: JSONValue? = nil,
+                                                       query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> Stream<E>
+    {
+        try await requestStreamResponse(E.self, makeOptions(method: method, path: path, body: body, content: nil, query: query, options: options)).parse()
     }
 
     public func get<T: Decodable & Sendable>(_ path: String, as type: T.Type = T.self, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> T {
         try await request(T.self, method: "get", path: path, query: query, options: options)
     }
 
-    public func post<T: Decodable & Sendable>(_ path: String, body: JSONValue? = nil, as type: T.Type = T.self, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> T {
-        try await request(T.self, method: "post", path: path, body: body, query: query, options: options)
+    public func get(_ path: String, as type: HTTPResponse.Type, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> HTTPResponse {
+        try await request(HTTPResponse.self, method: "get", path: path, query: query, options: options)
+    }
+
+    public func post<T: Decodable & Sendable>(_ path: String, body: JSONValue? = nil, content: Data? = nil, as type: T.Type = T.self, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> T {
+        try await request(T.self, method: "post", path: path, body: body, content: content, query: query, options: options)
+    }
+
+    public func post(_ path: String, body: JSONValue? = nil, content: Data? = nil, as type: HTTPResponse.Type, query: Query? = nil, options: RequestOptions = RequestOptions()) async throws -> HTTPResponse {
+        try await request(HTTPResponse.self, method: "post", path: path, body: body, content: content, query: query, options: options)
     }
 
     public func patch<T: Decodable & Sendable>(_ path: String, body: JSONValue? = nil, as type: T.Type = T.self, options: RequestOptions = RequestOptions()) async throws -> T {
@@ -612,9 +697,13 @@ enum Multipart {
         }
         for (name, file) in files {
             line("--\(boundary)")
-            let filename = file.filename ?? "upload"
-            line("Content-Disposition: form-data; name=\"\(escape(name))\"; filename=\"\(escape(filename))\"")
-            line("Content-Type: \(file.contentType ?? guessContentType(filename))")
+            // A file without a name is sent unnamed, as `application/octet-stream` (`_files._transform_file`).
+            if let filename = file.filename {
+                line("Content-Disposition: form-data; name=\"\(escape(name))\"; filename=\"\(escape(filename))\"")
+            } else {
+                line("Content-Disposition: form-data; name=\"\(escape(name))\"")
+            }
+            line("Content-Type: \(file.contentType ?? file.filename.map(guessContentType) ?? "application/octet-stream")")
             for (k, v) in file.headers.sorted(by: { $0.key < $1.key }) { line("\(k): \(v)") }
             line("")
             body.append(file.data)

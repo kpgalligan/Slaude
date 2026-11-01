@@ -1,13 +1,23 @@
 import Foundation
 
+/// An error caused by another one (Python's `raise ... from err`, i.e. `__cause__`).
+///
+/// The retry policy walks this chain: an error thrown by middleware that wraps a retryable failure
+/// (e.g. an `APIConnectionError`) keeps the request on the retry path.
+public protocol ChainedError: Error {
+    var cause: (any Error)? { get }
+}
+
 /// Root of the SDK's error hierarchy (`_exceptions.AnthropicError`).
-open class AnthropicError: Error, CustomStringConvertible, LocalizedError, @unchecked Sendable {
+open class AnthropicError: Error, ChainedError, CustomStringConvertible, LocalizedError, @unchecked Sendable {
     public let message: String
 
     public init(_ message: String) { self.message = message }
 
     open var description: String { message }
     public var errorDescription: String? { message }
+    /// The error this one was raised from, if any.
+    open var cause: (any Error)? { nil }
 }
 
 /// An error tied to an API request (`APIError`).
@@ -36,6 +46,8 @@ open class APIResponseValidationError: APIError, @unchecked Sendable {
         self.underlying = underlying
         super.init(message ?? "Data returned by API invalid for expected schema.", request: response.request, body: body)
     }
+
+    open override var cause: (any Error)? { underlying }
 }
 
 /// A webhook payload could not be verified.
@@ -72,6 +84,8 @@ open class APIConnectionError: APIError, @unchecked Sendable {
         self.underlying = underlying
         super.init(message, request: request, body: nil)
     }
+
+    open override var cause: (any Error)? { underlying }
 }
 
 /// The request timed out.
