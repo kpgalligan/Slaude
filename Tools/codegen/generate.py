@@ -81,11 +81,19 @@ def main() -> None:
     errors: list[str] = []
     if args.only in (None, "types"):
         errors += gen_types(ctx)
+    if args.only in (None, "resources", "tests") and not any(getattr(d, "_base_types", None) for m in ctx.type_modules for d in m.decls.values()):
+        for m in ctx.type_modules:
+            if not m.is_package:
+                ctx.emitter.render_module(m)
     if args.only in (None, "resources"):
         from resourcesgen import gen_resources
 
         errors += gen_resources(ctx, OUT_RESOURCES)
     if args.only in (None, "tests"):
+        if not hasattr(ctx, "resource_gen"):
+            from resourcesgen import gen_resources
+
+            gen_resources(ctx, OUT_RESOURCES)
         from testsgen import gen_tests
 
         errors += gen_tests(ctx, OUT_TESTS)

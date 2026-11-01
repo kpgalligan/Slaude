@@ -150,7 +150,8 @@ class Values:
                 raise Skip("datetime value")
             if k == "date":
                 if isinstance(node, ast.Call) and node.args:
-                    return f"ISODate({swift_string(node.args[0].value)})!"
+                    y, mo, da = node.args[0].value[:10].split("-")
+                    return f"ISODate(year: {int(y)}, month: {int(mo)}, day: {int(da)})"
                 raise Skip("date value")
             if k in ("file", "b64file", "bytes"):
                 if isinstance(node, ast.Constant) and isinstance(node.value, bytes):
@@ -358,6 +359,22 @@ class TestGen:
 
     def call_args(self, call: ast.Call, plan) -> tuple[str, bool]:
         kwargs = {k.arg: k.value for k in call.keywords}
+        positional_args = [a for a in plan.args if a.positional]
+        for i, node in enumerate(call.args):
+            if i >= len(positional_args):
+                raise Skip("too many positional args")
+            kwargs[positional_args[i].py] = node
+        extras = []
+        for key, label in (("extra_headers", "extraHeaders"), ("extra_query", "extraQuery"), ("extra_body", "extraBody")):
+            if key in kwargs:
+                node = kwargs.pop(key)
+                if key == "extra_headers":
+                    if not isinstance(node, ast.Dict):
+                        raise Skip("extra_headers shape")
+                    items = ", ".join(f"{swift_string(k.value)}: {swift_string(v.value)}" for k, v in zip(node.keys, node.values))
+                    extras.append(f"{label}: [{items or ':'}]")
+                else:
+                    extras.append(f"{label}: {self.values.json_literal(node)}")
         streaming = False
         if "stream" in kwargs:
             v = kwargs.pop("stream")
@@ -376,7 +393,7 @@ class TestGen:
             parts.append(expr if a.positional else f"{bare(a.swift)}: {expr}")
         if kwargs:
             raise Skip(f"unknown kwargs {list(kwargs)}")
-        return ", ".join(parts), streaming
+        return ", ".join(parts + extras), streaming
 
     # --------------------------------------------------------------- samples
 
@@ -428,8 +445,11 @@ class TestGen:
             for d in m.decls.values():
                 if not isinstance(d, ClassDecl) or not d.is_typeddict or not getattr(d, "_props", None):
                     continue
-                fields = {f.json_key for f in self.ctx.conv.fields(d)}
-                if fields != keys and not (keys <= fields and fields - keys <= {"stream"}):
+                fl = self.ctx.conv.fields(d)
+                fields = {f.json_key for f in fl}
+                # header params (`betas`, `workspace_id`, ...) are fields of the params TypedDict too
+                required_extra = {f.json_key for f in fl if f.required and f.json_key not in keys and f.json_key != "stream"}
+                if not keys <= fields or required_extra:
                     continue
                 res_parts = plan.module.name.split(".")[2:]
                 mparts = m.name.split(".")[2:]
@@ -535,7 +555,7 @@ class TestGen:
             acc = ".".join(path)
             if mode == "raw":
                 lines.append(f"let response = try await client.{acc}.withRawResponse.{sname}({args})")
-                if not streaming:
+                if any(ast.unparse(st) == "assert response.is_closed is True" for st in body):
                     lines.append("#expect(response.isClosed == true)")
                 lines.append('#expect(response.httpRequest.headers["X-Stainless-Lang"] == "swift")')
                 lines.append("let value = try await response.parse()")
@@ -567,7 +587,8 @@ class TestGen:
             return None
         out = f"// Transformed from `tests/{rel}`.\n\nimport Foundation\nimport Testing\n@testable import Anthropic\n"
         for cls in classes:
-            suite = cls.name.replace("TestAsync", "Test")
+            parts = rel.removesuffix(".py").split("/")[1:-1]
+            suite = "Test" + "".join(p[:1].upper() + camel(p)[1:] for p in parts) + cls.name.replace("TestAsync", "")
             tests = []
             for fn in cls.body:
                 if not isinstance(fn, ast.AsyncFunctionDef):
@@ -582,6 +603,8 @@ class TestGen:
 
 
 def raw_literal(s: str) -> str:
+    if "\n" in s:
+        return swift_string(s)
     hashes = "#"
     while f'"{hashes}' in s:
         hashes += "#"
@@ -608,6 +631,6 @@ def gen_tests(ctx, out_dir: pathlib.Path) -> list[str]:
             name = rel.replace("/", ".").removesuffix(".py") + ".swift"
             (out_dir / name).write_text(src)
             files += 1
-    (out_dir.parent / "GENERATED_TESTS_SKIPPED.txt").write_text("Upstream tests not transformed (see reasons):\n\n" + "\n".join(tg.skipped) + "\n")
+    (out_dir.parent.parent.parent / "docs" / "porting" / "GENERATED_TESTS_SKIPPED.txt").write_text("Upstream tests not transformed (see reasons):\n\n" + "\n".join(tg.skipped) + "\n")
     print(f"tests: wrote {files} files, {tg.counts['tests']} tests, {len(tg.skipped)} skipped")
     return []

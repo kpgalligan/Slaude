@@ -337,6 +337,7 @@ class ResourceGen:
         if txt in ("object",):
             return "JSONValue"
         ir = self.conv.conv(node, mod.name)
+        self.last_ir = ir
         return self.emitter.swift_type(ir, None, "Result")
 
     # ---------------------------------------------------------------- methods
@@ -469,6 +470,7 @@ class ResourceGen:
             page = kws["page"]
             page_cls = ast.unparse(page.value).replace("Async", "")
             item = self.swift_ref_type(kws["model"], mod)
+            item_ir = getattr(self, "last_ir", None)
             result_type = f"{page_cls}<{item}>"
         else:
             cast = kws.get("cast_to")
@@ -480,10 +482,13 @@ class ResourceGen:
                 result_kind = "jsonl"
                 result_type = self.swift_ref_type(cast.slice, mod)
             else:
+                self.last_ir = None
                 result_type = self.swift_ref_type(cast, mod)
+            result_ir = getattr(self, "last_ir", None)
             if stream_flag is not None:
                 st_txt = ast.unparse(stream_flag)
                 elem = self.swift_ref_type(kws["stream_cls"].slice, mod)
+                stream_ir = self.last_ir
                 if st_txt == "True":
                     stream_only = True
                     result_kind = "stream"
@@ -505,6 +510,11 @@ class ResourceGen:
         )
         if streaming_variant:
             plan.stream_elem = self._stream_elem  # type: ignore[attr-defined]
+        plan.result_ir = locals().get("result_ir")  # type: ignore[attr-defined]
+        plan.item_ir = locals().get("item_ir")  # type: ignore[attr-defined]
+        plan.stream_ir = locals().get("stream_ir")  # type: ignore[attr-defined]
+        if plan.stream_only:
+            plan.result_ir = plan.stream_ir  # type: ignore[attr-defined]
         return plan
 
     @staticmethod
@@ -735,7 +745,7 @@ def gen_resources(ctx, out_dir: pathlib.Path) -> list[str]:
             (out_dir / (".".join(name.split(".")[2:]) + ".swift")).write_text(src)
             count += 1
     (out_dir / "_client.swift").write_text(gen.emit_client_accessors())
-    report = out_dir.parent / "UNSUPPORTED_METHODS.txt"
+    report = out_dir.parent.parent.parent.parent / "docs" / "porting" / "UNSUPPORTED_METHODS.txt"
     report.write_text("Methods not handled by the transpiler (ported by hand in Sources/Anthropic/Lib):\n\n" + "\n".join(gen.unsupported) + "\n")
     print(f"resources: wrote {count} files, {len(gen.unsupported)} methods need hand-porting (see {report.name})")
     ctx.resource_gen = gen

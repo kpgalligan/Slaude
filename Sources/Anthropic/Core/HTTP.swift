@@ -211,7 +211,10 @@ public final class HTTPResponse: @unchecked Sendable {
 
     /// Reads the whole body (once; subsequent calls return the buffered bytes).
     public func read() async throws -> Data {
-        if let b = lock.withLock({ buffered }) { return b }
+        if let b = lock.withLock({ buffered }) {
+            close()
+            return b
+        }
         let s: ByteStream? = lock.withLock {
             let s = stream
             stream = nil
