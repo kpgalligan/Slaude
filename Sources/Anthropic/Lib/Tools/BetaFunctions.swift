@@ -19,9 +19,12 @@ public typealias BetaToolInput = [String: JSONValue]
 open class ToolError: Error, CustomStringConvertible, LocalizedError, PythonReprError, @unchecked Sendable {
     public let content: BetaFunctionToolResult
     public let message: String
+    /// The error this one was raised from (Python's `raise ... from cause`), if any.
+    public let cause: Error?
 
-    public init(_ content: BetaFunctionToolResult) {
+    public init(_ content: BetaFunctionToolResult, cause: Error? = nil) {
         self.content = content
+        self.cause = cause
         switch content {
         case .string(let s): message = s
         default:
