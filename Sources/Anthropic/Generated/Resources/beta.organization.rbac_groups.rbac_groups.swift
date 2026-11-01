@@ -39,7 +39,7 @@ public struct BetaOrganizationRbacGroupsRBACGroupsResource: Sendable {
     func _create(name: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaRBACGroup> {
         var body = ParamsBuilder()
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/rbac_groups", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/rbac_groups", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaRBACGroup.self, options, stream: _mode == .stream)
     }
 
@@ -63,7 +63,7 @@ public struct BetaOrganizationRbacGroupsRBACGroupsResource: Sendable {
 
     func _retrieve(_ rbacGroupID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaRBACGroup> {
         try requireNonEmpty(rbacGroupID, "rbac_group_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaRBACGroup.self, options, stream: _mode == .stream)
     }
 
@@ -95,7 +95,7 @@ public struct BetaOrganizationRbacGroupsRBACGroupsResource: Sendable {
         try requireNonEmpty(rbacGroupID, "rbac_group_id")
         var body = ParamsBuilder()
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaRBACGroup.self, options, stream: _mode == .stream)
     }
 
@@ -125,7 +125,7 @@ public struct BetaOrganizationRbacGroupsRBACGroupsResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rbac_groups", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/rbac_groups", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaRBACGroup>.self, options, stream: _mode == .stream)
     }
 
@@ -153,7 +153,7 @@ public struct BetaOrganizationRbacGroupsRBACGroupsResource: Sendable {
 
     func _delete(_ rbacGroupID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<RBACGroupDeleteResponse> {
         try requireNonEmpty(rbacGroupID, "rbac_group_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}", ["rbac_group_id": rbacGroupID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(RBACGroupDeleteResponse.self, options, stream: _mode == .stream)
     }
 

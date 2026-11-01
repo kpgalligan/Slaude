@@ -106,7 +106,7 @@ public struct BetaOrganizationAnalyticsUsersResource: Sendable {
         try query.set("order_by", orderBy)
         try query.set("page", page)
         try query.set("starting_date", startingDate)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.users.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.users.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaAnalyticsUserActivity>.self, options, stream: _mode == .stream)
     }
 

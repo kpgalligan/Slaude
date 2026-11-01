@@ -92,7 +92,7 @@ public struct BetaOrganizationPluginsResource: Sendable {
         body.setFiles("files", files)
         try body.set("marketplace_id", marketplaceID)
         try body.set("release_notes", releaseNotes)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugins", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugins", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPlugin.self, options, stream: _mode == .stream)
     }
 
@@ -138,7 +138,7 @@ public struct BetaOrganizationPluginsResource: Sendable {
         try requireNonEmpty(pluginID, "plugin_id")
         var query = ParamsBuilder()
         try query.set("organization_id", organizationID)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPlugin.self, options, stream: _mode == .stream)
     }
 
@@ -201,7 +201,7 @@ public struct BetaOrganizationPluginsResource: Sendable {
         try requireNonEmpty(pluginID, "plugin_id")
         var body = ParamsBuilder()
         try body.set("served_version_id", servedVersionID)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPlugin.self, options, stream: _mode == .stream)
     }
 
@@ -282,7 +282,7 @@ public struct BetaOrganizationPluginsResource: Sendable {
         try query.set("owner_type", ownerType)
         try query.set("owner_user_id", ownerUserID)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/plugins", query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/plugins", query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaPlugin>.self, options, stream: _mode == .stream)
     }
 
@@ -327,7 +327,7 @@ public struct BetaOrganizationPluginsResource: Sendable {
 
     func _delete(_ pluginID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedPlugin> {
         try requireNonEmpty(pluginID, "plugin_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}", ["plugin_id": pluginID]), headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedPlugin.self, options, stream: _mode == .stream)
     }
 

@@ -50,7 +50,7 @@ public struct BetaOrganizationClaudeTagSlackChannelsResource: Sendable {
         var body = ParamsBuilder()
         try body.set("slack", slack)
         try body.set("settings", settings)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/claude_tag/slack_channels", body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/claude_tag/slack_channels", body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagSlackChannel.self, options, stream: _mode == .stream)
     }
 
@@ -91,7 +91,7 @@ public struct BetaOrganizationClaudeTagSlackChannelsResource: Sendable {
         try requireNonEmpty(id, "id")
         var query = ParamsBuilder()
         try query.set("include_inherited", includeInherited)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagSlackChannel.self, options, stream: _mode == .stream)
     }
 
@@ -125,7 +125,7 @@ public struct BetaOrganizationClaudeTagSlackChannelsResource: Sendable {
         try requireNonEmpty(id, "id")
         var body = ParamsBuilder()
         try body.set("settings", settings)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagSlackChannel.self, options, stream: _mode == .stream)
     }
 
@@ -178,7 +178,7 @@ public struct BetaOrganizationClaudeTagSlackChannelsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("slack_channel_id", slackChannelID)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/claude_tag/slack_channels", query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/claude_tag/slack_channels", query: query, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaClaudeTagSlackChannel>.self, options, stream: _mode == .stream)
     }
 
@@ -218,7 +218,7 @@ public struct BetaOrganizationClaudeTagSlackChannelsResource: Sendable {
 
     func _delete(_ id: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaClaudeTagDeletedSlackChannel> {
         try requireNonEmpty(id, "id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/claude_tag/slack_channels/{id}", ["id": id]), headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.slack_channels.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaClaudeTagDeletedSlackChannel.self, options, stream: _mode == .stream)
     }
 

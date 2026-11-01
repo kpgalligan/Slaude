@@ -38,7 +38,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
         try body.set("provider_config", providerConfig)
         try body.set("display_name", displayName)
         try body.set("geo", geo)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/external_keys", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/external_keys", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaExternalKey.self, options, stream: _mode == .stream)
     }
 
@@ -60,7 +60,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
 
     func _retrieve(_ externalKeyID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaExternalKey> {
         try requireNonEmpty(externalKeyID, "external_key_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaExternalKey.self, options, stream: _mode == .stream)
     }
 
@@ -98,7 +98,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
         try body.set("display_name", displayName)
         try body.set("geo", geo)
         try body.set("provider_config", providerConfig)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaExternalKey.self, options, stream: _mode == .stream)
     }
 
@@ -127,7 +127,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/external_keys", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/external_keys", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaExternalKey>.self, options, stream: _mode == .stream)
     }
 
@@ -151,7 +151,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
 
     func _delete(_ externalKeyID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationExternalKeyDeleteResponse> {
         try requireNonEmpty(externalKeyID, "external_key_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationExternalKeyDeleteResponse.self, options, stream: _mode == .stream)
     }
 
@@ -178,7 +178,7 @@ public struct BetaOrganizationExternalKeysResource: Sendable {
 
     func _validate(_ externalKeyID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationExternalKeyValidateResponse> {
         try requireNonEmpty(externalKeyID, "external_key_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}/validate", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.validate")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/external_keys/{external_key_id}/validate", ["external_key_id": externalKeyID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.external_keys.validate", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationExternalKeyValidateResponse.self, options, stream: _mode == .stream)
     }
 

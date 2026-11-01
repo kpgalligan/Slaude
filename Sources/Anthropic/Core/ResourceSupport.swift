@@ -15,7 +15,8 @@ extension BaseClient {
     /// (`make_request_options` plus the `_post(path, body=..., ...)` call).
     public func makeRequestOptions(method: String, url: String, body: ParamsBuilder? = nil, query: ParamsBuilder? = nil,
                                    headers: Headers?, extraQuery: Query?, extraBody: Body?, timeout: Timeout?,
-                                   mode: ResponseMode, spanName: String? = nil) throws -> FinalRequestOptions
+                                   mode: ResponseMode, spanName: String? = nil,
+                                   qualifiers: [String: String]? = nil) throws -> FinalRequestOptions
     {
         var o = FinalRequestOptions(method: method, url: url)
         var h = headers ?? [:]
@@ -36,6 +37,7 @@ extension BaseClient {
         o.extraJSON = extraBody
         o.timeout = timeout
         o.spanName = spanName
+        o.qualifiers = qualifiers
         return o
     }
 
@@ -62,7 +64,7 @@ public final class JSONLDecoder<Element: Decodable & Sendable>: AsyncSequence, @
     init(response: HTTPResponse, client: BaseClient) {
         self.httpResponse = response
         self.client = client
-        self.state = State(bytes: response.bytes(), response: response, client: client)
+        self.state = State(bytes: nil, response: response, client: client)
     }
 
     /// Decodes `bytes` (Python's `raw_iterator`) rather than the response body.
@@ -73,7 +75,9 @@ public final class JSONLDecoder<Element: Decodable & Sendable>: AsyncSequence, @
     }
 
     final class State: @unchecked Sendable {
-        private var bytes: ByteStream.AsyncIterator
+        // Created on first use when no explicit byte source was given, so the body can still be
+        // read raw before iteration starts.
+        private var bytes: ByteStream.AsyncIterator?
         let response: HTTPResponse
         let client: BaseClient
         private var ready: [Data] = []
@@ -81,8 +85,8 @@ public final class JSONLDecoder<Element: Decodable & Sendable>: AsyncSequence, @
         private var done = false
         private var finished = false
 
-        init(bytes: ByteStream, response: HTTPResponse, client: BaseClient) {
-            self.bytes = bytes.makeAsyncIterator()
+        init(bytes: ByteStream?, response: HTTPResponse, client: BaseClient) {
+            self.bytes = bytes?.makeAsyncIterator()
             self.response = response
             self.client = client
         }
@@ -99,7 +103,8 @@ public final class JSONLDecoder<Element: Decodable & Sendable>: AsyncSequence, @
             while true {
                 if !ready.isEmpty { return ready.removeFirst() }
                 if done { return nil }
-                guard let chunk = try await bytes.next() else {
+                if bytes == nil { bytes = response.bytes().makeAsyncIterator() }
+                guard let chunk = try await bytes!.next() else {
                     done = true
                     if !buf.allSatisfy({ $0 == 0x0A || $0 == 0x0D || $0 == 0x20 || $0 == 0x09 }) { ready.append(buf) } // flush
                     buf = Data()

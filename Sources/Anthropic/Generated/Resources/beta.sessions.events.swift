@@ -68,7 +68,7 @@ public struct BetaSessionsEventsResource: Sendable {
         try query.set("order", order)
         try query.set("page", page)
         try query.set("types", types)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/events", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/events", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsSessionEvent>.self, options, stream: _mode == .stream)
     }
 
@@ -102,7 +102,7 @@ public struct BetaSessionsEventsResource: Sendable {
         try requireNonEmpty(sessionID, "session_id")
         var body = ParamsBuilder()
         try body.set("events", events)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/events", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.send")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/events", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.send", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsSendSessionEvents.self, options, stream: _mode == .stream)
     }
 
@@ -145,7 +145,7 @@ public struct BetaSessionsEventsResource: Sendable {
         try requireNonEmpty(sessionID, "session_id")
         var query = ParamsBuilder()
         try query.set("event_deltas", eventDeltas)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/events/stream", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.stream")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/events/stream", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.events.stream", qualifiers: ["beta": "true"])
         return try await client.requestStreamResponse(BetaManagedAgentsStreamSessionEvents.self, options)
     }
 

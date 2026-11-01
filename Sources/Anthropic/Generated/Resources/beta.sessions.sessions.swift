@@ -77,7 +77,7 @@ public struct BetaSessionsResource: Sendable {
         try body.set("resources", resources)
         try body.set("title", title)
         try body.set("vault_ids", vaultIDs)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/sessions", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/sessions", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsSession.self, options, stream: _mode == .stream)
     }
 
@@ -107,7 +107,7 @@ public struct BetaSessionsResource: Sendable {
 
     func _retrieve(_ sessionID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsSession> {
         try requireNonEmpty(sessionID, "session_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsSession.self, options, stream: _mode == .stream)
     }
 
@@ -166,7 +166,7 @@ public struct BetaSessionsResource: Sendable {
         try body.set("metadata", metadata)
         try body.set("title", title)
         try body.set("vault_ids", vaultIDs)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsSession.self, options, stream: _mode == .stream)
     }
 
@@ -238,7 +238,7 @@ public struct BetaSessionsResource: Sendable {
         try query.set("order", order)
         try query.set("page", page)
         try query.set("statuses", statuses)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/sessions", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/sessions", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(BidirectionalPageCursor<BetaManagedAgentsSession>.self, options, stream: _mode == .stream)
     }
 
@@ -268,7 +268,7 @@ public struct BetaSessionsResource: Sendable {
 
     func _delete(_ sessionID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeletedSession> {
         try requireNonEmpty(sessionID, "session_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/sessions/{session_id}", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeletedSession.self, options, stream: _mode == .stream)
     }
 
@@ -298,7 +298,7 @@ public struct BetaSessionsResource: Sendable {
 
     func _archive(_ sessionID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsSession> {
         try requireNonEmpty(sessionID, "session_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/archive", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/archive", ["session_id": sessionID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsSession.self, options, stream: _mode == .stream)
     }
 

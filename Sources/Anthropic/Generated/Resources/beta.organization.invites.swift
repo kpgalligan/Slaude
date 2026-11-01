@@ -51,7 +51,7 @@ public struct BetaOrganizationInvitesResource: Sendable {
         try body.set("email", email)
         try body.set("role", role)
         try body.set("rbac_group_ids", rbacGroupIDs)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/invites", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/invites", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationInvite.self, options, stream: _mode == .stream)
     }
 
@@ -73,7 +73,7 @@ public struct BetaOrganizationInvitesResource: Sendable {
 
     func _retrieve(_ inviteID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationInvite> {
         try requireNonEmpty(inviteID, "invite_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/invites/{invite_id}", ["invite_id": inviteID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/invites/{invite_id}", ["invite_id": inviteID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationInvite.self, options, stream: _mode == .stream)
     }
 
@@ -123,7 +123,7 @@ public struct BetaOrganizationInvitesResource: Sendable {
         try query.set("limit", limit)
         try query.set("roles", roles)
         try query.set("statuses", statuses)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/invites", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/invites", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaOrganizationInvite>.self, options, stream: _mode == .stream)
     }
 
@@ -145,7 +145,7 @@ public struct BetaOrganizationInvitesResource: Sendable {
 
     func _delete(_ inviteID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationInviteDeleteResponse> {
         try requireNonEmpty(inviteID, "invite_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/invites/{invite_id}", ["invite_id": inviteID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/invites/{invite_id}", ["invite_id": inviteID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.invites.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationInviteDeleteResponse.self, options, stream: _mode == .stream)
     }
 

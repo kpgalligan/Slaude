@@ -72,7 +72,7 @@ public struct BetaOrganizationPluginsInstallationSettingsResource: Sendable {
         try query.set("organization_id", organizationID)
         try query.set("page", page)
         try query.set("target_type", targetType)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaPluginInstallationSetting>.self, options, stream: _mode == .stream)
     }
 
@@ -129,7 +129,7 @@ public struct BetaOrganizationPluginsInstallationSettingsResource: Sendable {
     func _remove(_ target: String, pluginID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedPluginInstallationSetting> {
         try requireNonEmpty(pluginID, "plugin_id")
         try requireNonEmpty(target, "target")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings/{target}", ["plugin_id": pluginID, "target": target]), headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings/{target}", ["plugin_id": pluginID, "target": target]), headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.remove", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedPluginInstallationSetting.self, options, stream: _mode == .stream)
     }
 
@@ -187,7 +187,7 @@ public struct BetaOrganizationPluginsInstallationSettingsResource: Sendable {
         try requireNonEmpty(target, "target")
         var body = ParamsBuilder()
         try body.set("installation_preference", installationPreference)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings/{target}", ["plugin_id": pluginID, "target": target]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.set")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/installation_settings/{target}", ["plugin_id": pluginID, "target": target]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.installation_settings.set", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginInstallationSetting.self, options, stream: _mode == .stream)
     }
 

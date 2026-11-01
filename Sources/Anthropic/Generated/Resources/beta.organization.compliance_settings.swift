@@ -24,7 +24,7 @@ public struct BetaOrganizationComplianceSettingsResource: Sendable {
     }
 
     func _retrieve(extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaComplianceSettings> {
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/compliance_settings", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/compliance_settings", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaComplianceSettings.self, options, stream: _mode == .stream)
     }
 
@@ -60,7 +60,7 @@ public struct BetaOrganizationComplianceSettingsResource: Sendable {
     func _update(state: BetaComplianceSettingsStateParam, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaComplianceSettings> {
         var body = ParamsBuilder()
         try body.set("state", state)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/compliance_settings", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.update")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/compliance_settings", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaComplianceSettings.self, options, stream: _mode == .stream)
     }
 

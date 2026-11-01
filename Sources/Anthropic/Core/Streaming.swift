@@ -195,7 +195,7 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
     init(response: HTTPResponse, client: BaseClient) {
         self.response = response
         self.client = client
-        self.state = State(events: client.makeSSEEvents(response.bytes()), response: response, client: client)
+        self.state = State(response: response, client: client)
     }
 
     /// The raw server-sent events, before JSON parsing and event-name filtering.
@@ -206,13 +206,14 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
     /// The iteration state shared by the stream and its iterators (`__stream__`). Dropping the last
     /// reference to it closes the response.
     final class State: @unchecked Sendable {
-        private var events: AsyncThrowingStream<ServerSentEvent, Error>.AsyncIterator
+        // Created on first use: the body is only taken when iteration starts, so it can still be
+        // read raw (`stream.response.read()`) before that.
+        private var events: AsyncThrowingStream<ServerSentEvent, Error>.AsyncIterator?
         let response: HTTPResponse
         let client: BaseClient
         private var finished = false
 
-        init(events: AsyncThrowingStream<ServerSentEvent, Error>, response: HTTPResponse, client: BaseClient) {
-            self.events = events.makeAsyncIterator()
+        init(response: HTTPResponse, client: BaseClient) {
             self.response = response
             self.client = client
         }
@@ -226,8 +227,9 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
 
         func next() async throws -> Element? {
             if finished { return nil }
+            if events == nil { events = client.makeSSEEvents(response.bytes()).makeAsyncIterator() }
             do {
-                while let sse = try await events.next() {
+                while let sse = try await events!.next() {
                     if sse.event == "ping" { continue }
                     guard let name = sse.event else { continue }
                     if name == "error" {

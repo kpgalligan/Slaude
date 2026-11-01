@@ -35,7 +35,7 @@ public struct BetaOrganizationSpendLimitsResource: Sendable {
 
     func _retrieve(_ spendLimitID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSpendLimit> {
         try requireNonEmpty(spendLimitID, "spend_limit_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/spend_limits/{spend_limit_id}", ["spend_limit_id": spendLimitID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/spend_limits/{spend_limit_id}", ["spend_limit_id": spendLimitID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSpendLimit.self, options, stream: _mode == .stream)
     }
 
@@ -80,7 +80,7 @@ public struct BetaOrganizationSpendLimitsResource: Sendable {
         try query.set("page", page)
         try query.set("scope_type", scopeType)
         try query.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limits", query: query, headers: mergeHeaderLayers(["anthropic-beta": "spend-limit-reads-2026-09-26"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["spend-limit-reads-2026-09-26"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/spend_limits", query: query, headers: mergeHeaderLayers(["anthropic-beta": "spend-limit-reads-2026-09-26"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["spend-limit-reads-2026-09-26"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSpendLimit>.self, options, stream: _mode == .stream)
     }
 
@@ -109,7 +109,7 @@ public struct BetaOrganizationSpendLimitsResource: Sendable {
 
     func _delete(_ spendLimitID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<SpendLimitDeleteResponse> {
         try requireNonEmpty(spendLimitID, "spend_limit_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/spend_limits/{spend_limit_id}", ["spend_limit_id": spendLimitID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/spend_limits/{spend_limit_id}", ["spend_limit_id": spendLimitID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(SpendLimitDeleteResponse.self, options, stream: _mode == .stream)
     }
 
@@ -152,7 +152,7 @@ public struct BetaOrganizationSpendLimitsResource: Sendable {
         try body.set("amount", amount)
         try body.set("scope", scope)
         try body.set("period", period)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/spend_limits", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.set")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/spend_limits", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.spend_limits.set", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSpendLimit.self, options, stream: _mode == .stream)
     }
 

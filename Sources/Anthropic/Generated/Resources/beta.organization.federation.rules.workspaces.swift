@@ -51,7 +51,7 @@ public struct BetaOrganizationFederationRulesWorkspacesResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaFederationRuleWorkspace>.self, options, stream: _mode == .stream)
     }
 
@@ -92,7 +92,7 @@ public struct BetaOrganizationFederationRulesWorkspacesResource: Sendable {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
         var body = ParamsBuilder()
         try body.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.add")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.add", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaFederationRuleWorkspace.self, options, stream: _mode == .stream)
     }
 
@@ -128,7 +128,7 @@ public struct BetaOrganizationFederationRulesWorkspacesResource: Sendable {
     func _remove(_ workspaceID: String, federationRuleID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationFederationRulesWorkspaceRemoveResponse> {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
         try requireNonEmpty(workspaceID, "workspace_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces/{workspace_id}", ["federation_rule_id": federationRuleID, "workspace_id": workspaceID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces/{workspace_id}", ["federation_rule_id": federationRuleID, "workspace_id": workspaceID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.remove", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationFederationRulesWorkspaceRemoveResponse.self, options, stream: _mode == .stream)
     }
 

@@ -171,12 +171,12 @@ public typealias CallNext = @Sendable (APIRequest) async throws -> RawAPIRespons
 /// policy by type: `APIStatusError` (subject to the usual status policy), `APIConnectionError` and
 /// `RetryableError` — also when found on an error's `ChainedError.cause` chain.
 public protocol Middleware: Sendable {
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse
 }
 
 extension Middleware {
     /// The default passes the request straight on to the rest of the chain.
-    public func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    public func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         try await next(request)
     }
 }
@@ -189,7 +189,7 @@ public struct MiddlewareFunction: Middleware {
         self.name = name
         self.body = body
     }
-    public func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    public func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         try await body(request, next)
     }
 }

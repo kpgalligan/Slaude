@@ -69,6 +69,7 @@ class MethodPlan:
     streaming_variant: bool  # create + createStreaming pair
     stream_only: bool
     nonstreaming_timeout: Optional[str] = None
+    qualifiers: Optional[dict] = None
 
 
 def resource_swift_name(module: str, cls: str) -> str:
@@ -452,6 +453,7 @@ class ResourceGen:
         if "files" in kws:
             multipart = True
         span_name = span_route = None
+        qualifiers = None
         opts = kws.get("options")
         if isinstance(opts, ast.Call):
             for k in opts.keywords:
@@ -461,6 +463,8 @@ class ResourceGen:
                     span_name = k.value.value
                 elif k.arg == "span_route" and isinstance(k.value, ast.Constant):
                     span_route = k.value.value
+                elif k.arg == "qualifiers":
+                    qualifiers = ast.literal_eval(k.value)
                 elif k.arg == "post_parser":
                     raise Unsupported("post_parser")
         stream_flag = kws.get("stream")
@@ -506,7 +510,7 @@ class ResourceGen:
             method=http, path_expr=path_swift, body_entries=body_entries, query_entries=query_entries,
             header_expr=header_expr, result_kind=result_kind, result_type=result_type, span_name=span_name,
             span_route=span_route, multipart=multipart, streaming_variant=streaming_variant, stream_only=stream_only,
-            nonstreaming_timeout=nonstreaming_timeout,
+            nonstreaming_timeout=nonstreaming_timeout, qualifiers=qualifiers,
         )
         if streaming_variant:
             plan.stream_elem = self._stream_elem  # type: ignore[attr-defined]
@@ -575,6 +579,9 @@ class ResourceGen:
         opts += [f"headers: {headers}", "extraQuery: extraQuery", "extraBody: extraBody", "timeout: timeout", "mode: _mode"]
         if plan.span_name:
             opts.append(f"spanName: {swift_string(plan.span_name)}")
+        if plan.qualifiers:
+            entries = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in sorted(plan.qualifiers.items()))
+            opts.append(f"qualifiers: [{entries}]")
         lines.append(f"let options = try client.makeRequestOptions({', '.join(opts)})")
         kind = "stream" if streaming or plan.stream_only else plan.result_kind
         if kind == "json":

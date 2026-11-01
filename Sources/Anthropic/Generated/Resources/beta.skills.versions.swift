@@ -49,7 +49,7 @@ public struct BetaSkillsVersionsResource: Sendable {
         try requireNonEmpty(skillID, "skill_id")
         var body = ParamsBuilder()
         body.setFiles("files", files)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/skills/{skill_id}/versions", ["skill_id": skillID]), body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.create")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/skills/{skill_id}/versions", ["skill_id": skillID]), body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSkillVersion.self, options, stream: _mode == .stream)
     }
 
@@ -89,7 +89,7 @@ public struct BetaSkillsVersionsResource: Sendable {
     func _retrieve(_ version: String, skillID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSkillVersion> {
         try requireNonEmpty(skillID, "skill_id")
         try requireNonEmpty(version, "version")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSkillVersion.self, options, stream: _mode == .stream)
     }
 
@@ -131,7 +131,7 @@ public struct BetaSkillsVersionsResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions", ["skill_id": skillID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions", ["skill_id": skillID]), query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSkillVersion>.self, options, stream: _mode == .stream)
     }
 
@@ -170,7 +170,7 @@ public struct BetaSkillsVersionsResource: Sendable {
     func _delete(_ version: String, skillID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedSkillVersion> {
         try requireNonEmpty(skillID, "skill_id")
         try requireNonEmpty(version, "version")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedSkillVersion.self, options, stream: _mode == .stream)
     }
 
@@ -209,7 +209,7 @@ public struct BetaSkillsVersionsResource: Sendable {
     func _download(_ version: String, skillID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BinaryResponse> {
         try requireNonEmpty(skillID, "skill_id")
         try requireNonEmpty(version, "version")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}/content", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.download")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}/versions/{version}/content", ["skill_id": skillID, "version": version]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.versions.download", qualifiers: ["beta": "true"])
         return try await client.requestBinaryResponse(options, stream: _mode == .stream)
     }
 

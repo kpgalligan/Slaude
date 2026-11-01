@@ -135,7 +135,7 @@ public struct BetaOrganizationAnalyticsUserCostReportResource: Sendable {
         try query.set("slack_channel_ids", slackChannelIDs)
         try query.set("speeds", speeds)
         try query.set("user_ids", userIDs)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/user_cost_report", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.user_cost_report.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/user_cost_report", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.user_cost_report.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(ReportPageCursor<BetaAnalyticsCostUsersItem>.self, options, stream: _mode == .stream)
     }
 

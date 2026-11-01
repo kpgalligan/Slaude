@@ -40,7 +40,7 @@ public struct BetaSessionsResourcesResource: Sendable {
     func _retrieve(_ resourceID: String, sessionID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ResourceRetrieveResponse> {
         try requireNonEmpty(sessionID, "session_id")
         try requireNonEmpty(resourceID, "resource_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(ResourceRetrieveResponse.self, options, stream: _mode == .stream)
     }
 
@@ -76,7 +76,7 @@ public struct BetaSessionsResourcesResource: Sendable {
         try requireNonEmpty(resourceID, "resource_id")
         var body = ParamsBuilder()
         try body.set("authorization_token", authorizationToken)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(ResourceUpdateResponse.self, options, stream: _mode == .stream)
     }
 
@@ -114,7 +114,7 @@ public struct BetaSessionsResourcesResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/resources", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/sessions/{session_id}/resources", ["session_id": sessionID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsSessionResource>.self, options, stream: _mode == .stream)
     }
 
@@ -145,7 +145,7 @@ public struct BetaSessionsResourcesResource: Sendable {
     func _delete(_ resourceID: String, sessionID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeleteSessionResource> {
         try requireNonEmpty(sessionID, "session_id")
         try requireNonEmpty(resourceID, "resource_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/sessions/{session_id}/resources/{resource_id}", ["session_id": sessionID, "resource_id": resourceID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeleteSessionResource.self, options, stream: _mode == .stream)
     }
 
@@ -183,7 +183,7 @@ public struct BetaSessionsResourcesResource: Sendable {
         try body.set("file_id", fileID)
         try body.set("type", type)
         try body.set("mount_path", mountPath)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/resources", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.add")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/sessions/{session_id}/resources", ["session_id": sessionID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.sessions.resources.add", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsFileResource.self, options, stream: _mode == .stream)
     }
 

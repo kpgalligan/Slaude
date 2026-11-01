@@ -47,7 +47,7 @@ public struct BetaOrganizationWorkspacesRateLimitsResource: Sendable {
         try requireNonEmpty(rateLimitID, "rate_limit_id")
         var body = ParamsBuilder()
         try body.set("limits", limits)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits/{rate_limit_id}", ["workspace_id": workspaceID, "rate_limit_id": rateLimitID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits/{rate_limit_id}", ["workspace_id": workspaceID, "rate_limit_id": rateLimitID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaWorkspaceRateLimit.self, options, stream: _mode == .stream)
     }
 
@@ -95,7 +95,7 @@ public struct BetaOrganizationWorkspacesRateLimitsResource: Sendable {
         try query.set("include_inherited", includeInherited)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaWorkspaceRateLimit>.self, options, stream: _mode == .stream)
     }
 

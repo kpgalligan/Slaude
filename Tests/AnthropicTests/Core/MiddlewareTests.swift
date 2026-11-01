@@ -18,7 +18,7 @@ final class RecordingMiddleware: Middleware, @unchecked Sendable {
         self.events = events ?? Locked([])
     }
 
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         requests.withValue { $0.append(request) }
         events.withValue { $0.append("\(name):enter") }
         let result = try await next(request)
@@ -30,7 +30,7 @@ final class RecordingMiddleware: Middleware, @unchecked Sendable {
 
 struct MutateBody: Middleware {
     let changes: [String: JSONValue]
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         guard case .object(var body)? = request.json else { throw ValueError("expected an object body") }
         for (k, v) in changes { body[k] = v }
         return try await next(request.copy(body: .object(body)))
@@ -42,7 +42,7 @@ struct RetryWithChange: Middleware {
     let status: Int
     let key: String
     let value: JSONValue
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         let response = try await next(request)
         if response.statusCode == status {
             guard case .object(var body)? = request.json else { throw ValueError("expected an object body") }
@@ -63,7 +63,7 @@ final class ShortCircuit: Middleware, @unchecked Sendable {
     let message: Message
     let requests = Locked<[APIRequest]>([])
     init(_ message: Message) { self.message = message }
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         requests.withValue { $0.append(request) }
         return RawAPIResponse.shortCircuit(message, for: request)
     }
@@ -74,7 +74,7 @@ final class AttemptRecorder: Middleware, @unchecked Sendable {
     let attempts = Locked<[Int]>([])
     let statuses = Locked<[Int]>([])
     let errors = Locked<[String]>([])
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         attempts.withValue { $0.append(request.retriesTaken) }
         do {
             let response = try await next(request)
@@ -94,7 +94,7 @@ struct Boom: Error, ChainedError, CustomStringConvertible {
 }
 
 struct Exploding: Middleware {
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         throw Boom(message: "middleware failure")
     }
 }
@@ -102,7 +102,7 @@ struct Exploding: Middleware {
 /// Records the response returned by `next` and passes it through.
 final class InspectResponse: Middleware, @unchecked Sendable {
     let responses = Locked<[RawAPIResponse]>([])
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         let response = try await next(request)
         responses.withValue { $0.append(response) }
         return response
@@ -112,7 +112,7 @@ final class InspectResponse: Middleware, @unchecked Sendable {
 /// Parses the response inside the middleware before returning it.
 final class ParseInMiddleware: Middleware, @unchecked Sendable {
     let parsed = Locked<[Message]>([])
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         let response = try await next(request)
         let message = try await response.parse(as: Message.self)
         parsed.withValue { $0.append(message) }
@@ -123,7 +123,7 @@ final class ParseInMiddleware: Middleware, @unchecked Sendable {
 /// Retries the same request once on a 5xx error, recording the request headers seen each time.
 final class RetryOnInternalServerError: Middleware, @unchecked Sendable {
     let headersSeen = Locked<[Headers]>([])
-    func handle(_ request: APIRequest, next: CallNext) async throws -> RawAPIResponse {
+    func handle(_ request: APIRequest, next: @escaping CallNext) async throws -> RawAPIResponse {
         headersSeen.withValue { $0.append(request.headers) }
         var result = try await next(request)
         if result.statusCode >= 500 {

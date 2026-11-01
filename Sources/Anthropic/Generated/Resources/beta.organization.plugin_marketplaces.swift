@@ -55,7 +55,7 @@ public struct BetaOrganizationPluginMarketplacesResource: Sendable {
         try requireNonEmpty(marketplaceID, "marketplace_id")
         var query = ParamsBuilder()
         try query.set("organization_id", organizationID)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugin_marketplaces/{marketplace_id}", ["marketplace_id": marketplaceID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugin_marketplaces/{marketplace_id}", ["marketplace_id": marketplaceID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginMarketplace.self, options, stream: _mode == .stream)
     }
 
@@ -100,7 +100,7 @@ public struct BetaOrganizationPluginMarketplacesResource: Sendable {
         try requireNonEmpty(marketplaceID, "marketplace_id")
         var body = ParamsBuilder()
         try body.set("default_installation_preference", defaultInstallationPreference)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugin_marketplaces/{marketplace_id}", ["marketplace_id": marketplaceID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/plugin_marketplaces/{marketplace_id}", ["marketplace_id": marketplaceID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginMarketplace.self, options, stream: _mode == .stream)
     }
 
@@ -167,7 +167,7 @@ public struct BetaOrganizationPluginMarketplacesResource: Sendable {
         try query.set("owner_type", ownerType)
         try query.set("page", page)
         try query.set("source", source)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/plugin_marketplaces", query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/plugin_marketplaces", query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaPluginMarketplace>.self, options, stream: _mode == .stream)
     }
 
@@ -227,7 +227,7 @@ public struct BetaOrganizationPluginMarketplacesResource: Sendable {
     func _validateArchive(archive: FileUpload, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaPluginMarketplaceValidationReport> {
         var body = ParamsBuilder()
         body.setFile("archive", archive)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugin_marketplaces/validate_archive", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.validate_archive")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugin_marketplaces/validate_archive", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.validate_archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginMarketplaceValidationReport.self, options, stream: _mode == .stream)
     }
 
@@ -297,7 +297,7 @@ public struct BetaOrganizationPluginMarketplacesResource: Sendable {
         var body = ParamsBuilder()
         try body.set("repository_url", repositoryURL)
         try body.set("ref", ref)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugin_marketplaces/validate_repository", body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.validate_repository")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/plugin_marketplaces/validate_repository", body: body, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugin_marketplaces.validate_repository", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaPluginMarketplaceValidationReport.self, options, stream: _mode == .stream)
     }
 

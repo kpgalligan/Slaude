@@ -75,7 +75,7 @@ public struct BetaDreamsResource: Sendable {
         try body.set("model", model)
         try body.set("instructions", instructions)
         try body.set("output_behavior", outputBehavior)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/dreams", body: body, headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/dreams", body: body, headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDream.self, options, stream: _mode == .stream)
     }
 
@@ -113,7 +113,7 @@ public struct BetaDreamsResource: Sendable {
 
     func _retrieve(_ dreamID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDream> {
         try requireNonEmpty(dreamID, "dream_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/dreams/{dream_id}", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/dreams/{dream_id}", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDream.self, options, stream: _mode == .stream)
     }
 
@@ -173,7 +173,7 @@ public struct BetaDreamsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("statuses", statuses)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/dreams", query: query, headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/dreams", query: query, headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaDream>.self, options, stream: _mode == .stream)
     }
 
@@ -214,7 +214,7 @@ public struct BetaDreamsResource: Sendable {
 
     func _archive(_ dreamID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDream> {
         try requireNonEmpty(dreamID, "dream_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/dreams/{dream_id}/archive", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/dreams/{dream_id}/archive", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDream.self, options, stream: _mode == .stream)
     }
 
@@ -255,7 +255,7 @@ public struct BetaDreamsResource: Sendable {
 
     func _cancel(_ dreamID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDream> {
         try requireNonEmpty(dreamID, "dream_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/dreams/{dream_id}/cancel", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.cancel")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/dreams/{dream_id}/cancel", ["dream_id": dreamID]), headers: mergeHeaderLayers(["anthropic-beta": "dreaming-2026-04-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["dreaming-2026-04-21"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.dreams.cancel", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDream.self, options, stream: _mode == .stream)
     }
 

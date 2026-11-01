@@ -64,7 +64,7 @@ public struct BetaMemoryStoresMemoriesResource: Sendable {
         try body.set("path", path)
         var query = ParamsBuilder()
         try query.set("view", view)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories", ["memory_store_id": memoryStoreID]), body: body, query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.create")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories", ["memory_store_id": memoryStoreID]), body: body, query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsMemory.self, options, stream: _mode == .stream)
     }
 
@@ -107,7 +107,7 @@ public struct BetaMemoryStoresMemoriesResource: Sendable {
         try requireNonEmpty(memoryID, "memory_id")
         var query = ParamsBuilder()
         try query.set("view", view)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsMemory.self, options, stream: _mode == .stream)
     }
 
@@ -170,7 +170,7 @@ public struct BetaMemoryStoresMemoriesResource: Sendable {
         try body.set("precondition", precondition)
         var query = ParamsBuilder()
         try query.set("view", view)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), body: body, query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), body: body, query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsMemory.self, options, stream: _mode == .stream)
     }
 
@@ -235,7 +235,7 @@ public struct BetaMemoryStoresMemoriesResource: Sendable {
         try query.set("page", page)
         try query.set("path_prefix", pathPrefix)
         try query.set("view", view)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories", ["memory_store_id": memoryStoreID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories", ["memory_store_id": memoryStoreID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsMemoryListItem>.self, options, stream: _mode == .stream)
     }
 
@@ -278,7 +278,7 @@ public struct BetaMemoryStoresMemoriesResource: Sendable {
         try requireNonEmpty(memoryID, "memory_id")
         var query = ParamsBuilder()
         try query.set("expected_content_sha256", expectedContentSha256)
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/memory_stores/{memory_store_id}/memories/{memory_id}", ["memory_store_id": memoryStoreID, "memory_id": memoryID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "agent-memory-2026-07-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["agent-memory-2026-07-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.memory_stores.memories.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeletedMemory.self, options, stream: _mode == .stream)
     }
 

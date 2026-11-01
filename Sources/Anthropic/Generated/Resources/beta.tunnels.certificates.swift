@@ -55,7 +55,7 @@ public struct BetaTunnelsCertificatesResource: Sendable {
         try requireNonEmpty(tunnelID, "tunnel_id")
         var body = ParamsBuilder()
         try body.set("ca_certificate_pem", caCertificatePem)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates", ["tunnel_id": tunnelID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.create")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates", ["tunnel_id": tunnelID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnelCertificate.self, options, stream: _mode == .stream)
     }
 
@@ -97,7 +97,7 @@ public struct BetaTunnelsCertificatesResource: Sendable {
     func _retrieve(_ certificateID: String, tunnelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnelCertificate> {
         try requireNonEmpty(tunnelID, "tunnel_id")
         try requireNonEmpty(certificateID, "certificate_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates/{certificate_id}", ["tunnel_id": tunnelID, "certificate_id": certificateID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates/{certificate_id}", ["tunnel_id": tunnelID, "certificate_id": certificateID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnelCertificate.self, options, stream: _mode == .stream)
     }
 
@@ -147,7 +147,7 @@ public struct BetaTunnelsCertificatesResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates", ["tunnel_id": tunnelID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates", ["tunnel_id": tunnelID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaTunnelCertificate>.self, options, stream: _mode == .stream)
     }
 
@@ -192,7 +192,7 @@ public struct BetaTunnelsCertificatesResource: Sendable {
     func _archive(_ certificateID: String, tunnelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnelCertificate> {
         try requireNonEmpty(tunnelID, "tunnel_id")
         try requireNonEmpty(certificateID, "certificate_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates/{certificate_id}/archive", ["tunnel_id": tunnelID, "certificate_id": certificateID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/certificates/{certificate_id}/archive", ["tunnel_id": tunnelID, "certificate_id": certificateID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.certificates.archive", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnelCertificate.self, options, stream: _mode == .stream)
     }
 

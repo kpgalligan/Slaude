@@ -31,7 +31,7 @@ public struct BetaOrganizationUsersResource: Sendable {
 
     func _retrieve(_ userID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationUser> {
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationUser.self, options, stream: _mode == .stream)
     }
 
@@ -63,7 +63,7 @@ public struct BetaOrganizationUsersResource: Sendable {
         try requireNonEmpty(userID, "user_id")
         var body = ParamsBuilder()
         try body.set("role", role)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.update", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationUser.self, options, stream: _mode == .stream)
     }
 
@@ -108,7 +108,7 @@ public struct BetaOrganizationUsersResource: Sendable {
         try query.set("email", email)
         try query.set("limit", limit)
         try query.set("roles", roles)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaOrganizationUser>.self, options, stream: _mode == .stream)
     }
 
@@ -130,7 +130,7 @@ public struct BetaOrganizationUsersResource: Sendable {
 
     func _remove(_ userID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationUserRemoveResponse> {
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.remove", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationUserRemoveResponse.self, options, stream: _mode == .stream)
     }
 

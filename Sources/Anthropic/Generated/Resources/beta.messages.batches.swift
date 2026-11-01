@@ -54,7 +54,7 @@ public struct BetaMessagesBatchesResource: Sendable {
     func _create(requests: [BetaMessagesBatchCreateParams.Request], betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaMessageBatch> {
         var body = ParamsBuilder()
         try body.set("requests", requests)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/batches", body: body, headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/batches", body: body, headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.create", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaMessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -92,7 +92,7 @@ public struct BetaMessagesBatchesResource: Sendable {
 
     func _retrieve(_ messageBatchID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaMessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.retrieve", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaMessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -140,7 +140,7 @@ public struct BetaMessagesBatchesResource: Sendable {
         try query.set("after_id", afterID)
         try query.set("before_id", beforeID)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/messages/batches", query: query, headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/messages/batches", query: query, headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.list", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaMessageBatch>.self, options, stream: _mode == .stream)
     }
 
@@ -177,7 +177,7 @@ public struct BetaMessagesBatchesResource: Sendable {
 
     func _delete(_ messageBatchID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedMessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.delete", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedMessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -221,7 +221,7 @@ public struct BetaMessagesBatchesResource: Sendable {
 
     func _cancel(_ messageBatchID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaMessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/messages/batches/{message_batch_id}/cancel", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.cancel")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/messages/batches/{message_batch_id}/cancel", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(["anthropic-beta": "message-batches-2024-09-24"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["message-batches-2024-09-24"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.cancel", qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaMessageBatch.self, options, stream: _mode == .stream)
     }
 
