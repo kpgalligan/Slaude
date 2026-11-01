@@ -2,6 +2,23 @@
 
 import Foundation
 
+extension BetaMessageThread {
+    /// Run the tool loop over this thread, yielding the stream of each reply (`thread.tool_runner(stream=True)`).
+    /// Replies are parsed into the thread's output format, if it has one.
+    ///
+    /// - Parameter runToolsEagerly: Run each tool as soon as its call is complete, before the reply finishes. See
+    ///   `client.beta.messages.streamingToolRunner(...)`.
+    public func streamingToolRunner(maxIterations: Int? = nil, runToolsEagerly: Bool = false, extraHeaders: Headers? = nil,
+                                    extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil) throws
+        -> BetaStreamingToolRunner<Output>
+    {
+        try BetaStreamingToolRunner<Output>(
+            thread: inner,
+            options: ToolRunnerRequestOptions(extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout),
+            maxIterations: maxIterations, runToolsEagerly: runToolsEagerly, parser: parser)
+    }
+}
+
 extension BetaMessagesResource {
     /// Run the tools the model calls until it stops asking for them, yielding each assistant message.
     ///

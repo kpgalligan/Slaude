@@ -179,6 +179,7 @@ public final class HTTPResponse: @unchecked Sendable {
     private var stream: ByteStream?
     private var buffered: Data?
     private var _isClosed = false
+    private var _streamObserver: (any StreamObserver)?
     private let onClose: (@Sendable () -> Void)?
     public let elapsed: TimeInterval
 
@@ -213,6 +214,7 @@ public final class HTTPResponse: @unchecked Sendable {
     /// Reads the whole body (once; subsequent calls return the buffered bytes).
     public func read() async throws -> Data {
         if let b = lock.withLock({ buffered }) {
+            if !isClosed { streamObserver?.end(.read, error: nil) }
             close()
             return b
         }
@@ -223,11 +225,31 @@ public final class HTTPResponse: @unchecked Sendable {
         }
         var data = Data()
         if let s {
-            for try await chunk in s { data.append(chunk) }
+            do {
+                for try await chunk in s { data.append(chunk) }
+            } catch {
+                streamObserver?.end(.failed, error: error)
+                throw error
+            }
+            streamObserver?.end(.read, error: nil)
         }
         lock.withLock { buffered = data }
         close()
         return data
+    }
+
+    /// The body, when it has been read or was given whole.
+    var bufferedBody: Data? { lock.withLock { buffered } }
+
+    /// Learns how the application reads the body, for the span of the API call that returned it
+    /// (Python's `response.stream.stream_observer`).
+    var streamObserver: (any StreamObserver)? { lock.withLock { _streamObserver } }
+
+    func setStreamObserver(_ observer: any StreamObserver) { lock.withLock { _streamObserver = observer } }
+
+    deinit {
+        // The application may drop the response without closing it, and without reading any of the body.
+        if !_isClosed { _streamObserver?.end(.closed, error: nil) }
     }
 
     /// The response text (UTF-8).
@@ -235,11 +257,15 @@ public final class HTTPResponse: @unchecked Sendable {
 
     /// Iterates over the body's chunks. If the body was already read, yields the buffer once.
     public func bytes() -> ByteStream {
+        let observed = !isClosed && streamObserver != nil
         if let b = lock.withLock({ buffered }) {
-            return ByteStream { c in
+            let body = ByteStream { c in
                 if !b.isEmpty { c.yield(b) }
                 c.finish()
             }
+            guard observed else { return body }
+            let reader = ObservedBodyReader(body, response: self)
+            return ByteStream(unfolding: { try await reader.next() })
         }
         let s: ByteStream? = lock.withLock {
             let s = stream
@@ -247,7 +273,10 @@ public final class HTTPResponse: @unchecked Sendable {
             return s
         }
         guard let s else { return ByteStream { $0.finish() } }
-        return s
+        guard observed else { return s }
+        // Reports to the observer how reading the body ended (`SpanEndingStream`).
+        let reader = ObservedBodyReader(s, response: self)
+        return ByteStream(unfolding: { try await reader.next() })
     }
 
     public func close() {
@@ -256,7 +285,10 @@ public final class HTTPResponse: @unchecked Sendable {
             _isClosed = true
             return true
         }
-        if shouldNotify { onClose?() }
+        if shouldNotify {
+            streamObserver?.end(.closed, error: nil)
+            onClose?()
+        }
     }
 
     static func reason(for status: Int) -> String {
@@ -280,6 +312,32 @@ public final class HTTPResponse: @unchecked Sendable {
         case 504: return "Gateway Timeout"
         case 529: return "Overloaded"
         default: return HTTPURLResponse.localizedString(forStatusCode: status)
+        }
+    }
+}
+
+/// Reads a body for `HTTPResponse.bytes()`, and tells the response's observer how the reading ended.
+final class ObservedBodyReader: @unchecked Sendable {
+    private var iterator: ByteStream.AsyncIterator
+    private weak var response: HTTPResponse?
+    private var done = false
+
+    init(_ bytes: ByteStream, response: HTTPResponse) {
+        self.iterator = bytes.makeAsyncIterator()
+        self.response = response
+    }
+
+    func next() async throws -> Data? {
+        if done { return nil }
+        do {
+            if let chunk = try await iterator.next() { return chunk }
+            done = true
+            response?.streamObserver?.end(.read, error: nil)
+            return nil
+        } catch {
+            done = true
+            response?.streamObserver?.end(.failed, error: error)
+            throw error
         }
     }
 }

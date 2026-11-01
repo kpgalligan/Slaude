@@ -47,7 +47,7 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
   `test_a_runner_made_from_params_raises_the_errors_of_tool_runner`.
 * **`_memories.py` (`SessionMemoryStores`, memory-store sync for the environment worker)** and its tests
   (`memory_sync/`): not ported in this pass.
-* The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is not ported; only what the runners use.
+* The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is ported in `Lib/Threads/` (see `threads-environments-sessions.md`).
 * **Not reached in this pass** (layer 4 of the port): `agent_toolset.py` (the bash / file tools and
   `AgentToolContext`), `_deprecations.py`, `_toolsets/` (computer and browser toolsets, pipeline, enforcement,
   security, confirm) and `src/anthropic/tools/{browser,computer}.py`, with their tests (`test_agent_toolset.py`,

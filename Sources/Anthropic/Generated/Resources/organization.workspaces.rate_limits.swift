@@ -47,7 +47,7 @@ public struct OrganizationWorkspacesRateLimitsResource: Sendable {
         try requireNonEmpty(rateLimitID, "rate_limit_id")
         var body = ParamsBuilder()
         try body.set("limits", limits)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits/{rate_limit_id}", ["workspace_id": workspaceID, "rate_limit_id": rateLimitID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits/{rate_limit_id}", ["workspace_id": workspaceID, "rate_limit_id": rateLimitID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.update", spanRoute: "/v1/organizations/workspaces/{workspace_id}/rate_limits/{rate_limit_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.rate_limit.id": rateLimitID])
         return try await client.requestResponse(WorkspaceRateLimit.self, options, stream: _mode == .stream)
     }
 
@@ -95,7 +95,7 @@ public struct OrganizationWorkspacesRateLimitsResource: Sendable {
         try query.set("include_inherited", includeInherited)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/rate_limits", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.rate_limits.list", spanRoute: "/v1/organizations/workspaces/{workspace_id}/rate_limits", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestPageResponse(PageCursor<WorkspaceRateLimit>.self, options, stream: _mode == .stream)
     }
 

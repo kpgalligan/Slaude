@@ -64,6 +64,7 @@ open class Anthropic: BaseClient, @unchecked Sendable {
                 config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                 timeout: Timeout? = nil, maxRetries: Int = DEFAULT_MAX_RETRIES, defaultHeaders: Headers? = nil,
                 defaultQuery: Query? = nil, transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         let isBase = Self.self == Anthropic.self
@@ -133,7 +134,8 @@ open class Anthropic: BaseClient, @unchecked Sendable {
         }
 
         super.init(version: ANTHROPIC_SDK_VERSION, baseURL: url, maxRetries: maxRetries, timeout: timeout,
-                   customHeaders: headers, customQuery: defaultQuery, transport: transport, middleware: middleware)
+                   customHeaders: headers, customQuery: defaultQuery, transport: transport, middleware: middleware,
+                   openTelemetry: openTelemetry, openTelemetryEnvironment: environment)
     }
 
     /// Whether one of the credential arguments was passed; throws `ValueError` for more than one
@@ -184,7 +186,8 @@ open class Anthropic: BaseClient, @unchecked Sendable {
                    config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                    timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                    setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                   transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
+                   transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                   openTelemetry: OpenTelemetryOptions? = nil) throws -> Anthropic
     {
         if defaultHeaders != nil && setDefaultHeaders != nil {
             throw ValueError("The `default_headers` and `set_default_headers` arguments are mutually exclusive")
@@ -223,7 +226,10 @@ open class Anthropic: BaseClient, @unchecked Sendable {
             webhookKey: webhookKey ?? self.webhookKey, baseURL: baseURL ?? inheritedBaseURL,
             timeout: timeout ?? (timeoutOverridden ? self.timeout : nil),
             maxRetries: maxRetries ?? self.maxRetries, defaultHeaders: headers, defaultQuery: params,
-            transport: transport ?? self.transport, middleware: middleware ?? self.middleware, environment: env)
+            transport: transport ?? self.transport, middleware: middleware ?? self.middleware,
+            // The option given replaces the client's whole option. The client's own is resolved, so the environment
+            // variables do not apply to a copy.
+            openTelemetry: openTelemetry ?? self.openTelemetry, environment: env)
         if sharesTokenCache {
             client.tokenCache = tokenCache
             client.customAuth = tokenCache.map { AccessTokenAuth($0) }
@@ -239,10 +245,11 @@ open class Anthropic: BaseClient, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use: `client.withOptions(timeout: 10).messages.create(...)`.
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
-                            defaultQuery: Query? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
+                            defaultQuery: Query? = nil, middleware: [Middleware]? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> Anthropic
     {
         try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery,
-                 middleware: middleware)
+                 middleware: middleware, openTelemetry: openTelemetry)
     }
 
     /// A copy of this client with `middleware` appended after its own.

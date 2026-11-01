@@ -112,7 +112,7 @@ public struct BetaOrganizationAnalyticsUsageReportResource: Sendable {
         try query.set("slack_channel_ids", slackChannelIDs)
         try query.set("speeds", speeds)
         try query.set("user_ids", userIDs)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/usage_report", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.usage_report.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/usage_report", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.usage_report.list", spanRoute: "/v1/organizations/analytics/usage_report", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(ReportPageCursor<BetaAnalyticsUsageReportTimeBucket>.self, options, stream: _mode == .stream)
     }
 

@@ -62,7 +62,7 @@ public struct UserProfilesResource: Sendable {
         try body.set("external_user_details", externalUserDetails)
         try body.set("metadata", metadata)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/user_profiles", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/user_profiles", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.create", spanRoute: "/v1/user_profiles", spanCreatedID: SpanCreatedID("anthropic.user_profile.id"))
         return try await client.requestResponse(UserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -91,7 +91,7 @@ public struct UserProfilesResource: Sendable {
 
     func _retrieve(_ userProfileID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<UserProfile> {
         try requireNonEmpty(userProfileID, "user_profile_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.retrieve", spanRoute: "/v1/user_profiles/{user_profile_id}", spanAttributes: ["anthropic.user_profile.id": userProfileID])
         return try await client.requestResponse(UserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -141,7 +141,7 @@ public struct UserProfilesResource: Sendable {
         try body.set("external_user_details", externalUserDetails)
         try body.set("metadata", metadata)
         try body.set("name", name)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.update", spanRoute: "/v1/user_profiles/{user_profile_id}", spanAttributes: ["anthropic.user_profile.id": userProfileID])
         return try await client.requestResponse(UserProfile.self, options, stream: _mode == .stream)
     }
 
@@ -196,7 +196,7 @@ public struct UserProfilesResource: Sendable {
         try query.set("order", order)
         try query.set("order_by", orderBy)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/user_profiles", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/user_profiles", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.list", spanRoute: "/v1/user_profiles")
         return try await client.requestPageResponse(PageCursor<UserProfile>.self, options, stream: _mode == .stream)
     }
 
@@ -225,7 +225,7 @@ public struct UserProfilesResource: Sendable {
 
     func _delete(_ userProfileID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<DeletedUserProfile> {
         try requireNonEmpty(userProfileID, "user_profile_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/user_profiles/{user_profile_id}", ["user_profile_id": userProfileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.delete", spanRoute: "/v1/user_profiles/{user_profile_id}", spanAttributes: ["anthropic.user_profile.id": userProfileID])
         return try await client.requestResponse(DeletedUserProfile.self, options, stream: _mode == .stream)
     }
 

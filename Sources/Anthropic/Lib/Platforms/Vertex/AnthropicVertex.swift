@@ -7,6 +7,9 @@ import Foundation
 /// travels in the body, and requests carry a Google OAuth2 access token: `accessToken`, else
 /// `credentials`, else Application Default Credentials.
 open class AnthropicVertex: BaseClient, @unchecked Sendable {
+    open override var genAIProviderName: String { "gcp.vertex_ai" }
+    open override var otelPlatform: String? { "vertex" }
+
     public let region: String
     public let accessToken: String?
     let state: GoogleCredentialsState
@@ -25,6 +28,7 @@ open class AnthropicVertex: BaseClient, @unchecked Sendable {
                 baseURL: String? = nil, timeout: Timeout? = nil, maxRetries: Int = DEFAULT_MAX_RETRIES,
                 defaultHeaders: Headers? = nil, defaultQuery: Query? = nil, transport: HTTPTransport? = nil,
                 middleware: [Middleware]? = nil, credentialsLoader: GoogleCredentialsLoader? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         guard let region = region ?? environment["CLOUD_ML_REGION"] else {
@@ -51,7 +55,8 @@ open class AnthropicVertex: BaseClient, @unchecked Sendable {
         let envProject = environment["ANTHROPIC_VERTEX_PROJECT_ID"].flatMap { $0.isEmpty ? nil : $0 }
         self._projectID = projectID ?? envProject
         super.init(version: ANTHROPIC_SDK_VERSION, baseURL: url, maxRetries: maxRetries, timeout: timeout,
-                   customHeaders: defaultHeaders, customQuery: defaultQuery, transport: transport, middleware: middleware)
+                   customHeaders: defaultHeaders, customQuery: defaultQuery, transport: transport, middleware: middleware,
+                   openTelemetry: openTelemetry, openTelemetryEnvironment: environment)
     }
 
     /// The GCP project; back-filled from Application Default Credentials when not configured.
@@ -133,7 +138,8 @@ open class AnthropicVertex: BaseClient, @unchecked Sendable {
     public func copy(region: String? = nil, projectID: String? = nil, accessToken: String? = nil, credentials: GoogleCredentials? = nil,
                      baseURL: String? = nil, timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                      setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                     transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> AnthropicVertex
+                     transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                     openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicVertex
     {
         let (headers, params) = try copiedLayers(defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                                  defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery)
@@ -142,7 +148,8 @@ open class AnthropicVertex: BaseClient, @unchecked Sendable {
             credentials: credentials ?? self.credentials, baseURL: baseURL ?? self.baseURL.absoluteString,
             timeout: timeout ?? (timeoutOverridden ? self.timeout : nil), maxRetries: maxRetries ?? self.maxRetries,
             defaultHeaders: headers, defaultQuery: params, transport: transport ?? self.transport,
-            middleware: middleware ?? self.middleware, credentialsLoader: credentialsLoader, environment: environment)
+            middleware: middleware ?? self.middleware, credentialsLoader: credentialsLoader,
+            openTelemetry: openTelemetry ?? self.openTelemetry, environment: environment)
         client.timeoutOverridden = timeoutOverridden || timeout != nil
         client.sleeper = sleeper
         return client
@@ -150,10 +157,11 @@ open class AnthropicVertex: BaseClient, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use.
     public func withOptions(region: String? = nil, projectID: String? = nil, timeout: Timeout? = nil, maxRetries: Int? = nil,
-                            defaultHeaders: Headers? = nil, defaultQuery: Query? = nil) throws -> AnthropicVertex
+                            defaultHeaders: Headers? = nil, defaultQuery: Query? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicVertex
     {
         try copy(region: region, projectID: projectID, timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders,
-                 defaultQuery: defaultQuery)
+                 defaultQuery: defaultQuery, openTelemetry: openTelemetry)
     }
 
     /// A copy of this client with `middleware` appended after its own.

@@ -70,6 +70,8 @@ class MethodPlan:
     stream_only: bool
     nonstreaming_timeout: Optional[str] = None
     qualifiers: Optional[dict] = None
+    # Swift arguments of `makeRequestOptions` for the call's span (`span_attributes`, `span_created_id`, ...).
+    span_options: list = field(default_factory=list)
 
 
 def resource_swift_name(module: str, cls: str) -> str:
@@ -457,6 +459,7 @@ class ResourceGen:
             multipart = True
         span_name = span_route = None
         qualifiers = None
+        span_options: list[str] = []
         opts = kws.get("options")
         if isinstance(opts, ast.Call):
             for k in opts.keywords:
@@ -468,6 +471,8 @@ class ResourceGen:
                     span_route = k.value.value
                 elif k.arg == "qualifiers":
                     qualifiers = ast.literal_eval(k.value)
+                elif k.arg in ("span_attributes", "span_created_id", "span_content_query_params"):
+                    span_options.append(self.span_option(k.arg, k.value, args))
                 elif k.arg == "post_parser":
                     raise Unsupported("post_parser")
         stream_flag = kws.get("stream")
@@ -513,7 +518,7 @@ class ResourceGen:
             method=http, path_expr=path_swift, body_entries=body_entries, query_entries=query_entries,
             header_expr=header_expr, result_kind=result_kind, result_type=result_type, span_name=span_name,
             span_route=span_route, multipart=multipart, streaming_variant=streaming_variant, stream_only=stream_only,
-            nonstreaming_timeout=nonstreaming_timeout, qualifiers=qualifiers,
+            nonstreaming_timeout=nonstreaming_timeout, qualifiers=qualifiers, span_options=span_options,
         )
         if streaming_variant:
             plan.stream_elem = self._stream_elem  # type: ignore[attr-defined]
@@ -523,6 +528,42 @@ class ResourceGen:
         if plan.stream_only:
             plan.result_ir = plan.stream_ir  # type: ignore[attr-defined]
         return plan
+
+    # The functions of `lib/_tracing` that read a span's start attributes from the prepared body.
+    SPAN_BODY_ATTRIBUTES = {
+        "lambda body: messages_create_request_attributes(self._client, body, extra_headers)": "messagesCreateRequestAttributes",
+        "lambda body: messages_count_tokens_request_attributes(self._client, body)": "messagesCountTokensRequestAttributes",
+        "lambda body: attributes({'anthropic.message.batch.request_count': count(get(body, 'requests'))})": "batchCreateRequestAttributes",
+        "sessions_create_request_attributes": "sessionsCreateRequestAttributes",
+    }
+
+    def span_option(self, name: str, node: ast.expr, args: dict) -> str:
+        """The `makeRequestOptions` argument for one of the `span_*` options of `make_request_options`."""
+        if name == "span_created_id":
+            value = ast.literal_eval(node)
+            if isinstance(value, str):
+                return f"spanCreatedID: SpanCreatedID({swift_string(value)})"
+            return f"spanCreatedID: SpanCreatedID({swift_string(value[0])}, field: {swift_string(value[1])})"
+        if name == "span_content_query_params":
+            return "spanContentQueryParams: [" + ", ".join(swift_string(v) for v in ast.literal_eval(node)) + "]"
+        if isinstance(node, ast.Dict):
+            entries = []
+            for k, v in zip(node.keys, node.values):
+                a = args.get(v.id) if isinstance(v, ast.Name) else None
+                if not isinstance(k, ast.Constant) or a is None:
+                    raise Unsupported(f"span_attributes {ast.unparse(node)[:60]}")
+                if a.base_type == "String":
+                    value = a.swift
+                elif a.type.endswith("?"):
+                    value = a.swift + '.map { "\\($0)" }'
+                else:
+                    value = '"\\(' + a.swift + ')"'
+                entries.append(f"{swift_string(k.value)}: {value}")
+            return f"spanAttributes: [{', '.join(entries)}]"
+        function = self.SPAN_BODY_ATTRIBUTES.get(ast.unparse(node))
+        if function is None:
+            raise Unsupported(f"span_attributes {ast.unparse(node)[:60]}")
+        return f"spanBodyAttributes: {function}"
 
     @staticmethod
     def substitute(layers: list[str], previous: str) -> str:
@@ -584,6 +625,9 @@ class ResourceGen:
         opts += [f"headers: {headers}", "extraQuery: extraQuery", "extraBody: extraBody", "timeout: timeout", "mode: _mode"]
         if plan.span_name:
             opts.append(f"spanName: {swift_string(plan.span_name)}")
+        if plan.span_route:
+            opts.append(f"spanRoute: {swift_string(plan.span_route)}")
+        opts += plan.span_options
         if plan.qualifiers:
             entries = ", ".join(f"{swift_string(k)}: {swift_string(v)}" for k, v in sorted(plan.qualifiers.items()))
             opts.append(f"qualifiers: [{entries}]")

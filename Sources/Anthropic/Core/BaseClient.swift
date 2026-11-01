@@ -95,6 +95,11 @@ open class BaseClient: @unchecked Sendable {
     private var _baseURL: URL
     private var _timeout: Timeout
     private var middlewareChain: CallNext? = nil
+    /// The client's `openTelemetry` option, resolved when the client was constructed (`client.open_telemetry`):
+    /// it has `propagation` and every field of `traces`. A client that was given no option has what the environment
+    /// variables said then.
+    public let openTelemetry: OpenTelemetryOptions
+    private var lazyTracer: (any Tracer)?? = nil
 
     /// The base URL requests are made against (always ending in `/`). Settable, like Python's
     /// `client.base_url = ...`.
@@ -119,9 +124,12 @@ open class BaseClient: @unchecked Sendable {
 
     public init(version: String, baseURL: URL, maxRetries: Int = DEFAULT_MAX_RETRIES, timeout: Timeout? = nil,
                 customHeaders: Headers? = nil, customQuery: Query? = nil, transport: HTTPTransport? = nil,
-                middleware: [Middleware]? = nil)
+                middleware: [Middleware]? = nil, openTelemetry: OpenTelemetryOptions? = nil,
+                openTelemetryEnvironment: [String: String]? = nil)
     {
         self.version = version
+        // The environment is read here only. A copy of the client that is given no option has the resolved one.
+        self.openTelemetry = OpenTelemetryOptions.resolve(openTelemetry, environment: openTelemetryEnvironment ?? ProcessInfo.processInfo.environment)
         self._baseURL = BaseClient.enforceTrailingSlash(baseURL)
         self.maxRetries = maxRetries
         self.timeoutOverridden = timeout != nil
@@ -198,6 +206,24 @@ open class BaseClient: @unchecked Sendable {
         if response.statusCode == 429 { return true }
         if response.statusCode >= 500 { return true }
         return false
+    }
+
+    /// The `gen_ai.provider.name` of the client's spans.
+    open var genAIProviderName: String { "anthropic" }
+
+    /// The platform that the instrumentation scope of a platform client's spans ends with.
+    open var otelPlatform: String? { nil }
+
+    /// What the client's `openTelemetry` option says about its spans.
+    public var otel: OpenTelemetryConfig { OpenTelemetryConfig(openTelemetry, providerName: genAIProviderName, platform: otelPlatform) }
+
+    /// The client's tracer, or `nil` when it has no spans. The client gets it when it first needs it, so constructing
+    /// or copying a client calls nothing of the tracing API.
+    public var tracer: (any Tracer)? {
+        if let tracer = stateLock.withLock({ lazyTracer }) { return tracer }
+        let tracer = getTracer(openTelemetry, version: version, scope: otel.instrumentationScope)
+        stateLock.withLock { if lazyTracer == nil { lazyTracer = .some(tracer) } }
+        return stateLock.withLock { lazyTracer! }
     }
 
     open func idempotencyKey() -> String { "stainless-swift-retry-\(UUID().uuidString.lowercased())" }
@@ -315,11 +341,19 @@ open class BaseClient: @unchecked Sendable {
     // MARK: - Sending
 
     /// Sends one attempt and returns the response whatever its status (`_attempt_request`).
-    func attemptRequest(_ options: FinalRequestOptions, stream: Bool, retriesTaken: Int) async throws -> (HTTPResponse, FinalRequestOptions) {
+    func attemptRequest(_ options: FinalRequestOptions, stream: Bool, retriesTaken: Int, call: ApiCall? = nil) async throws -> (HTTPResponse, FinalRequestOptions) {
         let options = try await prepareOptions(options)
         var request = try buildRequest(options, retriesTaken: retriesTaken)
+        if let call, call.propagation {
+            // `prepareRequest` may sign the headers, and `injectTraceHeaders` sets these after it.
+            removeTraceHeaders(call.span, &request.headers)
+        }
         try await prepareRequest(&request)
         try await authenticate(&request)
+        if let call {
+            call.sending(request, options: options)
+            if call.propagation { injectTraceHeaders(call.span, &request.headers) }
+        }
         let wantsStream = stream || request.headers[rawResponseHeader] == "stream"
         do {
             let response = try await transport.send(request, stream: wantsStream)
@@ -383,12 +417,18 @@ open class BaseClient: @unchecked Sendable {
     /// With middleware, the chain runs once per attempt; a response it returns with an error status
     /// stays on the retry path, and a short-circuited response is returned as is.
     public func sendRequest(_ inputOptions: FinalRequestOptions, stream: Bool, castTo: Any.Type = JSONValue.self) async throws -> RawAPIResponse {
+        try await sendRequest(inputOptions, stream: stream, castTo: castTo, call: nil)
+    }
+
+    /// The retry loop of an API call. `call`, an API call that has a span, records each attempt.
+    func sendRequest(_ inputOptions: FinalRequestOptions, stream: Bool, castTo: Any.Type, call: ApiCall?) async throws -> RawAPIResponse {
         var input = copyAndPrepare(inputOptions)
         if input.idempotencyKey == nil && input.method.lowercased() != "get" {
             // ensure the idempotency key is reused between retries
             input.idempotencyKey = idempotencyKey()
         }
-        let chain = middlewareChain
+        // The prebuilt chain has no call to record its attempts on.
+        let chain = call == nil || middleware.isEmpty ? middlewareChain : buildMiddlewareChain(call: call)
         let maxRetries = input.getMaxRetries(self.maxRetries)
         var retriesTaken = 0
         while true {
@@ -401,7 +441,7 @@ open class BaseClient: @unchecked Sendable {
                     if raw.isShortCircuit || raw.http.isSuccess { return raw }
                     response = raw.http
                 } else {
-                    let (r, prepared) = try await attemptRequest(input, stream: stream, retriesTaken: retriesTaken)
+                    let (r, prepared) = try await attemptRequest(input, stream: stream, retriesTaken: retriesTaken, call: call)
                     if r.isSuccess {
                         return RawAPIResponse(http: r, options: prepared, retriesTaken: retriesTaken, client: self)
                     }
@@ -566,21 +606,23 @@ open class BaseClient: @unchecked Sendable {
     public func requestResponse<T: Decodable & Sendable>(_ type: T.Type, _ options: FinalRequestOptions, stream: Bool = false,
                                                          postParser: (@Sendable (T) throws -> T)? = nil) async throws -> APIResponse<T>
     {
-        let raw = try await sendRequest(options, stream: stream, castTo: T.self)
-        return APIResponse(raw, client: self) { resp in
-            let value = try await resp.client.decodeBody(T.self, from: resp.http)
-            return try postParser?(value) ?? value
+        try await tracedRequest(options, stream: stream, castTo: T.self) { raw in
+            APIResponse(raw, client: self) { resp in
+                let value = try await resp.client.decodeBody(T.self, from: resp.http)
+                return try postParser?(value) ?? value
+            }
         }
     }
 
     /// A paginated response.
     public func requestPageResponse<P: AsyncPage>(_ type: P.Type, _ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<P> {
-        let raw = try await sendRequest(options, stream: stream, castTo: P.self)
         let prepared = options
-        return APIResponse(raw, client: self) { resp in
-            var page = try await resp.client.decodeBody(P.self, from: resp.http)
-            page.context = PageContext(client: resp.client, options: prepared)
-            return page
+        return try await tracedRequest(options, stream: stream, castTo: P.self) { raw in
+            APIResponse(raw, client: self) { resp in
+                var page = try await resp.client.decodeBody(P.self, from: resp.http)
+                page.context = PageContext(client: resp.client, options: prepared)
+                return page
+            }
         }
     }
 
@@ -590,24 +632,27 @@ open class BaseClient: @unchecked Sendable {
 
     /// A server-sent-event stream.
     public func requestStreamResponse<E: Decodable & Sendable>(_ type: E.Type, _ options: FinalRequestOptions) async throws -> APIResponse<Stream<E>> {
-        let raw = try await sendRequest(options, stream: true, castTo: Stream<E>.self)
-        return APIResponse(raw, client: self) { resp in
-            Stream<E>(response: resp.http, client: resp.client)
+        try await tracedRequest(options, stream: true, castTo: Stream<E>.self, spanCastTo: streamedType(E.self)) { raw in
+            APIResponse(raw, client: self) { resp in
+                Stream<E>(response: resp.http, client: resp.client)
+            }
         }
     }
 
     /// A binary response.
     public func requestBinaryResponse(_ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<BinaryResponse> {
-        let raw = try await sendRequest(options, stream: stream, castTo: BinaryResponse.self)
-        return APIResponse(raw, client: self) { resp in
-            BinaryResponse(response: resp.http)
+        try await tracedRequest(options, stream: stream, castTo: BinaryResponse.self) { raw in
+            APIResponse(raw, client: self) { resp in
+                BinaryResponse(response: resp.http)
+            }
         }
     }
 
     /// The HTTP response itself (Python's `cast_to=httpx.Response`); its body is read unless `stream`.
     public func requestHTTPResponse(_ options: FinalRequestOptions, stream: Bool = false) async throws -> APIResponse<HTTPResponse> {
-        let raw = try await sendRequest(options, stream: stream, castTo: HTTPResponse.self)
-        return APIResponse(raw, client: self) { resp in resp.http }
+        try await tracedRequest(options, stream: stream, castTo: HTTPResponse.self) { raw in
+            APIResponse(raw, client: self) { resp in resp.http }
+        }
     }
 
     func makeOptions(method: String, path: String, body: JSONValue?, content: Data?, query: Query?, options: RequestOptions) -> FinalRequestOptions {

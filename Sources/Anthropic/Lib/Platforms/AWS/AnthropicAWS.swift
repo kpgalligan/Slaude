@@ -10,6 +10,8 @@ import Foundation
 /// argument, the `ANTHROPIC_AWS_API_KEY` environment variable, then the default AWS credential
 /// chain (see `AWSDefaultCredentialsChain`).
 open class AnthropicAWS: Anthropic, @unchecked Sendable {
+    open override var otelPlatform: String? { "aws" }
+
     public let awsAccessKey: String?
     public let awsSecretKey: String?
     public let awsRegion: String?
@@ -30,6 +32,7 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                 defaultHeaders: Headers? = nil, defaultQuery: Query? = nil, transport: HTTPTransport? = nil,
                 middleware: [Middleware]? = nil, authToken: String? = nil, webhookKey: String? = nil,
                 credentialsProvider: AWSCredentialsProvider? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         try AWSConfig.validateCredentials(awsAccessKey: awsAccessKey, awsSecretKey: awsSecretKey)
@@ -82,7 +85,7 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                                                transport: nil)
         try super.init(apiKey: resolvedAPIKey ?? "", webhookKey: webhookKey, baseURL: resolvedBaseURL, timeout: timeout,
                        maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery, transport: transport,
-                       middleware: middleware, environment: environment)
+                       middleware: middleware, openTelemetry: openTelemetry, environment: environment)
         // Only explicit credentials apply: undo the base client's ambient ANTHROPIC_API_KEY /
         // ANTHROPIC_AUTH_TOKEN fallback. `authToken` is set here, not passed up, because the base
         // client rejects it next to an API key.
@@ -129,7 +132,8 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                             config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                             timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
+                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> Anthropic
     {
         // The AWS client authenticates with SigV4 (or an API key), not a token provider:
         // `credentials: .some(nil)` (Python's `credentials=None`) is accepted as a no-op, and a
@@ -144,7 +148,7 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                                        timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders,
                                        setDefaultHeaders: setDefaultHeaders, defaultQuery: defaultQuery,
                                        setDefaultQuery: setDefaultQuery, transport: transport, middleware: middleware,
-                                       awsAccessKey: nil)
+                                       awsAccessKey: nil, openTelemetry: openTelemetry)
         return c
     }
 
@@ -157,7 +161,7 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                      transport: HTTPTransport? = nil, middleware: [Middleware]? = nil, awsAccessKey: String? = nil,
                      awsSecretKey: String? = nil, awsRegion: String? = nil, awsProfile: String? = nil,
                      awsSessionToken: String? = nil, workspaceID: String? = nil, skipAuth: Bool? = nil,
-                     credentialsProvider: AWSCredentialsProvider? = nil) throws -> AnthropicAWS
+                     credentialsProvider: AWSCredentialsProvider? = nil, openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicAWS
     {
         if defaultHeaders != nil && setDefaultHeaders != nil {
             throw ValueError("The `default_headers` and `set_default_headers` arguments are mutually exclusive")
@@ -196,7 +200,8 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
             timeout: timeout ?? (timeoutOverridden ? self.timeout : nil), maxRetries: maxRetries ?? self.maxRetries,
             defaultHeaders: headers, defaultQuery: params, transport: transport ?? self.transport,
             middleware: middleware ?? self.middleware, authToken: token, webhookKey: webhookKey ?? self.webhookKey,
-            credentialsProvider: credentialsProvider ?? self.credentialsProvider, environment: env)
+            credentialsProvider: credentialsProvider ?? self.credentialsProvider, openTelemetry: openTelemetry ?? self.openTelemetry,
+            environment: env)
         client.timeoutOverridden = self.timeoutOverridden || timeout != nil
         client.sleeper = self.sleeper
         return client
@@ -206,11 +211,12 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             defaultQuery: Query? = nil, baseURL: String? = nil, awsAccessKey: String? = nil,
                             awsSecretKey: String? = nil, awsRegion: String? = nil, awsProfile: String? = nil,
-                            awsSessionToken: String? = nil, workspaceID: String? = nil, skipAuth: Bool? = nil) throws -> AnthropicAWS
+                            awsSessionToken: String? = nil, workspaceID: String? = nil, skipAuth: Bool? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicAWS
     {
         try copy(baseURL: baseURL, timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery,
                  awsAccessKey: awsAccessKey, awsSecretKey: awsSecretKey, awsRegion: awsRegion, awsProfile: awsProfile,
-                 awsSessionToken: awsSessionToken, workspaceID: workspaceID, skipAuth: skipAuth)
+                 awsSessionToken: awsSessionToken, workspaceID: workspaceID, skipAuth: skipAuth, openTelemetry: openTelemetry)
     }
 }
 

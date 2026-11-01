@@ -52,7 +52,7 @@ public struct FilesResource: Sendable {
         try query.set("ids", ids)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/files", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/files", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.list", spanRoute: "/v1/files")
         return try await client.requestPageResponse(PageCursor<FileMetadata>.self, options, stream: _mode == .stream)
     }
 
@@ -81,7 +81,7 @@ public struct FilesResource: Sendable {
 
     func _delete(_ fileID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<DeletedFile> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.delete", spanRoute: "/v1/files/{file_id}", spanAttributes: ["anthropic.file.id": fileID])
         return try await client.requestResponse(DeletedFile.self, options, stream: _mode == .stream)
     }
 
@@ -110,7 +110,7 @@ public struct FilesResource: Sendable {
 
     func _download(_ fileID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BinaryResponse> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}/content", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.download")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}/content", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), mergeHeaderLayers(["Accept": "application/binary"], extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.download", spanRoute: "/v1/files/{file_id}/content", spanAttributes: ["anthropic.file.id": fileID])
         return try await client.requestBinaryResponse(options, stream: _mode == .stream)
     }
 
@@ -139,7 +139,7 @@ public struct FilesResource: Sendable {
 
     func _retrieveMetadata(_ fileID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<FileMetadata> {
         try requireNonEmpty(fileID, "file_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.retrieve_metadata")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/files/{file_id}", ["file_id": fileID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.retrieve_metadata", spanRoute: "/v1/files/{file_id}", spanAttributes: ["anthropic.file.id": fileID])
         return try await client.requestResponse(FileMetadata.self, options, stream: _mode == .stream)
     }
 
@@ -177,7 +177,7 @@ public struct FilesResource: Sendable {
         var body = ParamsBuilder()
         body.setFile("file", file)
         try body.set("expires_in_seconds", expiresInSeconds)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/files", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaders(mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders)))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.upload")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/files", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaders(mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders)))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.files.upload", spanRoute: "/v1/files", spanCreatedID: SpanCreatedID("anthropic.file.id"))
         return try await client.requestResponse(FileMetadata.self, options, stream: _mode == .stream)
     }
 

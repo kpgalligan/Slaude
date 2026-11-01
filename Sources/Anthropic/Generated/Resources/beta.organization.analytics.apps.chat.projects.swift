@@ -99,7 +99,7 @@ public struct BetaOrganizationAnalyticsAppsChatProjectsResource: Sendable {
         try query.set("order_by", orderBy)
         try query.set("page", page)
         try query.set("starting_date", startingDate)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/apps/chat/projects", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.apps.chat.projects.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/analytics/apps/chat/projects", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.analytics.apps.chat.projects.list", spanRoute: "/v1/organizations/analytics/apps/chat/projects", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaAnalyticsProjectActivity>.self, options, stream: _mode == .stream)
     }
 

@@ -78,7 +78,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
         try body.set("display_name", displayName)
         try body.set("headers", headers)
         try body.set("traces", traces)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/telemetry_destinations", body: body, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/telemetry_destinations", body: body, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.create", spanRoute: "/v1/organizations/telemetry_destinations", spanCreatedID: SpanCreatedID("anthropic.organization.telemetry_destination.id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTelemetryDestination.self, options, stream: _mode == .stream)
     }
 
@@ -107,7 +107,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
 
     func _retrieve(_ destinationID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTelemetryDestination> {
         try requireNonEmpty(destinationID, "destination_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.retrieve", spanRoute: "/v1/organizations/telemetry_destinations/{destination_id}", spanAttributes: ["anthropic.organization.telemetry_destination.id": destinationID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTelemetryDestination.self, options, stream: _mode == .stream)
     }
 
@@ -194,7 +194,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
         try body.set("state", state)
         try body.set("traces", traces)
         try body.set("workspaces", workspaces)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.update", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.update", spanRoute: "/v1/organizations/telemetry_destinations/{destination_id}", spanAttributes: ["anthropic.organization.telemetry_destination.id": destinationID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTelemetryDestination.self, options, stream: _mode == .stream)
     }
 
@@ -239,7 +239,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("workspace_ids", workspaceIDs)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/telemetry_destinations", query: query, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/telemetry_destinations", query: query, headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.list", spanRoute: "/v1/organizations/telemetry_destinations", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaTelemetryDestination>.self, options, stream: _mode == .stream)
     }
 
@@ -272,7 +272,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
 
     func _delete(_ destinationID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedTelemetryDestination> {
         try requireNonEmpty(destinationID, "destination_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.delete", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.delete", spanRoute: "/v1/organizations/telemetry_destinations/{destination_id}", spanAttributes: ["anthropic.organization.telemetry_destination.id": destinationID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedTelemetryDestination.self, options, stream: _mode == .stream)
     }
 
@@ -304,7 +304,7 @@ public struct BetaOrganizationTelemetryDestinationsResource: Sendable {
 
     func _test(_ destinationID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTelemetryDestinationTestResponse> {
         try requireNonEmpty(destinationID, "destination_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}/test", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.test", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/telemetry_destinations/{destination_id}/test", ["destination_id": destinationID]), headers: mergeHeaderLayers(["anthropic-beta": "telemetry-destinations-2026-08-11"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["telemetry-destinations-2026-08-11"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.telemetry_destinations.test", spanRoute: "/v1/organizations/telemetry_destinations/{destination_id}/test", spanAttributes: ["anthropic.organization.telemetry_destination.id": destinationID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTelemetryDestinationTestResponse.self, options, stream: _mode == .stream)
     }
 

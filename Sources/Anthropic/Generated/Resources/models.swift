@@ -41,7 +41,7 @@ public struct ModelsResource: Sendable {
 
     func _retrieve(_ modelID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ModelInfo> {
         try requireNonEmpty(modelID, "model_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/models/{model_id}", ["model_id": modelID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/models/{model_id}", ["model_id": modelID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.retrieve", spanRoute: "/v1/models/{model_id}", spanAttributes: ["anthropic.model.id": modelID])
         return try await client.requestResponse(ModelInfo.self, options, stream: _mode == .stream)
     }
 
@@ -90,7 +90,7 @@ public struct ModelsResource: Sendable {
         try query.set("before_id", beforeID)
         try query.set("lifecycle", lifecycle)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/models", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/models", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.list", spanRoute: "/v1/models")
         return try await client.requestPageResponse(Page<ModelInfo>.self, options, stream: _mode == .stream)
     }
 

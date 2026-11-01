@@ -45,7 +45,7 @@ public struct OrganizationWorkspacesServiceAccountsResource: Sendable {
     func _retrieve(_ serviceAccountID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ServiceAccountWorkspaceMember> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.retrieve", spanRoute: "/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccountWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -85,7 +85,7 @@ public struct OrganizationWorkspacesServiceAccountsResource: Sendable {
         try requireNonEmpty(serviceAccountID, "service_account_id")
         var body = ParamsBuilder()
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.update", spanRoute: "/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccountWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -125,7 +125,7 @@ public struct OrganizationWorkspacesServiceAccountsResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.list", spanRoute: "/v1/organizations/workspaces/{workspace_id}/service_accounts", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestPageResponse(PageCursor<ServiceAccountWorkspaceMember>.self, options, stream: _mode == .stream)
     }
 
@@ -167,7 +167,7 @@ public struct OrganizationWorkspacesServiceAccountsResource: Sendable {
         var body = ParamsBuilder()
         try body.set("service_account_id", serviceAccountID)
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.add")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.add", spanRoute: "/v1/organizations/workspaces/{workspace_id}/service_accounts", spanAttributes: ["anthropic.organization.workspace.id": workspaceID], spanCreatedID: SpanCreatedID("anthropic.organization.workspace.service_account.id", field: "service_account_id"))
         return try await client.requestResponse(ServiceAccountWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -203,7 +203,7 @@ public struct OrganizationWorkspacesServiceAccountsResource: Sendable {
     func _remove(_ serviceAccountID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<ServiceAccountRemoveResponse> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", ["workspace_id": workspaceID, "service_account_id": serviceAccountID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.service_accounts.remove", spanRoute: "/v1/organizations/workspaces/{workspace_id}/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.service_account.id": serviceAccountID])
         return try await client.requestResponse(ServiceAccountRemoveResponse.self, options, stream: _mode == .stream)
     }
 

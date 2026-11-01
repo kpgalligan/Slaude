@@ -49,7 +49,7 @@ public struct SkillsResource: Sendable {
         var body = ParamsBuilder()
         body.setFiles("files", files)
         try body.set("display_name", displayName)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/skills", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/skills", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.create", spanRoute: "/v1/skills", spanCreatedID: SpanCreatedID("anthropic.skill.id"))
         return try await client.requestResponse(Skill.self, options, stream: _mode == .stream)
     }
 
@@ -80,7 +80,7 @@ public struct SkillsResource: Sendable {
 
     func _retrieve(_ skillID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<Skill> {
         try requireNonEmpty(skillID, "skill_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.retrieve", spanRoute: "/v1/skills/{skill_id}", spanAttributes: ["anthropic.skill.id": skillID])
         return try await client.requestResponse(Skill.self, options, stream: _mode == .stream)
     }
 
@@ -126,7 +126,7 @@ public struct SkillsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("source", source)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/skills", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/skills", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.list", spanRoute: "/v1/skills")
         return try await client.requestPageResponse(PageCursor<Skill>.self, options, stream: _mode == .stream)
     }
 
@@ -157,7 +157,7 @@ public struct SkillsResource: Sendable {
 
     func _delete(_ skillID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<DeletedSkill> {
         try requireNonEmpty(skillID, "skill_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.delete", spanRoute: "/v1/skills/{skill_id}", spanAttributes: ["anthropic.skill.id": skillID])
         return try await client.requestResponse(DeletedSkill.self, options, stream: _mode == .stream)
     }
 

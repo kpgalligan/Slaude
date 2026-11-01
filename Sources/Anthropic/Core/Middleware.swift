@@ -197,7 +197,8 @@ public struct MiddlewareFunction: Middleware {
 extension BaseClient {
     /// Builds the middleware chain (`_build_middleware_chain`). It only depends on the immutable
     /// `middleware` list, so it is built once, when the client is created.
-    func buildMiddlewareChain() -> CallNext? {
+    /// A traced API call builds its own, whose attempts are recorded on `call`.
+    func buildMiddlewareChain(call: ApiCall? = nil) -> CallNext? {
         if middleware.isEmpty { return nil }
         var chain: CallNext = { [unowned self] req in
             // The chain always operates on a response wrapper: plain calls are upgraded to "raw" so
@@ -209,7 +210,7 @@ extension BaseClient {
                 headers[rawResponseHeader] = "raw"
             }
             options.headers = headers
-            let (response, prepared) = try await self.attemptRequest(options, stream: req.stream, retriesTaken: req.retriesTaken)
+            let (response, prepared) = try await self.attemptRequest(options, stream: req.stream, retriesTaken: req.retriesTaken, call: call)
             return RawAPIResponse(http: response, options: prepared, retriesTaken: req.retriesTaken, client: self)
         }
         for m in middleware.reversed() {

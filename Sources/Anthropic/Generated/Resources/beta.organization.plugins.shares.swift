@@ -74,7 +74,7 @@ public struct BetaOrganizationPluginsSharesResource: Sendable {
         try query.set("organization_id", organizationID)
         try query.set("page", page)
         try query.set("target_type", targetType)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/shares", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.shares.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/plugins/{plugin_id}/shares", ["plugin_id": pluginID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "ce-plugins-2026-09-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["ce-plugins-2026-09-01"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.plugins.shares.list", spanRoute: "/v1/organizations/plugins/{plugin_id}/shares", spanAttributes: ["anthropic.organization.plugin.id": pluginID], qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaPluginShare>.self, options, stream: _mode == .stream)
     }
 

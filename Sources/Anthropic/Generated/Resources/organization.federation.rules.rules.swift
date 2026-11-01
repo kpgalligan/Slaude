@@ -87,7 +87,7 @@ public struct OrganizationFederationRulesResource: Sendable {
         try body.set("description", description)
         try body.set("token_lifetime_seconds", tokenLifetimeSeconds)
         try body.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_rules", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/federation_rules", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.create", spanRoute: "/v1/organizations/federation_rules", spanCreatedID: SpanCreatedID("anthropic.organization.federation_rule.id"))
         return try await client.requestResponse(FederationRule.self, options, stream: _mode == .stream)
     }
 
@@ -114,7 +114,7 @@ public struct OrganizationFederationRulesResource: Sendable {
 
     func _retrieve(_ federationRuleID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<FederationRule> {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}", ["federation_rule_id": federationRuleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}", ["federation_rule_id": federationRuleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.retrieve", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID])
         return try await client.requestResponse(FederationRule.self, options, stream: _mode == .stream)
     }
 
@@ -192,7 +192,7 @@ public struct OrganizationFederationRulesResource: Sendable {
         try body.set("target", target)
         try body.set("token_lifetime_seconds", tokenLifetimeSeconds)
         try body.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}", ["federation_rule_id": federationRuleID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}", ["federation_rule_id": federationRuleID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.update", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID])
         return try await client.requestResponse(FederationRule.self, options, stream: _mode == .stream)
     }
 
@@ -232,7 +232,7 @@ public struct OrganizationFederationRulesResource: Sendable {
         try query.set("issuer_id", issuerID)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_rules", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/federation_rules", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.list", spanRoute: "/v1/organizations/federation_rules")
         return try await client.requestPageResponse(PageCursor<FederationRule>.self, options, stream: _mode == .stream)
     }
 
@@ -266,7 +266,7 @@ public struct OrganizationFederationRulesResource: Sendable {
 
     func _archive(_ federationRuleID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<FederationRule> {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/archive", ["federation_rule_id": federationRuleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.archive")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/archive", ["federation_rule_id": federationRuleID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.archive", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}/archive", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID])
         return try await client.requestResponse(FederationRule.self, options, stream: _mode == .stream)
     }
 

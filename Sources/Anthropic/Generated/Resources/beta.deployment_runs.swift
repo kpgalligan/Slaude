@@ -41,7 +41,7 @@ public struct BetaDeploymentRunsResource: Sendable {
 
     func _retrieve(_ deploymentRunID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsDeploymentRun> {
         try requireNonEmpty(deploymentRunID, "deployment_run_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/deployment_runs/{deployment_run_id}", ["deployment_run_id": deploymentRunID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployment_runs.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/deployment_runs/{deployment_run_id}", ["deployment_run_id": deploymentRunID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployment_runs.retrieve", spanRoute: "/v1/deployment_runs/{deployment_run_id}", spanAttributes: ["anthropic.deployment_run.id": deploymentRunID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsDeploymentRun.self, options, stream: _mode == .stream)
     }
 
@@ -102,7 +102,7 @@ public struct BetaDeploymentRunsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("trigger_type", triggerType)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/deployment_runs", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployment_runs.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/deployment_runs", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.deployment_runs.list", spanRoute: "/v1/deployment_runs", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsDeploymentRun>.self, options, stream: _mode == .stream)
     }
 

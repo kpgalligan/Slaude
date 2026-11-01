@@ -52,7 +52,7 @@ public struct MessagesBatchesResource: Sendable {
     func _create(requests: [BatchCreateParams.Request], userProfileID: String? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<MessageBatch> {
         var body = ParamsBuilder()
         try body.set("requests", requests)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/batches", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.create")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/batches", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.create", spanRoute: "/v1/messages/batches", spanBodyAttributes: batchCreateRequestAttributes, spanCreatedID: SpanCreatedID("anthropic.message.batch.id"))
         return try await client.requestResponse(MessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -88,7 +88,7 @@ public struct MessagesBatchesResource: Sendable {
 
     func _retrieve(_ messageBatchID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<MessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.retrieve", spanRoute: "/v1/messages/batches/{message_batch_id}", spanAttributes: ["anthropic.message.batch.id": messageBatchID])
         return try await client.requestResponse(MessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -134,7 +134,7 @@ public struct MessagesBatchesResource: Sendable {
         try query.set("after_id", afterID)
         try query.set("before_id", beforeID)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/messages/batches", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/messages/batches", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.list", spanRoute: "/v1/messages/batches")
         return try await client.requestPageResponse(Page<MessageBatch>.self, options, stream: _mode == .stream)
     }
 
@@ -169,7 +169,7 @@ public struct MessagesBatchesResource: Sendable {
 
     func _delete(_ messageBatchID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<DeletedMessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.delete")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/messages/batches/{message_batch_id}", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.delete", spanRoute: "/v1/messages/batches/{message_batch_id}", spanAttributes: ["anthropic.message.batch.id": messageBatchID])
         return try await client.requestResponse(DeletedMessageBatch.self, options, stream: _mode == .stream)
     }
 
@@ -211,7 +211,7 @@ public struct MessagesBatchesResource: Sendable {
 
     func _cancel(_ messageBatchID: String, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<MessageBatch> {
         try requireNonEmpty(messageBatchID, "message_batch_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/messages/batches/{message_batch_id}/cancel", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.cancel")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/messages/batches/{message_batch_id}/cancel", ["message_batch_id": messageBatchID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.batches.cancel", spanRoute: "/v1/messages/batches/{message_batch_id}/cancel", spanAttributes: ["anthropic.message.batch.id": messageBatchID])
         return try await client.requestResponse(MessageBatch.self, options, stream: _mode == .stream)
     }
 

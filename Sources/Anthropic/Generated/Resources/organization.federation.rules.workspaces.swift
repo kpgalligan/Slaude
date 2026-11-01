@@ -49,7 +49,7 @@ public struct OrganizationFederationRulesWorkspacesResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.list", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}/workspaces", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID])
         return try await client.requestPageResponse(PageCursor<FederationRuleWorkspace>.self, options, stream: _mode == .stream)
     }
 
@@ -88,7 +88,7 @@ public struct OrganizationFederationRulesWorkspacesResource: Sendable {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
         var body = ParamsBuilder()
         try body.set("workspace_id", workspaceID)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.add")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces", ["federation_rule_id": federationRuleID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.add", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}/workspaces", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID], spanCreatedID: SpanCreatedID("anthropic.organization.federation_rule.workspace.id", field: "workspace_id"))
         return try await client.requestResponse(FederationRuleWorkspace.self, options, stream: _mode == .stream)
     }
 
@@ -122,7 +122,7 @@ public struct OrganizationFederationRulesWorkspacesResource: Sendable {
     func _remove(_ workspaceID: String, federationRuleID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<OrganizationFederationRulesWorkspaceRemoveResponse> {
         try requireNonEmpty(federationRuleID, "federation_rule_id")
         try requireNonEmpty(workspaceID, "workspace_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces/{workspace_id}", ["federation_rule_id": federationRuleID, "workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/federation_rules/{federation_rule_id}/workspaces/{workspace_id}", ["federation_rule_id": federationRuleID, "workspace_id": workspaceID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.federation.rules.workspaces.remove", spanRoute: "/v1/organizations/federation_rules/{federation_rule_id}/workspaces/{workspace_id}", spanAttributes: ["anthropic.organization.federation_rule.id": federationRuleID, "anthropic.organization.federation_rule.workspace.id": workspaceID])
         return try await client.requestResponse(OrganizationFederationRulesWorkspaceRemoveResponse.self, options, stream: _mode == .stream)
     }
 

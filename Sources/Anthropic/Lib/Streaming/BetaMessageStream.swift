@@ -10,7 +10,10 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
     private let parser: OutputParser<Output>?
     private var rawIterator: Stream<BetaRawMessageStreamEvent>.AsyncIterator?
     private var pending: [ParsedBetaMessageStreamEvent] = []
-    private var snapshot: BetaMessage?
+    private var snapshot: BetaMessage? {
+        didSet { tracedMessage?.updateSnapshot(snapshot) }
+    }
+    private var tracedMessage: StreamedMessage?
     private var parsedOutputs: [Int: Output] = [:]
     private var jsonBufs: [Int: String] = [:]
     private var done = false
@@ -25,6 +28,8 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
     public init(rawStream: Stream<BetaRawMessageStreamEvent>, parser: OutputParser<Output>? = nil) {
         self.rawStream = rawStream
         self.parser = parser
+        // The span of the call takes its output content from the Message accumulated here.
+        self.tracedMessage = shareMessageSnapshot(rawStream)
     }
 
     public var response: HTTPResponse { rawStream.response }
@@ -112,7 +117,12 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
             if snapshot == nil {
                 guard case .messageStart = event else { return .raw(event) }
             }
-            snapshot = try accumulateBetaEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs, requestHeaders: response.request.headers)
+            do {
+                snapshot = try accumulateBetaEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs, requestHeaders: response.request.headers)
+            } catch {
+                withholdMessageSnapshot(rawStream)
+                throw error
+            }
             guard let message = snapshot else { continue }
             if case .contentBlockStop(let e) = event {
                 completedBlocks += 1
