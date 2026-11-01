@@ -84,16 +84,45 @@ private enum ToolOverride {
     case removed
 }
 
-/// What the loop does when it is next asked for an item.
-private enum PendingStep {
-    /// Handle the reply of a turn that was handed out.
-    case turn(BetaMessage)
-    /// Register the response of a compaction request that was handed out.
-    case compaction(thread: MessageThread, message: BetaMessage, compactedCount: Int, previous: BetaMessage?, thenStop: Bool)
+/// How a runner sends each turn and what it hands out for it.
+enum ToolRunnerRequestKind<Item: Sendable, Output: Sendable>: Sendable {
+    /// `parse()`: the reply (`BetaAsyncToolRunner`).
+    case message(@Sendable (ParsedBetaMessage<Output>) -> Item)
+    /// `stream()`: the reply's stream (`BetaAsyncStreamingToolRunner`).
+    case stream(@Sendable (BetaMessageStream<Output>) -> Item, runToolsEagerly: Bool)
 }
 
-/// Runs the tools the model calls until it stops asking for them, yielding each assistant message
-/// (`BetaAsyncToolRunner`). Make one with `client.beta.messages.toolRunner(...)`.
+/// One request of the loop: the reply, or the stream it arrives on (Python's `_last_message`).
+final class ToolRunnerTurn<Output: Sendable>: @unchecked Sendable {
+    let thread: MessageThread
+    let reply: ParsedBetaMessage<Output>?
+    let stream: BetaMessageStream<Output>?
+    /// Whether the stream was recorded and the thread's turn ended, which happens once.
+    var ended = false
+
+    init(thread: MessageThread, reply: ParsedBetaMessage<Output>) {
+        self.thread = thread
+        self.reply = reply
+        self.stream = nil
+    }
+
+    init(thread: MessageThread, stream: BetaMessageStream<Output>) {
+        self.thread = thread
+        self.reply = nil
+        self.stream = stream
+    }
+
+    /// The reply; a stream is read to its end first.
+    func finalMessage() async throws -> ParsedBetaMessage<Output> {
+        if let reply { return reply }
+        return try await stream!.getFinalMessage()
+    }
+}
+
+/// Runs the tools the model calls until it stops asking for them (`BaseToolRunner`). It comes in three forms:
+/// `BetaToolRunner` yields each `BetaMessage`, `BetaParsedToolRunner<Output>` each reply parsed into a structured
+/// output, and `BetaStreamingToolRunner<Output>` each reply's `BetaMessageStream`. Make one with
+/// `client.beta.messages.toolRunner(...)` or `client.beta.messages.streamingToolRunner(...)`.
 ///
 /// ```swift
 /// let runner = try client.beta.messages.toolRunner(maxTokens: 1024, messages: [...], model: "claude-haiku-4-5", tools: [getWeather])
@@ -102,8 +131,8 @@ private enum PendingStep {
 /// }
 /// // or: let final = try await runner.untilDone()
 /// ```
-public actor BetaToolRunner: AsyncSequence {
-    public typealias Element = BetaMessage
+public actor BaseBetaToolRunner<Item: Sendable, Output: Sendable>: AsyncSequence {
+    public typealias Element = Item
 
     let thread: MessageThread
     /// While a reply is handled, the history that `setMessagesParams()` and `appendMessages()` read and change: what
@@ -118,6 +147,9 @@ public actor BetaToolRunner: AsyncSequence {
     private var appendedToThread = false
 
     private let options: TurnOverrides
+    private let kind: ToolRunnerRequestKind<Item, Output>
+    /// Parses the replies of a thread that has an output format.
+    private let parser: OutputParser<Output>?
     private var toolOverrides = OrderedDict<ToolOverride>()
     private var toolsets = OrderedDict<BetaRunnableToolset>()
     private let helperHeaders: Headers
@@ -129,16 +161,33 @@ public actor BetaToolRunner: AsyncSequence {
     private var pendingCompaction: JSONValue?
     private var messagesBeingCompacted: [JSONValue]?
     private var pendingToolChanges: [JSONValue] = []
+    /// The tool calls of the streamed reply being handled. `nil` without `runToolsEagerly`.
+    private var eagerToolCalls: EagerToolCalls?
+    /// Whether a tool is running inside a read of a streamed reply. Closing the runner then only stops the loop at
+    /// its next step, as closing the reply would close it under that read.
+    private var runningEagerTool = false
 
-    private var lastMessage: BetaMessage?
+    private var lastTurn: ToolRunnerTurn<Output>?
     private var pending: PendingStep?
     private var finished = false
     private var loopStopReason: BetaStopReason?
 
-    init(thread: MessageThread, options: ToolRunnerRequestOptions, tools: [any BetaToolLike] = [], maxIterations: Int?) throws {
+    /// What the loop does when it is next asked for an item.
+    private enum PendingStep {
+        /// Handle the reply of a turn that was handed out.
+        case turn(ToolRunnerTurn<Output>)
+        /// Register the response of a compaction request that was handed out.
+        case compaction(ToolRunnerTurn<Output>, compactedCount: Int, previous: ToolRunnerTurn<Output>?, thenStop: Bool)
+    }
+
+    init(thread: MessageThread, options: ToolRunnerRequestOptions, tools: [any BetaToolLike] = [], maxIterations: Int?,
+         kind: ToolRunnerRequestKind<Item, Output>, parser: OutputParser<Output>?) throws
+    {
         self.thread = thread
         self.options = TurnOverrides(options: options)
         self.maxIterations = maxIterations
+        self.kind = kind
+        self.parser = parser
         let (byName, byFamily) = indexRunnables(tools)
         for (name, tool) in byName.items { toolOverrides[name] = .tool(tool) }
         toolsets = byFamily
@@ -154,38 +203,26 @@ public actor BetaToolRunner: AsyncSequence {
         try rejectCompactionParam(thread.state.params.fields)
     }
 
-    /// Runs the tool loop with the params of its requests, its tools and toolsets, and a client
-    /// (`BetaAsyncToolRunner(params=..., tools=..., client=...)`).
-    public init(params: BetaToolRunnerParams, tools: [any BetaToolLike], client: BaseClient,
-                options: ToolRunnerRequestOptions = ToolRunnerRequestOptions(), maxIterations: Int? = nil) throws
-    {
-        try rejectThreadParam(params["thread"])
-        var fields = params
-        let messages = fields.removeValue(forKey: "messages")?.arrayValue ?? []
-        let definitions = fields.removeValue(forKey: "tools")?.arrayValue ?? []
-        let threading = fields.removeValue(forKey: "thread") != .bool(false)
-        let thread = try MessageThread.forToolRunner(client: client, fields: fields, messages: messages,
-                                                     tools: definitions, threading: threading)
-        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations)
-    }
-
     // MARK: - Iteration
 
     public nonisolated func makeAsyncIterator() -> Iterator { Iterator(runner: self) }
 
     public struct Iterator: AsyncIteratorProtocol {
-        let runner: BetaToolRunner
-        public mutating func next() async throws -> BetaMessage? { try await runner.next() }
+        let runner: BaseBetaToolRunner
+        public mutating func next() async throws -> Item? { try await runner.next() }
     }
 
-    /// The next assistant message, or `nil` once the loop is done.
-    public func next() async throws -> BetaMessage? {
+    /// The next item, or `nil` once the loop is done.
+    public func next() async throws -> Item? {
         do {
             while true {
                 if closed { finished = true }
                 if let step = pending {
                     pending = nil
-                    if closed { return nil }
+                    if closed {
+                        abandon(step)
+                        return nil
+                    }
                     if let item = try await resume(step) { return item }
                     continue
                 }
@@ -200,20 +237,37 @@ public actor BetaToolRunner: AsyncSequence {
     }
 
     /// Consumes the loop and returns the last message (`until_done()`).
-    public func untilDone() async throws -> BetaMessage {
+    func untilDoneParsed() async throws -> ParsedBetaMessage<Output> {
         while try await next() != nil {}
-        guard let lastMessage else { throw AnthropicError("The tool runner made no request") }
-        return lastMessage
+        guard let lastTurn else { throw AnthropicError("The tool runner made no request") }
+        return try await lastTurn.finalMessage()
     }
 
     /// Stop the runner early. Iterating a closed runner yields nothing; closing a runner that is done has no
-    /// effect. A loop closed from inside one of its tools stops at its next step.
+    /// effect. A stream the runner handed out is closed with it. A loop closed from inside one of its tools stops at
+    /// its next step.
     public func close() {
         closed = true
+        // A tool that runs while the application reads a reply is inside that read, so the reply stays open.
+        guard !runningEagerTool, let step = pending else { return }
+        pending = nil
+        finished = true
+        abandon(step)
+    }
+
+    /// Close the request of a step that is not resumed.
+    private func abandon(_ step: PendingStep) {
+        switch step {
+        case .turn(let turn):
+            try? closeTurn(turn)
+        case .compaction(let turn, _, _, _):
+            messagesBeingCompacted = nil
+            try? closeTurn(turn)
+        }
     }
 
     /// The top of the loop: the next request, or `nil` once the loop stops.
-    private func top() async throws -> BetaMessage? {
+    private func top() async throws -> Item? {
         if shouldStop() {
             finished = true
             return nil
@@ -227,16 +281,17 @@ public actor BetaToolRunner: AsyncSequence {
         sentMessages = thread.messages
         messages = sentMessages
         messagesReplaced = false
-        let message = try await handleRequest(thread)
-        lastMessage = message
-        pending = .turn(message)
-        return message
+        let turn = try await handleRequest(thread)
+        lastTurn = turn
+        pending = .turn(turn)
+        return item(of: turn)
     }
 
     /// The loop body after a turn was handed out.
-    private func resume(_ step: PendingStep) async throws -> BetaMessage? {
+    private func resume(_ step: PendingStep) async throws -> Item? {
         switch step {
-        case .turn(let message):
+        case .turn(let turn):
+            let message = try await settle(turn).message
             loopStopReason = message.stopReason
             let nextStep = determineNextStep(message.stopReason)
             if nextStep != .stop {
@@ -262,18 +317,38 @@ public actor BetaToolRunner: AsyncSequence {
             cachedToolCallResponse = nil
             return nil
 
-        case .compaction(let fork, let message, let compactedCount, let previous, let thenStop):
+        case .compaction(let turn, let compactedCount, let previous, let thenStop):
+            let message: BetaMessage
+            do {
+                message = try await settle(turn).message
+            } catch {
+                messagesBeingCompacted = nil
+                throw error
+            }
             messagesBeingCompacted = nil
-            if !registerCompactionResponse(fork, message, compactedCount) {
+            if !registerCompactionResponse(turn.thread, message, compactedCount) {
                 // `untilDone()` still returns the turn the run ended on.
-                lastMessage = previous
+                lastTurn = previous
             }
             if thenStop { finished = true }
             return nil
         }
     }
 
-    private func compactAfterFinalTurn(_ message: BetaMessage) async throws -> BetaMessage? {
+    /// The reply of `turn`, after which its request is closed (leaving Python's `async with self._handle_request()`).
+    private func settle(_ turn: ToolRunnerTurn<Output>) async throws -> ParsedBetaMessage<Output> {
+        let message: ParsedBetaMessage<Output>
+        do {
+            message = try await turn.finalMessage()
+        } catch {
+            try? closeTurn(turn)
+            throw error
+        }
+        try closeTurn(turn)
+        return message
+    }
+
+    private func compactAfterFinalTurn(_ message: BetaMessage) async throws -> Item? {
         if let compaction = prepareCompactionAfterFinalTurn(message) {
             return try await startCompaction(compaction, thenStop: true)
         }
@@ -281,24 +356,69 @@ public actor BetaToolRunner: AsyncSequence {
         return nil
     }
 
-    private func startCompaction(_ compaction: JSONValue, thenStop: Bool) async throws -> BetaMessage {
-        let previous = lastMessage
+    private func startCompaction(_ compaction: JSONValue, thenStop: Bool) async throws -> Item {
+        let previous = lastTurn
         let fork = try takeCompactionThread(compaction)
         let compactedCount = thread.messages.count
-        let message: BetaMessage
+        let turn: ToolRunnerTurn<Output>
         do {
-            message = try await handleRequest(fork)
+            turn = try await handleRequest(fork)
         } catch {
             messagesBeingCompacted = nil
             throw error
         }
-        lastMessage = message
-        pending = .compaction(thread: fork, message: message, compactedCount: compactedCount, previous: previous, thenStop: thenStop)
-        return message
+        lastTurn = turn
+        pending = .compaction(turn, compactedCount: compactedCount, previous: previous, thenStop: thenStop)
+        return item(of: turn)
     }
 
-    private func handleRequest(_ thread: MessageThread) async throws -> BetaMessage {
-        try await thread.send(overrides: turnOptions(thread))
+    private func item(of turn: ToolRunnerTurn<Output>) -> Item {
+        switch kind {
+        case .message(let make): return make(turn.reply!)
+        case .stream(let make, _): return make(turn.stream!)
+        }
+    }
+
+    /// Send a turn on `thread` (`_handle_request`): parsed, or as a stream whose end ends the turn.
+    private func handleRequest(_ thread: MessageThread) async throws -> ToolRunnerTurn<Output> {
+        let parser = thread.state.outputFormat == nil ? nil : self.parser
+        switch kind {
+        case .message:
+            let reply = try await thread.send(overrides: turnOptions(thread))
+            return ToolRunnerTurn(thread: thread, reply: try parseBetaResponse(reply, parser: parser))
+        case .stream(_, let runToolsEagerly):
+            let raw = try await thread.openStream(overrides: turnOptions(thread))
+            let stream = BetaMessageStream(rawStream: raw, parser: parser)
+            let turn = ToolRunnerTurn(thread: thread, stream: stream)
+            var hooks = BetaMessageStreamHooks()
+            hooks.didEnd = { [weak self] in try await self?.closeTurn(turn, closingStream: false) }
+            if runToolsEagerly {
+                let calls = EagerToolCalls()
+                eagerToolCalls = calls
+                hooks.willYield = { [weak self] event in try await self?.runToolsWhileStreaming(event, calls) }
+            }
+            stream.hooks = hooks
+            return turn
+        }
+    }
+
+    /// Record a streamed turn and free its thread, unless the turn has ended already: the whole reply if the stream
+    /// reached `message_stop`, the partial reply and a new thread if it ended after `message_start`, and nothing if
+    /// it ended before that (`_end_turn`). A turn that is not streamed ended when its reply arrived.
+    private func closeTurn(_ turn: ToolRunnerTurn<Output>, closingStream: Bool = true) throws {
+        guard let stream = turn.stream else { return }
+        if closingStream { stream.close() }
+        if turn.ended { return }
+        turn.ended = true
+        let state = turn.thread.state
+        defer { state.endTurn() }
+        if let snapshot = stream.currentMessageSnapshot?.message {
+            if stream.messageComplete {
+                try state.recordReply(snapshot)
+            } else {
+                try state.recordPartialReply(snapshot, completedBlocks: stream.completedBlocks)
+            }
+        }
     }
 
     /// The runner's request options for a turn on `thread`; the runner's helper tags go on top of the headers.
@@ -396,6 +516,11 @@ public actor BetaToolRunner: AsyncSequence {
         try appendJSONMessages(messages.map { .reply($0) })
     }
 
+    /// Add parsed assistant replies to the conversation history.
+    public func appendMessages(_ messages: ParsedBetaMessage<Output>...) throws {
+        try appendJSONMessages(messages.map { .reply($0.message) })
+    }
+
     /// Add messages written as JSON to the conversation history.
     public func appendMessages(json messages: JSONValue...) throws {
         try appendJSONMessages(messages.map { .param($0) })
@@ -444,6 +569,8 @@ public actor BetaToolRunner: AsyncSequence {
         let fork = thread.fork()
         try fork.state.update(TurnOverrides(fields: ["compaction": compaction]))
         fork.state.fields = withoutCompactionIncompatibleParams(fork.state.fields)
+        // The output format is added to `output_config` only when a turn is sent, so the fork drops it separately.
+        fork.state.outputFormat = nil
         pendingCompaction = nil
         messagesBeingCompacted = thread.messages
         return fork
@@ -630,11 +757,14 @@ public actor BetaToolRunner: AsyncSequence {
         return toolset
     }
 
+
     // MARK: - Tool calls
 
     /// Runs the tool calls of the last message and returns their results as a user message, or `nil` if the
     /// message made no tool call (`generate_tool_call_response`). The response is cached: calling it again returns
-    /// the same response.
+    /// the same response. With `runToolsEagerly`, it reuses the results of the reply's calls that have run and runs
+    /// the rest, including the ones `deferToolCall()` is holding, so that no call runs twice. A streamed reply is
+    /// read to its end first.
     public func generateToolCallResponse() async throws -> BetaMessageParam? {
         try await generateToolCallResponseJSON()?.decode()
     }
@@ -650,7 +780,9 @@ public actor BetaToolRunner: AsyncSequence {
     }
 
     private func makeToolCallResponse() async throws -> JSONValue? {
-        guard let last = lastMessage, last.role == "assistant", !last.content.isEmpty else { return nil }
+        guard let lastTurn else { return nil }
+        let last = try await lastTurn.finalMessage().message
+        guard last.role == "assistant", !last.content.isEmpty else { return nil }
         let toolUses: [BetaToolUseBlock] = last.content.compactMap { if case .toolUse(let t) = $0 { return t } else { return nil } }
         if toolUses.isEmpty { return nil }
 
@@ -658,6 +790,7 @@ public actor BetaToolRunner: AsyncSequence {
         let toolsByName = runnableTools()
         let available = availableNames()
         var failedToolsets = Set<String>()
+        let eagerCalls = eagerToolCalls
 
         for toolUse in toolUses {
             if let family = toolUse.toolsetName {
@@ -665,9 +798,20 @@ public actor BetaToolRunner: AsyncSequence {
                     results.append(notExecutedResult(toolUse))
                     continue
                 }
-                let memberResult = try await runToolsetMember(toolUse)
+                // The result of a member that ran while the reply streamed is kept, so that it doesn't run twice.
+                var memberResult: JSONValue
+                if let ran = eagerCalls?.results[toolUse.id] {
+                    memberResult = ran
+                } else {
+                    memberResult = try await runToolsetMember(toolUse)
+                    eagerCalls?.record(toolUse, memberResult)
+                }
                 if memberResult["is_error"] == true && toolsetsByFamily().contains(family) { failedToolsets.insert(family) }
                 results.append(memberResult)
+                continue
+            }
+            if let ran = eagerCalls?.results[toolUse.id] {
+                results.append(ran)
                 continue
             }
             let tool = available.contains(toolUse.name) ? toolsByName[toolUse.name] : nil
@@ -676,19 +820,22 @@ public actor BetaToolRunner: AsyncSequence {
                 results.append(malformedToolsetCallResult(toolUse))
                 continue
             }
-            guard let tool else {
+            let result: JSONValue
+            if let tool {
+                result = try await runTool(tool, toolUse)
+            } else {
                 ToolDiagnostics.warn(
                     "Tool '\(toolUse.name)' not found in tool runner. "
                         + "Available tools: \(pythonList(toolsByName.keys)). "
                         + "If using a raw tool definition, handle the tool call manually and use `append_messages()` to add the result. "
                         + "Otherwise, pass the tool using `beta_async_tool(func)` or a `@beta_async_tool` decorated function.")
-                results.append([
+                result = [
                     "type": "tool_result", "tool_use_id": .string(toolUse.id),
                     "content": .string("Error: Tool '\(toolUse.name)' not found"), "is_error": true,
-                ])
-                continue
+                ]
             }
-            results.append(try await runTool(tool, toolUse))
+            eagerCalls?.record(toolUse, result)
+            results.append(result)
         }
         return ["role": "user", "content": .array(results)]
     }
@@ -715,6 +862,272 @@ public actor BetaToolRunner: AsyncSequence {
                 isError: true)
         }
         return try await toolset.toolResultJSON(toolUse)
+    }
+
+    /// Called with each event of a streamed reply as the reader asks for it (`_run_tools_while_streaming`): runs the
+    /// call the previous event showed the model has moved on from, then follows `event`. Asking for the next event is
+    /// how the reader says it is done with the one it holds, and the next event is read first, so that no call runs
+    /// once reading the reply has failed.
+    func runToolsWhileStreaming(_ event: ParsedBetaMessageStreamEvent, _ calls: EagerToolCalls) async throws {
+        if let movedOnFrom = calls.movedOnFrom {
+            calls.movedOnFrom = nil
+            let name = movedOnFrom.name
+            var family = movedOnFrom.toolsetName
+            let tool = family == nil && availableNames().contains(name) ? runnableTools()[name] : nil
+            if family == nil && tool == nil && toolsetsByFamily().contains(name) {
+                // A call named like a toolset, with no `toolset_name`, is a malformed toolset call.
+                family = name
+                calls.waitingToolsets.insert(name)
+            }
+            if let family {
+                // A toolset runs its calls in the model's order. So once one of its calls waits for the tool
+                // response, or fails, its later calls wait for the tool response too.
+                if calls.isHeld(movedOnFrom) { calls.waitingToolsets.insert(family) }
+                if !calls.waitingToolsets.contains(family) {
+                    runningEagerTool = true
+                    defer { runningEagerTool = false }
+                    let memberResult = try await runToolsetMember(movedOnFrom)
+                    calls.record(movedOnFrom, memberResult)
+                    if memberResult["is_error"] == true { calls.waitingToolsets.insert(family) }
+                }
+            } else if let tool, !calls.isHeld(movedOnFrom) {
+                // A call to a tool the runner doesn't have gets its error result with the tool response.
+                runningEagerTool = true
+                defer { runningEagerTool = false }
+                calls.record(movedOnFrom, try await runTool(tool, movedOnFrom))
+            }
+        }
+        calls.movedOnFrom = calls.track(event)
+    }
+
+    /// Hold a tool call of the current reply until you are done with the reply (`defer_tool_call`).
+    func holdToolCall(_ id: String) {
+        eagerToolCalls?.hold(id)
+    }
+
+    /// The tool calls of the current reply that `deferToolCall()` is holding (`deferred_tool_calls`).
+    func heldToolCalls() -> [BetaToolUseBlock] {
+        eagerToolCalls?.held() ?? []
+    }
+}
+
+/// A tool runner that yields each assistant message (`BetaAsyncToolRunner`).
+public typealias BetaToolRunner = BaseBetaToolRunner<BetaMessage, Never>
+
+/// A tool runner that yields each assistant message parsed into `Output` (`BetaAsyncToolRunner[ResponseFormatT]`).
+public typealias BetaParsedToolRunner<Output: Sendable> = BaseBetaToolRunner<ParsedBetaMessage<Output>, Output>
+
+/// A tool runner that yields the stream of each assistant message (`BetaAsyncStreamingToolRunner`), parsed into
+/// `Output` when the runner has an output format (`Never` when it has none).
+public typealias BetaStreamingToolRunner<Output: Sendable> = BaseBetaToolRunner<BetaMessageStream<Output>, Output>
+
+extension BaseBetaToolRunner where Item == BetaMessage, Output == Never {
+    init(thread: MessageThread, options: ToolRunnerRequestOptions, tools: [any BetaToolLike] = [], maxIterations: Int?) throws {
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations,
+                      kind: .message { $0.message }, parser: nil)
+    }
+
+    /// Runs the tool loop with the params of its requests, its tools and toolsets, and a client
+    /// (`BetaAsyncToolRunner(params=..., tools=..., client=...)`).
+    public init(params: BetaToolRunnerParams, tools: [any BetaToolLike], client: BaseClient,
+                options: ToolRunnerRequestOptions = ToolRunnerRequestOptions(), maxIterations: Int? = nil) throws
+    {
+        let thread = try toolRunnerThread(params: params, client: client, outputFormat: nil)
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations)
+    }
+
+    /// Consumes the loop and returns the last message (`until_done()`).
+    public func untilDone() async throws -> BetaMessage {
+        try await untilDoneParsed().message
+    }
+}
+
+extension BaseBetaToolRunner where Item == ParsedBetaMessage<Output> {
+    init(thread: MessageThread, options: ToolRunnerRequestOptions, tools: [any BetaToolLike] = [], maxIterations: Int?,
+         parser: @escaping OutputParser<Output>) throws
+    {
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations, kind: .message { $0 },
+                      parser: parser)
+    }
+
+    /// Consumes the loop and returns the last message (`until_done()`).
+    public func untilDone() async throws -> ParsedBetaMessage<Output> {
+        try await untilDoneParsed()
+    }
+}
+
+extension BaseBetaToolRunner where Item == ParsedBetaMessage<Output>, Output: StructuredOutput {
+    /// Runs the tool loop with the params of its requests, its tools and toolsets, and a client, parsing each reply
+    /// into `outputFormat` (`BetaAsyncToolRunner(params={..., "output_format": ...}, tools=..., client=...)`).
+    public init(params: BetaToolRunnerParams, outputFormat: Output.Type, tools: [any BetaToolLike], client: BaseClient,
+                options: ToolRunnerRequestOptions = ToolRunnerRequestOptions(), maxIterations: Int? = nil) throws
+    {
+        let thread = try toolRunnerThread(params: params, client: client, outputFormat: try toolRunnerOutputFormat(Output.self))
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations,
+                      parser: structuredOutputParser(Output.self))
+    }
+}
+
+extension BaseBetaToolRunner where Item == BetaMessageStream<Output> {
+    init(thread: MessageThread, options: ToolRunnerRequestOptions, tools: [any BetaToolLike] = [], maxIterations: Int?,
+         runToolsEagerly: Bool, parser: OutputParser<Output>?) throws
+    {
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations,
+                      kind: .stream({ $0 }, runToolsEagerly: runToolsEagerly), parser: parser)
+    }
+
+    /// Runs the tool loop with the params of its requests, its tools and toolsets, and a client, streaming each reply
+    /// (`BetaAsyncStreamingToolRunner(params=..., tools=..., client=...)`).
+    ///
+    /// - Parameter runToolsEagerly: Run each tool as soon as its call is complete, before the reply finishes. See
+    ///   `client.beta.messages.streamingToolRunner(...)`.
+    public init(params: BetaToolRunnerParams, tools: [any BetaToolLike], client: BaseClient,
+                options: ToolRunnerRequestOptions = ToolRunnerRequestOptions(), maxIterations: Int? = nil,
+                runToolsEagerly: Bool = false) throws where Output == Never
+    {
+        let thread = try toolRunnerThread(params: params, client: client, outputFormat: nil)
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations,
+                      runToolsEagerly: runToolsEagerly, parser: nil)
+    }
+
+    /// Like `init(params:tools:client:options:maxIterations:runToolsEagerly:)`, parsing each reply into
+    /// `outputFormat`.
+    public init(params: BetaToolRunnerParams, outputFormat: Output.Type, tools: [any BetaToolLike], client: BaseClient,
+                options: ToolRunnerRequestOptions = ToolRunnerRequestOptions(), maxIterations: Int? = nil,
+                runToolsEagerly: Bool = false) throws where Output: StructuredOutput
+    {
+        let thread = try toolRunnerThread(params: params, client: client, outputFormat: try toolRunnerOutputFormat(Output.self))
+        try self.init(thread: thread, options: options, tools: tools, maxIterations: maxIterations,
+                      runToolsEagerly: runToolsEagerly, parser: structuredOutputParser(Output.self))
+    }
+
+    /// Consumes the loop and returns the last message (`until_done()`).
+    public func untilDone() async throws -> ParsedBetaMessage<Output> {
+        try await untilDoneParsed()
+    }
+
+    /// Hold a tool call of the current reply until you are done with the reply, which is when it runs without
+    /// `runToolsEagerly`: at the end of the loop body, or when you call `generateToolCallResponse()`
+    /// (`defer_tool_call`).
+    ///
+    /// With `runToolsEagerly` the runner otherwise runs each call while the reply streams, once the model has moved
+    /// on from it: when the next block starts, or the reply stops with `tool_use`. The call runs when you ask for the
+    /// event after that one, so you can hold it while you handle any event up to and including that one. The other
+    /// calls of the reply still run early, except the later calls of the same toolset, which a toolset runs in
+    /// order. It does nothing for a call that has run, outside the loop body, and without `runToolsEagerly`.
+    ///
+    /// ```swift
+    /// for try await stream in runner {
+    ///     for try await event in stream {
+    ///         if case .contentBlockStart(let start) = event, case .toolUse(let call) = start.contentBlock, call.name == "delete_file" {
+    ///             await runner.deferToolCall(call)
+    ///         }
+    ///     }
+    ///     // No `delete_file` call has run yet.
+    /// }
+    /// ```
+    public func deferToolCall(_ toolUse: BetaToolUseBlock) {
+        holdToolCall(toolUse.id)
+    }
+
+    /// `deferToolCall(_:)` by the id of the call's `tool_use` block.
+    public func deferToolCall(id: String) {
+        holdToolCall(id)
+    }
+
+    /// The tool calls of the current reply that `deferToolCall()` is holding, in the model's order, as their
+    /// `tool_use` blocks (`deferred_tool_calls`).
+    ///
+    /// A call is in the list once its block has finished streaming, so read the list when you are done with the
+    /// stream. A call that has run is not in it. It is empty without `runToolsEagerly`. Held calls are listed
+    /// whatever the reply's `stop_reason`, because `generateToolCallResponse()` runs them whatever it is.
+    public var deferredToolCalls: [BetaToolUseBlock] {
+        heldToolCalls()
+    }
+}
+
+/// The thread of a runner made from the params of its requests (`_for_tool_runner`).
+func toolRunnerThread(params: BetaToolRunnerParams, client: BaseClient, outputFormat: [String: JSONValue]?) throws -> MessageThread {
+    try rejectThreadParam(params["thread"])
+    if outputFormat != nil, let format = params["output_config"]?["format"], !format.isNull {
+        throw outputFormatConflictError()
+    }
+    var fields = params
+    let messages = fields.removeValue(forKey: "messages")?.arrayValue ?? []
+    let definitions = fields.removeValue(forKey: "tools")?.arrayValue ?? []
+    let threading = fields.removeValue(forKey: "thread") != .bool(false)
+    return try MessageThread.forToolRunner(client: client, fields: fields, messages: messages, tools: definitions,
+                                           threading: threading, outputFormat: outputFormat)
+}
+
+/// The `output_config.format` a runner with the output format `Output` sends (`JSONOutputFormat.format_param`).
+func toolRunnerOutputFormat<Output: StructuredOutput>(_ type: Output.Type) throws -> [String: JSONValue] {
+    ["type": "json_schema", "schema": .object(try jsonOutputFormat(Output.self))]
+}
+
+func outputFormatConflictError() -> AnthropicError {
+    AnthropicError(
+        "Both output_format and output_config.format were provided. Please use only output_config.format (output_format is deprecated).")
+}
+
+/// The tool calls of one streamed reply, for a tool runner with `runToolsEagerly` (`EagerToolCalls`). Only used from
+/// the runner's actor.
+final class EagerToolCalls: @unchecked Sendable {
+    /// The result of each call that has run, by `tool_use` id.
+    var results: [String: JSONValue] = [:]
+    /// The `tool_use` blocks that have finished streaming, in the model's order.
+    private var finished: [BetaToolUseBlock] = []
+    /// The ids of the calls that `deferToolCall()` is holding.
+    private var heldIDs = Set<String>()
+    /// The toolsets that have a call waiting for the tool response. Their later calls wait for it too.
+    var waitingToolsets = Set<String>()
+    /// The last `tool_use` block to close, until the model moves on from it.
+    private var closed: BetaToolUseBlock?
+    /// Whether a refusal has handed the reply to a fallback model.
+    private var fallback = false
+    /// The call the last event showed the model has moved on from; it runs when the reader asks for the next event.
+    var movedOnFrom: BetaToolUseBlock?
+
+    func hold(_ id: String) {
+        if results[id] == nil { heldIDs.insert(id) }
+    }
+
+    func isHeld(_ toolUse: BetaToolUseBlock) -> Bool { heldIDs.contains(toolUse.id) }
+
+    func held() -> [BetaToolUseBlock] { finished.filter { heldIDs.contains($0.id) } }
+
+    func record(_ toolUse: BetaToolUseBlock, _ result: JSONValue) {
+        heldIDs.remove(toolUse.id)
+        results[toolUse.id] = result
+    }
+
+    /// Follows the reply, and returns the call that `event` shows the model has moved on from, if any.
+    ///
+    /// A call's own `content_block_stop` isn't enough, because a reply that is cut off closes its last call too.
+    /// After a `fallback` block no call is returned, so the rest wait for the reply to end.
+    func track(_ event: ParsedBetaMessageStreamEvent) -> BetaToolUseBlock? {
+        switch event {
+        case .contentBlockStop(let stop):
+            if case .toolUse(let toolUse) = stop.contentBlock {
+                finished.append(toolUse)
+                closed = fallback ? nil : toolUse
+            }
+            return nil
+        case .contentBlockStart(let start):
+            if case .fallback = start.contentBlock {
+                // The refusal that led to the fallback may have cut off the call before it.
+                fallback = true
+                closed = nil
+                return nil
+            }
+        case .messageDelta(let delta) where delta.delta.stopReason == .toolUse:
+            break
+        default:
+            return nil
+        }
+        let movedOnFrom = closed
+        closed = nil
+        return movedOnFrom
     }
 }
 

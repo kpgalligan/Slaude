@@ -138,6 +138,9 @@ final class ThreadState: @unchecked Sendable {
     private(set) var tools: [any BetaToolLike]?
     var runnableTools = OrderedDict<any BetaRunnableTool>()
     var fields: [String: JSONValue] = [:]
+    /// The `output_config.format` of the thread's output format (`_output_format.format_param`), added to
+    /// `output_config` when a turn is sent. The runner that owns the thread parses the replies.
+    var outputFormat: [String: JSONValue]?
 
     private var stored: [ThreadEntry] = []
     private var staged: [ThreadEntry] = []
@@ -161,6 +164,7 @@ final class ThreadState: @unchecked Sendable {
         tools = other.tools
         runnableTools = other.runnableTools
         fields = other.fields
+        outputFormat = other.outputFormat
         stored = other.stored
         staged = other.staged
         thread = other.thread
@@ -521,9 +525,16 @@ final class ThreadState: @unchecked Sendable {
         throw AnthropicError(message)
     }
 
+    /// The thread's request fields with this turn's overrides, and the output format as `output_config`.
     private func turnParams(_ overrides: TurnOverrides) throws -> [String: JSONValue] {
         try readTools()
-        return overrideFields(fields, overrides.fields)
+        var params = overrideFields(fields, overrides.fields)
+        if let outputFormat {
+            var outputConfig = params["output_config"]?.objectValue ?? [:]
+            outputConfig["format"] = .object(outputFormat)
+            params["output_config"] = .object(outputConfig)
+        }
+        return params
     }
 
     private func requestOptions(_ overrides: TurnOverrides, stream: Bool) -> ToolRunnerRequestOptions {

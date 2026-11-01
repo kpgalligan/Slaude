@@ -18,6 +18,9 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
     public private(set) var messageComplete = false
     /// How many `content_block_stop` events were received.
     public private(set) var completedBlocks = 0
+    /// What a tool runner does around the events it hands out (Python wraps `stream._iterator`).
+    var hooks: BetaMessageStreamHooks?
+    private var hooksEnded = false
 
     public init(rawStream: Stream<BetaRawMessageStreamEvent>, parser: OutputParser<Output>? = nil) {
         self.rawStream = rawStream
@@ -75,6 +78,29 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
     public func makeAsyncIterator() -> AsyncIterator { AsyncIterator(stream: self) }
 
     func nextEvent() async throws -> ParsedBetaMessageStreamEvent? {
+        guard let hooks else { return try await readEvent() }
+        let event: ParsedBetaMessageStreamEvent?
+        do {
+            event = try await readEvent()
+        } catch {
+            try await endHooks(hooks)
+            throw error
+        }
+        guard let event else {
+            try await endHooks(hooks)
+            return nil
+        }
+        try await hooks.willYield?(event)
+        return event
+    }
+
+    private func endHooks(_ hooks: BetaMessageStreamHooks) async throws {
+        if hooksEnded { return }
+        hooksEnded = true
+        try await hooks.didEnd?()
+    }
+
+    private func readEvent() async throws -> ParsedBetaMessageStreamEvent? {
         while true {
             if !pending.isEmpty { return pending.removeFirst() }
             if done { return nil }
@@ -99,6 +125,14 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
             pending.append(contentsOf: buildBetaEvents(event, snapshot: message))
         }
     }
+}
+
+/// The hooks a tool runner puts around the events of a stream it hands out.
+struct BetaMessageStreamHooks: Sendable {
+    /// Called with each event once it was read, before it is handed out.
+    var willYield: (@Sendable (ParsedBetaMessageStreamEvent) async throws -> Void)?
+    /// Called once, when the events run out or reading them fails.
+    var didEnd: (@Sendable () async throws -> Void)?
 }
 
 /// Applies one raw event to the accumulated message (`lib/streaming/_beta_messages.accumulate_event`).

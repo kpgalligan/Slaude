@@ -24,11 +24,14 @@ final class MessageThread: @unchecked Sendable {
 
     /// The thread of a tool runner made from the params of its requests (`_for_tool_runner`).
     static func forToolRunner(client: BaseClient, fields: [String: JSONValue], messages: [JSONValue],
-                              tools: [any BetaToolLike], threading: Bool) throws -> MessageThread
+                              tools: [any BetaToolLike], threading: Bool, outputFormat: [String: JSONValue]? = nil) throws
+        -> MessageThread
     {
-        MessageThread(client: client, state: try ThreadState(
+        let state = try ThreadState(
             fields: fields, messages: messages, tools: tools, options: ToolRunnerRequestOptions(),
-            threading: threading && supportsMessageThreads(client), unsupportedRequestBehavior: "continue_unthreaded"))
+            threading: threading && supportsMessageThreads(client), unsupportedRequestBehavior: "continue_unthreaded")
+        state.outputFormat = outputFormat
+        return MessageThread(client: client, state: state)
     }
 
     var messages: [JSONValue] { state.messages }
