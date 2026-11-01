@@ -14,8 +14,8 @@ public let ANTHROPIC_SDK_VERSION = "2.3.0"
 /// )
 /// ```
 open class Anthropic: BaseClient, @unchecked Sendable {
-    public let apiKey: String?
-    public let authToken: String?
+    public internal(set) var apiKey: String?
+    public internal(set) var authToken: String?
     public let webhookKey: String?
     let environment: [String: String]
     let explicitBaseURL: Bool

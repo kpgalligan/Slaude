@@ -125,7 +125,14 @@ func swiftVersion() -> String {
 /// just like the Python platform clients override the `_`-prefixed methods.
 open class BaseClient: @unchecked Sendable {
     public let version: String
-    public let baseURL: URL
+    /// The base URL requests are resolved against. Assignable after construction (Python's
+    /// `client.base_url = ...`); subclasses may override it (e.g. to derive it lazily).
+    open var baseURL: URL {
+        get { baseURLLock.withLock { _baseURL } }
+        set { baseURLLock.withLock { _baseURL = BaseClient.enforceTrailingSlash(newValue) } }
+    }
+    private var _baseURL: URL
+    private let baseURLLock = NSLock()
     public let maxRetries: Int
     public let timeout: Timeout
     public internal(set) var timeoutOverridden: Bool
@@ -146,7 +153,7 @@ open class BaseClient: @unchecked Sendable {
                 middleware: [Middleware]? = nil)
     {
         self.version = version
-        self.baseURL = BaseClient.enforceTrailingSlash(baseURL)
+        self._baseURL = BaseClient.enforceTrailingSlash(baseURL)
         self.maxRetries = maxRetries
         self.timeoutOverridden = timeout != nil
         self.timeout = timeout ?? DEFAULT_TIMEOUT
