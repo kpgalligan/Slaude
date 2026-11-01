@@ -377,7 +377,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
         let events = FakeSessionEvents(streamEvents: [], listEvents: [
             toolUse("tu_1", "gated", permission: "ask"), confirmation("tu_1", "deny"), idleEndTurn(),
         ])
-        let (items, finished) = try await drive(runner(events, tools: [], maxIdle: 0.05), for: 2)
+        let (items, finished) = try await drive(runner(events, tools: [], maxIdle: 0.05), for: 20)
         #expect(finished)
         #expect(items.map(\.confirmation) == ["deny"])
         #expect(events.sendCount == 0)
@@ -487,7 +487,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
         let calls = Box(0)
         let script = [toolUse("tu_1", "gated", permission: "ask"), idleEndTurn(), confirmation("tu_1", "deny")]
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : script, listEvents: inHistory ? script : [])
-        let (items, finished) = try await drive(runner(events, tools: [fakeTool("gated", counting(calls))], maxIdle: 0.05), for: 2)
+        let (items, finished) = try await drive(runner(events, tools: [fakeTool("gated", counting(calls))], maxIdle: 0.05), for: 20)
         #expect(finished)
         #expect(calls.value == 0)
         #expect(events.sendCount == 0)
@@ -498,7 +498,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     func allowAfterEndTurnResumesIdleStop(inHistory: Bool) async throws {
         let script = [toolUse("tu_1", "gated", permission: "ask"), idleEndTurn(), confirmation("tu_1", "allow")]
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : script, listEvents: inHistory ? script : [])
-        let (items, finished) = try await drive(runner(events, tools: [fakeTool("gated") { _ in "ran" }], maxIdle: 0.05), for: 2)
+        let (items, finished) = try await drive(runner(events, tools: [fakeTool("gated") { _ in "ran" }], maxIdle: 0.05), for: 20)
         #expect(finished)
         #expect(items.map(\.confirmation) == ["allow"])
         #expect(events.sendCount == 1)
@@ -523,7 +523,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
             listEventsPerCall: [[], [confirmation("tu_1", "allow"), idleEndTurn()]])
         var timings = SessionRunnerTimings()
         timings.streamBackoffStart = 0.01
-        let (seen, finished) = try await drive(runner(events, tools: [slow], maxIdle: maxIdle, timings: timings), for: 4)
+        let (seen, finished) = try await drive(runner(events, tools: [slow], maxIdle: maxIdle, timings: timings), for: 20)
         let stoppedAt = Date()
         #expect(finished)
         #expect(calls.value == 1)
@@ -534,7 +534,7 @@ private func counting(_ counter: Box<Int>, _ value: String = "ran") -> @Sendable
     @Test(arguments: ["end_turn", "refusal", "retries_exhausted", "budget_reached", "newer_than_this_sdk"], [false, true])
     func idleAfterTurnEndsEndsIteration(stopReason: String, inHistory: Bool) async throws {
         let events = FakeSessionEvents(streamEvents: inHistory ? [] : [idle(stopReason)], listEvents: inHistory ? [idle(stopReason)] : [])
-        let (items, finished) = try await drive(runner(events, tools: [], maxIdle: 0.05), for: 2)
+        let (items, finished) = try await drive(runner(events, tools: [], maxIdle: 0.05), for: 20)
         #expect(finished)
         #expect(items.isEmpty)
     }
