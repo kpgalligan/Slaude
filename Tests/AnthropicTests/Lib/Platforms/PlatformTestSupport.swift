@@ -49,6 +49,42 @@ let platformMessageJSON = #"{"id": "msg_01", "type": "message", "role": "assista
     }
 }
 
+/// The structured output of the platform `parse` / `stream` routing tests.
+struct PlatformHelpersCity: StructuredOutput, Equatable {
+    let city: String
+    static let jsonSchema: JSONValue = [
+        "type": "object", "properties": ["city": ["type": "string"]], "required": ["city"], "additionalProperties": false,
+    ]
+}
+
+let platformCityText = #"{"city": "Paris"}"#
+
+/// A Messages response whose one text block is `platformCityText`.
+let platformCityMessageJSON = String(decoding: try! JSONValue.serialize([
+    "id": "msg_01", "type": "message", "role": "assistant", "model": "claude",
+    "content": [["type": "text", "text": .string(platformCityText)]], "stop_reason": "end_turn", "stop_sequence": nil,
+    "usage": ["input_tokens": 1, "output_tokens": 1],
+] as JSONValue), as: UTF8.self)
+
+/// The same message as stream events.
+let platformCityStreamEvents: [JSONValue] = [
+    ["type": "message_start", "message": ["id": "msg_01", "type": "message", "role": "assistant", "model": "claude", "content": [],
+                                          "stop_reason": nil, "stop_sequence": nil, "usage": ["input_tokens": 1, "output_tokens": 1]]],
+    ["type": "content_block_start", "index": 0, "content_block": ["type": "text", "text": ""]],
+    ["type": "content_block_delta", "index": 0, "delta": ["type": "text_delta", "text": .string(platformCityText)]],
+    ["type": "content_block_stop", "index": 0],
+    ["type": "message_delta", "delta": ["stop_reason": "end_turn", "stop_sequence": nil], "usage": ["output_tokens": 5]],
+    ["type": "message_stop"],
+]
+
+/// `platformCityStreamEvents` as a `text/event-stream` response.
+@Sendable func platformCitySSEResponse(_ request: HTTPRequest) -> HTTPResponse {
+    let sse = platformCityStreamEvents.map { event in
+        "event: \(event["type"]?.stringValue ?? "")\ndata: \(String(decoding: try! JSONValue.serialize(event), as: UTF8.self))\n\n"
+    }.joined()
+    return HTTPResponse(statusCode: 200, headers: ["content-type": "text/event-stream"], stream: chunked(Data(sse.utf8)), request: request)
+}
+
 /// `[{"role": "user", "content": text}]` as `MessageParam`s (decoded, so the test does not depend
 /// on generated union case names).
 func userMessages(_ text: String) -> [MessageParam] {

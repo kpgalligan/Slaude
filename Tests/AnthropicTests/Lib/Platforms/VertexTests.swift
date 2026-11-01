@@ -81,6 +81,53 @@ final class FakeGoogleCredentials: GoogleCredentials, @unchecked Sendable {
         #expect(recorder.requests[0].json["stream"] == true)
     }
 
+    /// `test_beta_messages_helpers_are_bound`, plus the routing checks of
+    /// `test_beta_tool_runner_routes_through_raw_predict` for the helpers ported so far: `create`,
+    /// `parse`, `stream` and `count_tokens` (beta and stable) go through `:rawPredict`
+    /// (`:streamRawPredict`, `count-tokens:rawPredict`), with the body rewritten.
+    @Test func messagesHelpersRouteThroughRawPredict() async throws {
+        let recorder = RequestRecorder { req, _ in
+            if req.url.path.hasSuffix(":streamRawPredict") { return platformCitySSEResponse(req) }
+            if req.url.path.hasSuffix("count-tokens:rawPredict") { return platformJSON(#"{"input_tokens": 3}"#)(req) }
+            return platformJSON(platformCityMessageJSON)(req)
+        }
+        let client = try vertex(recorder)
+        let model: ModelParam = "claude-haiku-4-5@20251001"
+        let city = PlatformHelpersCity(city: "Paris")
+
+        _ = try await client.beta.messages.create(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model)
+        let betaParsed = try await client.beta.messages.parse(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model,
+                                                              outputFormat: PlatformHelpersCity.self)
+        let betaStream = try await client.beta.messages.stream(maxTokens: 256, messages: betaUserMessages("weather in Paris?"), model: model,
+                                                               outputFormat: PlatformHelpersCity.self)
+        let betaStreamed = try await betaStream.getFinalMessage()
+        let betaCount = try await client.beta.messages.countTokens(messages: betaUserMessages("weather in Paris?"), model: model)
+        let parsed = try await client.messages.parse(maxTokens: 256, messages: userMessages("weather in Paris?"), model: model,
+                                                     outputFormat: PlatformHelpersCity.self)
+        let stream = try await client.messages.stream(maxTokens: 256, messages: userMessages("weather in Paris?"), model: model,
+                                                      outputFormat: PlatformHelpersCity.self)
+        let streamed = try await stream.getFinalMessage()
+
+        #expect(betaParsed.parsedOutput == city)
+        #expect(betaStreamed.parsedOutput == city)
+        #expect(betaCount.inputTokens == 3)
+        #expect(parsed.parsedOutput == city)
+        #expect(streamed.parsedOutput == city)
+        let streamURL = modelsURL + "claude-haiku-4-5@20251001:streamRawPredict"
+        let countURL = modelsURL + "count-tokens:rawPredict"
+        #expect(recorder.urls == [toolRunnerURL, toolRunnerURL, streamURL, countURL, toolRunnerURL, streamURL])
+        for req in recorder.requests {
+            #expect(req.headers["Authorization"] == "Bearer my-access-token")
+            #expect(req.headers["anthropic-version"] == nil)
+            let body = req.json
+            #expect(body["output_format"] == nil)
+            #expect(body["anthropic_version"] == .string(ANTHROPIC_API_VERSION))
+        }
+        for i in [0, 1, 4] { #expect(recorder.requests[i].json["model"] == nil && recorder.requests[i].json["stream"] == nil) }
+        for i in [2, 5] { #expect(recorder.requests[i].json["model"] == nil && recorder.requests[i].json["stream"] == true) }
+        for i in [1, 2, 4, 5] { #expect(recorder.requests[i].json["output_config"]?["format"]?["type"] == "json_schema") }
+    }
+
     @Test func extraBodyAnthropicVersionWins() async throws {
         let recorder = RequestRecorder()
         _ = try await vertex(recorder).messages.create(maxTokens: 1024, messages: userMessages("Hello"), model: "claude-haiku-4-5@20251001",

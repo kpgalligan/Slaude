@@ -12,7 +12,8 @@ public enum ScopedClient {
     /// - The new token replaces the parent's API key / auth token; the API key is also cleared
     ///   after the copy (a subclass that overrides `copy`, such as `AnthropicAWS`, passes its own
     ///   key back in, and a key wins over a bearer token).
-    /// - The parent's base URL is kept.
+    /// - The parent's base URL and the headers of its credential (such as a profile's
+    ///   `anthropic-workspace-id`) are kept.
     /// - `x-stainless-helper: <helper>` is merged into the default headers.
     /// - Inherited `Authorization` / `X-Api-Key` custom headers are stripped, since they would win
     ///   over the bearer.
@@ -24,6 +25,9 @@ public enum ScopedClient {
         guard let scoped = try client.copy(authToken: authToken, baseURL: client.baseURL.absoluteString,
                                            setDefaultHeaders: headers) as? C
         else { throw AnthropicError("copy() of \(type(of: client)) did not return the same client type") }
+        // `copy()` drops the headers that came with the parent's credential (such as a profile's
+        // `anthropic-workspace-id`), but the bearer is for the workspace the parent talks to.
+        scoped.credentialHeaders = client.credentialHeaders
         scoped.apiKey = nil
         return scoped
     }

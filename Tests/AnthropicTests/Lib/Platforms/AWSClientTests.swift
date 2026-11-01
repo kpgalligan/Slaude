@@ -142,6 +142,13 @@ private func send(_ client: Anthropic, workspaceID: String? = nil, userProfileID
         #expect(h["Authorization"] == nil)
     }
 
+    @Test func ambientFirstPartyCredentialsDoNotWarn() async throws {
+        try await withCapturedLogs { logs in
+            _ = try awsClient(region: "eu-west-1", workspace: "ws-123", skipAuth: true, env: ambientFirstParty)
+            #expect(logs.records.isEmpty, "\(logs.text)")
+        }
+    }
+
     @Test(arguments: ["copy", "scoped_helper"])
     func explicitAuthTokenOnCopyIsSent(via: String) async throws {
         let recorder = RequestRecorder()
@@ -444,6 +451,24 @@ private func send(_ client: Anthropic, workspaceID: String? = nil, userProfileID
         let scoped = try ScopedClient.copyWithBearerAuth(client, authToken: "unused-under-sigv4", helper: .environmentsWorkPoller)
         #expect(scoped.useSigV4)
         #expect(scoped.workspaceID == "ws-123")
+    }
+
+    /// `credentials: .some(nil)` is Python's `credentials=None`: a no-op, since the AWS client
+    /// authenticates with SigV4, not a token provider. The copy stays SigV4.
+    @Test func copyAcceptsCredentialsNoneNoop() throws {
+        let client = try sigv4Client()
+        let copied = try #require(try client.copy(credentials: .some(nil)) as? AnthropicAWS)
+        #expect(copied.useSigV4)
+        #expect(copied.workspaceID == "ws-123")
+        #expect(copied.awsRegion == "us-east-1")
+        #expect(copied.credentials == nil)
+    }
+
+    @Test func copyRejectsRealCredentialsProvider() async throws {
+        let client = try sigv4Client()
+        await expectThrows(ArgumentTypeError.self, matching: "does not support a `credentials` provider") {
+            _ = try client.copy(credentials: StaticToken("token"))
+        }
     }
 }
 

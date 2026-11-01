@@ -131,8 +131,14 @@ open class AnthropicAWS: Anthropic, @unchecked Sendable {
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
                             transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
     {
-        if credentials != nil || config != nil || profile != nil {
-            throw ArgumentTypeError("AnthropicAWS.copy() does not accept `credentials`, `config` or `profile`")
+        // The AWS client authenticates with SigV4 (or an API key), not a token provider:
+        // `credentials: .some(nil)` (Python's `credentials=None`) is accepted as a no-op, and a
+        // real provider is rejected rather than silently ignored.
+        if case .some(.some) = credentials {
+            throw ArgumentTypeError("AnthropicAWS does not support a `credentials` provider (it authenticates with AWS SigV4).")
+        }
+        if config != nil || profile != nil {
+            throw ArgumentTypeError("AnthropicAWS.copy() does not accept `config` or `profile`")
         }
         let c: AnthropicAWS = try copy(apiKey: apiKey, authToken: authToken, webhookKey: webhookKey, baseURL: baseURL,
                                        timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders,
