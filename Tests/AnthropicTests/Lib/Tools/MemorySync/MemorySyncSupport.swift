@@ -90,6 +90,7 @@ final class MemorySyncServer: @unchecked Sendable {
 
     func record(_ call: MemorySyncCall) { lock.withLock { _received.append(call) } }
     func noteFetch(_ path: String) { lock.withLock { _contentFetches.append(path) } }
+    func clearFetches() { lock.withLock { _contentFetches = [] } }
     func content(_ path: String) -> String?? { lock.withLock { _files[path] } }
     func paths() -> [String] { lock.withLock { Array(_files.keys) } }
 }
