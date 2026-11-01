@@ -16,6 +16,7 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 | `client.beta.messages.tool_runner(...)` | `client.beta.messages.toolRunner(...)` (extension on `BetaMessagesResource`) → `BetaToolRunner` |
 | `BetaAsyncToolRunner` | `actor BetaToolRunner: AsyncSequence` (`for try await message in runner`, `untilDone()`, `generateToolCallResponse()`, `setMessagesParams`, `appendMessages`, `addTools`, `removeTools`, `compactBeforeNextTurn`, `close()`, `init(params:tools:client:)`) |
 | `lib/threads` `ThreadState` / `BetaAsyncMessageThread` (sending half) | internal `ThreadState` / `MessageThread` in `Lib/Tools/Threads/`; `MessageThreadsUnsupported` marks a client without message threads (`_supports_message_threads = False`) |
+| `SessionToolRunner` / `client.beta.sessions.events.tool_runner(...)` | `final class SessionToolRunner: AsyncSequence` of `DispatchedToolCall` / `client.beta.sessions.events.toolRunner(...)`; events are handled as JSON through `protocol SessionEventsAPI` (the generated resource, or a fake) |
 | `logging` / `warnings` in the helpers | `ToolDiagnostics` (log handler, `AnthropicWarnings` for warnings, task-local `capture` for tests) |
 
 Request fields and messages are held as JSON inside the runner, as Python holds them as dicts; the public API takes
@@ -67,6 +68,16 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
   `test_compact_before_next_turn_on_the_compaction_response_is_ignored_sync`: they mutate a params list in place
   after handing it to the runner; Swift values are copied.
 
+`test_session_runner.py`
+* `test_sync_tool_runs_off_the_event_loop`: sync tools on a worker thread; Swift tools are async. The timeout for
+  a tool that blocks without honouring cancellation is ported (`toolTimeoutFiresForAToolThatIgnoresCancellation`).
+* `test_environment_key_threads_through_to_scoped_client`, `test_no_environment_key_threads_none_to_scoped_client`:
+  they patch the private `_scoped_client` factory; `SessionRunnerHTTPTests` checks the same over a mock transport
+  (Bearer environment key, helper tag, passthrough headers).
+* `test_environments_public_reexports`: `lib.environments` is not part of this port.
+* `test_send_retry_window_update_bounds_send_already_retrying` drives the internal `send_retry_window` hook directly
+  (no `_run_session_tools` shim, which only the environment worker uses).
+
 Sync/async twins are ported once (async). Tests that exist only as `_sync` exercise behaviour the async runner
 shares and are ported as async tests.
 
@@ -76,3 +87,4 @@ shares and are ported as async tests.
 | --- | --- | --- |
 | `test_functions.py` | `FunctionsTests.swift` | 9 upstream tests (+4 Swift-specific checks) |
 | `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift` | 62 upstream tests/twin pairs (non-streaming) |
+| `test_session_runner.py` | `SessionRunnerTests.swift` | 55 of 59 (2 merged into one parametrized test, 1 via HTTP) |
