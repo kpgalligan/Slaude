@@ -797,7 +797,7 @@ final class ToolsetStatelessBrowser: BetaAbstractBrowserToolset20260801, @unchec
             _ = try await call(browser, "get_page_text")
             events.mutate { $0.append("queued done") }
         }
-        try await Task.sleep(nanoseconds: 50_000_000)
+        try await Task.sleep(nanoseconds: 200_000_000)
         let closer = Task {
             try await browser.close()
             events.mutate { $0.append("closed") }

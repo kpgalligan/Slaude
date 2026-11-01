@@ -48,6 +48,10 @@ open class BetaRunnableToolset: BetaToolLike, @unchecked Sendable {
 
     public func toToolParam() throws -> JSONValue { try toDict() }
 
+    /// The `tools[]` entry as the generated param type, for `messages.create` and `countTokens` (where Python passes
+    /// the toolset instance itself).
+    public func toToolUnionParam() throws -> BetaToolUnionParam { try toDict().decode() }
+
     /// Whether `close()` ran. A member call on a closed toolset raises `ToolsetClosedError`.
     public var isClosed: Bool { closedLock.withLock { _toolsetClosed } }
 
