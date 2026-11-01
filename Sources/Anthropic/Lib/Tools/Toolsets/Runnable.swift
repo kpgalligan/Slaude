@@ -53,6 +53,23 @@ open class BetaRunnableToolset: BetaToolLike, @unchecked Sendable {
 
     public func markClosed() { closedLock.withLock { _toolsetClosed = true } }
 
+    /// Runs `body` with the toolset open and closes it afterwards, unless `body` closed it already (Python's
+    /// `async with toolset:`). Entering a closed toolset throws `ToolsetClosedError`.
+    public func use<T>(_ body: () async throws -> T) async throws -> T {
+        try refuseIfClosed()
+        let result: Result<T, Error>
+        do {
+            result = .success(try await body())
+        } catch {
+            result = .failure(error)
+        }
+        if !isClosed {
+            defer { markClosed() }
+            try await close()
+        }
+        return try result.get()
+    }
+
     func refuseIfClosed() throws {
         if isClosed { throw ToolsetClosedError("this \(pythonStringRepr(toolsetName)) toolset is closed") }
     }
