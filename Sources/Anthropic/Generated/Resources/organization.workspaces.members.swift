@@ -34,7 +34,7 @@ public struct OrganizationWorkspacesMembersResource: Sendable {
     func _retrieve(_ userID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<WorkspaceMember> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.retrieve", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID])
         return try await client.requestResponse(WorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -63,7 +63,7 @@ public struct OrganizationWorkspacesMembersResource: Sendable {
         try requireNonEmpty(userID, "user_id")
         var body = ParamsBuilder()
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.update", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID])
         return try await client.requestResponse(WorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -99,7 +99,7 @@ public struct OrganizationWorkspacesMembersResource: Sendable {
         try query.set("after_id", afterID)
         try query.set("before_id", beforeID)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.list")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.list", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members", spanAttributes: ["anthropic.organization.workspace.id": workspaceID])
         return try await client.requestPageResponse(Page<WorkspaceMember>.self, options, stream: _mode == .stream)
     }
 
@@ -128,7 +128,7 @@ public struct OrganizationWorkspacesMembersResource: Sendable {
         var body = ParamsBuilder()
         try body.set("user_id", userID)
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.add")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.add", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members", spanAttributes: ["anthropic.organization.workspace.id": workspaceID], spanCreatedID: SpanCreatedID("anthropic.organization.workspace.member.id", field: "user_id"))
         return try await client.requestResponse(WorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -153,7 +153,7 @@ public struct OrganizationWorkspacesMembersResource: Sendable {
     func _remove(_ userID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<MemberRemoveResponse> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.remove", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID])
         return try await client.requestResponse(MemberRemoveResponse.self, options, stream: _mode == .stream)
     }
 

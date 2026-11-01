@@ -43,7 +43,7 @@ public struct BetaModelsResource: Sendable {
 
     func _retrieve(_ modelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaModelInfo> {
         try requireNonEmpty(modelID, "model_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/models/{model_id}", ["model_id": modelID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/models/{model_id}", ["model_id": modelID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.retrieve", spanRoute: "/v1/models/{model_id}", spanAttributes: ["anthropic.model.id": modelID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaModelInfo.self, options, stream: _mode == .stream)
     }
 
@@ -94,7 +94,7 @@ public struct BetaModelsResource: Sendable {
         try query.set("before_id", beforeID)
         try query.set("lifecycle", lifecycle)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/models", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/models", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.models.list", spanRoute: "/v1/models", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaModelInfo>.self, options, stream: _mode == .stream)
     }
 

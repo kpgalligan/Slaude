@@ -17,6 +17,8 @@ open class MutuallyExclusiveAuthError: AnthropicError, @unchecked Sendable {
 /// API and Message Batches are not available on Foundry (the Python client hides them; here they
 /// are present but the service rejects them).
 open class AnthropicFoundry: Anthropic, @unchecked Sendable {
+    open override var otelPlatform: String? { "foundry" }
+
     let azureADTokenProvider: AzureADTokenProvider?
     let foundryEnvironment: [String: String]
 
@@ -29,7 +31,8 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
     public init(resource: String? = nil, apiKey: String? = nil, azureADTokenProvider: AzureADTokenProvider? = nil,
                 webhookKey: String? = nil, baseURL: String? = nil, timeout: Timeout? = nil, maxRetries: Int = DEFAULT_MAX_RETRIES,
                 defaultHeaders: Headers? = nil, defaultQuery: Query? = nil, transport: HTTPTransport? = nil,
-                middleware: [Middleware]? = nil, environment: [String: String] = ProcessInfo.processInfo.environment) throws
+                middleware: [Middleware]? = nil, openTelemetry: OpenTelemetryOptions? = nil,
+                environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         let apiKey = apiKey ?? environment["ANTHROPIC_FOUNDRY_API_KEY"]
         let resource = resource ?? environment["ANTHROPIC_FOUNDRY_RESOURCE"]
@@ -52,7 +55,7 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
         self.foundryEnvironment = environment
         try super.init(apiKey: apiKey, webhookKey: webhookKey, baseURL: base, timeout: timeout, maxRetries: maxRetries,
                        defaultHeaders: defaultHeaders, defaultQuery: defaultQuery, transport: transport, middleware: middleware,
-                       environment: environment)
+                       openTelemetry: openTelemetry, environment: environment)
     }
 
     /// The Azure AD token, when a provider is configured (`_get_azure_ad_token`).
@@ -90,7 +93,8 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
                             config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                             timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
+                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> Anthropic
     {
         if credentials != nil || config != nil || profile != nil {
             throw ArgumentTypeError("MutuallyExclusiveAuthError.copy() does not accept `credentials`, `config` or `profile`")
@@ -98,7 +102,7 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
         let c: AnthropicFoundry = try copy(apiKey: apiKey, webhookKey: webhookKey, baseURL: baseURL, timeout: timeout,
                                            maxRetries: maxRetries, defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                            defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery, transport: transport,
-                                           middleware: middleware, azureADTokenProvider: nil)
+                                           middleware: middleware, azureADTokenProvider: nil, openTelemetry: openTelemetry)
         return c
     }
 
@@ -106,7 +110,8 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
     public func copy(apiKey: String? = nil, webhookKey: String? = nil, baseURL: String? = nil, timeout: Timeout? = nil,
                      maxRetries: Int? = nil, defaultHeaders: Headers? = nil, setDefaultHeaders: Headers? = nil,
                      defaultQuery: Query? = nil, setDefaultQuery: Query? = nil, transport: HTTPTransport? = nil,
-                     middleware: [Middleware]? = nil, azureADTokenProvider: AzureADTokenProvider?) throws -> AnthropicFoundry
+                     middleware: [Middleware]? = nil, azureADTokenProvider: AzureADTokenProvider?,
+                     openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicFoundry
     {
         let (headers, params) = try copiedLayers(defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                                  defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery)
@@ -118,7 +123,7 @@ open class AnthropicFoundry: Anthropic, @unchecked Sendable {
             webhookKey: webhookKey ?? self.webhookKey, baseURL: baseURL ?? self.baseURL.absoluteString,
             timeout: timeout ?? (timeoutOverridden ? self.timeout : nil), maxRetries: maxRetries ?? self.maxRetries,
             defaultHeaders: headers, defaultQuery: params, transport: transport ?? self.transport,
-            middleware: middleware ?? self.middleware, environment: env)
+            middleware: middleware ?? self.middleware, openTelemetry: openTelemetry ?? self.openTelemetry, environment: env)
         client.timeoutOverridden = timeoutOverridden || timeout != nil
         client.sleeper = sleeper
         return client

@@ -42,7 +42,7 @@ public struct BetaOrganizationRbacGroupsMembersResource: Sendable {
         var query = ParamsBuilder()
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members", ["rbac_group_id": rbacGroupID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members", ["rbac_group_id": rbacGroupID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.list", spanRoute: "/v1/organizations/rbac_groups/{rbac_group_id}/members", spanAttributes: ["anthropic.organization.rbac_group.id": rbacGroupID], qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaRBACGroupMember>.self, options, stream: _mode == .stream)
     }
 
@@ -74,7 +74,7 @@ public struct BetaOrganizationRbacGroupsMembersResource: Sendable {
         try requireNonEmpty(rbacGroupID, "rbac_group_id")
         var body = ParamsBuilder()
         try body.set("user_id", userID)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members", ["rbac_group_id": rbacGroupID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.add", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members", ["rbac_group_id": rbacGroupID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.add", spanRoute: "/v1/organizations/rbac_groups/{rbac_group_id}/members", spanAttributes: ["anthropic.organization.rbac_group.id": rbacGroupID], spanCreatedID: SpanCreatedID("anthropic.organization.rbac_group.member.id", field: "user_id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaRBACGroupMember.self, options, stream: _mode == .stream)
     }
 
@@ -105,7 +105,7 @@ public struct BetaOrganizationRbacGroupsMembersResource: Sendable {
     func _remove(_ userID: String, rbacGroupID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationRbacGroupsMemberRemoveResponse> {
         try requireNonEmpty(rbacGroupID, "rbac_group_id")
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members/{user_id}", ["rbac_group_id": rbacGroupID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.remove", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/rbac_groups/{rbac_group_id}/members/{user_id}", ["rbac_group_id": rbacGroupID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.rbac_groups.members.remove", spanRoute: "/v1/organizations/rbac_groups/{rbac_group_id}/members/{user_id}", spanAttributes: ["anthropic.organization.rbac_group.id": rbacGroupID, "anthropic.organization.rbac_group.member.id": userID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationRbacGroupsMemberRemoveResponse.self, options, stream: _mode == .stream)
     }
 

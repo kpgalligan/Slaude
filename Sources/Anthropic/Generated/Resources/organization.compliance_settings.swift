@@ -24,7 +24,7 @@ public struct OrganizationComplianceSettingsResource: Sendable {
     }
 
     func _retrieve(extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<OrganizationComplianceSettings> {
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/compliance_settings", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/compliance_settings", headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.retrieve", spanRoute: "/v1/organizations/compliance_settings")
         return try await client.requestResponse(OrganizationComplianceSettings.self, options, stream: _mode == .stream)
     }
 
@@ -60,7 +60,7 @@ public struct OrganizationComplianceSettingsResource: Sendable {
     func _update(state: ComplianceSettingsStateParam, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<OrganizationComplianceSettings> {
         var body = ParamsBuilder()
         try body.set("state", state)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/compliance_settings", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.update")
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/compliance_settings", body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.compliance_settings.update", spanRoute: "/v1/organizations/compliance_settings")
         return try await client.requestResponse(OrganizationComplianceSettings.self, options, stream: _mode == .stream)
     }
 

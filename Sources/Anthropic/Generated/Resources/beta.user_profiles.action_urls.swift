@@ -44,7 +44,7 @@ public struct BetaUserProfilesActionURLsResource: Sendable {
         try requireNonEmpty(userProfileID, "user_profile_id")
         var body = ParamsBuilder()
         try body.set("action", action)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/action_urls", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.action_urls.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/user_profiles/{user_profile_id}/action_urls", ["user_profile_id": userProfileID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "user-profiles-2026-08-18"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["user-profiles-2026-08-18"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.user_profiles.action_urls.create", spanRoute: "/v1/user_profiles/{user_profile_id}/action_urls", spanAttributes: ["anthropic.user_profile.id": userProfileID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaUserProfileActionURL.self, options, stream: _mode == .stream)
     }
 

@@ -47,7 +47,7 @@ public struct BetaMessagesResource: Sendable {
         try body.set("thread", thread)
         try body.set("tool_choice", toolChoice)
         try body.set("tools", tools)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages", body: body, headers: mergeHeaders(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages", body: body, headers: mergeHeaders(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.create", spanRoute: "/v1/messages", spanBodyAttributes: messagesCreateRequestAttributes, qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaMessage.self, options, stream: _mode == .stream)
     }
 
@@ -82,7 +82,7 @@ public struct BetaMessagesResource: Sendable {
         try body.set("tool_choice", toolChoice)
         try body.set("tools", tools)
         body.put("stream", true)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages", body: body, headers: mergeHeaders(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages", body: body, headers: mergeHeaders(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.create", spanRoute: "/v1/messages", spanBodyAttributes: messagesCreateRequestAttributes, qualifiers: ["beta": "true"])
         return try await client.requestStreamResponse(BetaRawMessageStreamEvent.self, options)
     }
 
@@ -335,7 +335,7 @@ public struct BetaMessagesResource: Sendable {
         try body.set("thinking", thinking)
         try body.set("tool_choice", toolChoice)
         try body.set("tools", tools)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/count_tokens", body: body, headers: mergeHeaderLayers(["anthropic-beta": "token-counting-2024-11-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["token-counting-2024-11-01"], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.count_tokens", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/messages/count_tokens", body: body, headers: mergeHeaderLayers(["anthropic-beta": "token-counting-2024-11-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["token-counting-2024-11-01"], separator: ",")), ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.messages.count_tokens", spanRoute: "/v1/messages/count_tokens", spanBodyAttributes: messagesCountTokensRequestAttributes, qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaMessageTokensCount.self, options, stream: _mode == .stream)
     }
 

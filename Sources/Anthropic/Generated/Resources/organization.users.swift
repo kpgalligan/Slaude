@@ -31,7 +31,7 @@ public struct OrganizationUsersResource: Sendable {
 
     func _retrieve(_ userID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<OrganizationUser> {
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.retrieve")
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.retrieve", spanRoute: "/v1/organizations/users/{user_id}", spanAttributes: ["anthropic.organization.user.id": userID])
         return try await client.requestResponse(OrganizationUser.self, options, stream: _mode == .stream)
     }
 
@@ -63,7 +63,7 @@ public struct OrganizationUsersResource: Sendable {
         try requireNonEmpty(userID, "user_id")
         var body = ParamsBuilder()
         try body.set("role", role)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.update")
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.update", spanRoute: "/v1/organizations/users/{user_id}", spanAttributes: ["anthropic.organization.user.id": userID])
         return try await client.requestResponse(OrganizationUser.self, options, stream: _mode == .stream)
     }
 
@@ -108,7 +108,7 @@ public struct OrganizationUsersResource: Sendable {
         try query.set("email", email)
         try query.set("limit", limit)
         try query.set("roles", roles)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.list")
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/users", query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.list", spanRoute: "/v1/organizations/users")
         return try await client.requestPageResponse(Page<OrganizationUser>.self, options, stream: _mode == .stream)
     }
 
@@ -130,7 +130,7 @@ public struct OrganizationUsersResource: Sendable {
 
     func _remove(_ userID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<UserRemoveResponse> {
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.remove")
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/users/{user_id}", ["user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.users.remove", spanRoute: "/v1/organizations/users/{user_id}", spanAttributes: ["anthropic.organization.user.id": userID])
         return try await client.requestResponse(UserRemoveResponse.self, options, stream: _mode == .stream)
     }
 

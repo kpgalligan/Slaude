@@ -51,7 +51,7 @@ public struct BetaSkillsResource: Sendable {
         var body = ParamsBuilder()
         body.setFiles("files", files)
         try body.set("display_name", displayName)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/skills", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/skills", body: body, headers: mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(["Content-Type": "multipart/form-data"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders))), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.create", spanRoute: "/v1/skills", spanCreatedID: SpanCreatedID("anthropic.skill.id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSkill.self, options, stream: _mode == .stream)
     }
 
@@ -84,7 +84,7 @@ public struct BetaSkillsResource: Sendable {
 
     func _retrieve(_ skillID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaSkill> {
         try requireNonEmpty(skillID, "skill_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.retrieve", spanRoute: "/v1/skills/{skill_id}", spanAttributes: ["anthropic.skill.id": skillID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaSkill.self, options, stream: _mode == .stream)
     }
 
@@ -132,7 +132,7 @@ public struct BetaSkillsResource: Sendable {
         try query.set("limit", limit)
         try query.set("page", page)
         try query.set("source", source)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/skills", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/skills", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.list", spanRoute: "/v1/skills", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaSkill>.self, options, stream: _mode == .stream)
     }
 
@@ -165,7 +165,7 @@ public struct BetaSkillsResource: Sendable {
 
     func _delete(_ skillID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaDeletedSkill> {
         try requireNonEmpty(skillID, "skill_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.delete", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/skills/{skill_id}", ["skill_id": skillID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.skills.delete", spanRoute: "/v1/skills/{skill_id}", spanAttributes: ["anthropic.skill.id": skillID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaDeletedSkill.self, options, stream: _mode == .stream)
     }
 

@@ -55,7 +55,7 @@ public struct BetaOrganizationServiceAccountsResource: Sendable {
         try body.set("name", name)
         try body.set("description", description)
         try body.set("organization_role", organizationRole)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/service_accounts", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/organizations/service_accounts", body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.create", spanRoute: "/v1/organizations/service_accounts", spanCreatedID: SpanCreatedID("anthropic.organization.service_account.id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -84,7 +84,7 @@ public struct BetaOrganizationServiceAccountsResource: Sendable {
 
     func _retrieve(_ serviceAccountID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaServiceAccount> {
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.retrieve", spanRoute: "/v1/organizations/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -126,7 +126,7 @@ public struct BetaOrganizationServiceAccountsResource: Sendable {
         var body = ParamsBuilder()
         try body.set("description", description)
         try body.set("organization_role", organizationRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.update", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}", ["service_account_id": serviceAccountID]), body: body, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.update", spanRoute: "/v1/organizations/service_accounts/{service_account_id}", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaServiceAccount.self, options, stream: _mode == .stream)
     }
 
@@ -166,7 +166,7 @@ public struct BetaOrganizationServiceAccountsResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/service_accounts", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/organizations/service_accounts", query: query, headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.list", spanRoute: "/v1/organizations/service_accounts", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaServiceAccount>.self, options, stream: _mode == .stream)
     }
 
@@ -200,7 +200,7 @@ public struct BetaOrganizationServiceAccountsResource: Sendable {
 
     func _archive(_ serviceAccountID: String, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaServiceAccount> {
         try requireNonEmpty(serviceAccountID, "service_account_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/archive", ["service_account_id": serviceAccountID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.archive", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/service_accounts/{service_account_id}/archive", ["service_account_id": serviceAccountID]), headers: mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ","))]), extraHeaders), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.service_accounts.archive", spanRoute: "/v1/organizations/service_accounts/{service_account_id}/archive", spanAttributes: ["anthropic.organization.service_account.id": serviceAccountID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaServiceAccount.self, options, stream: _mode == .stream)
     }
 

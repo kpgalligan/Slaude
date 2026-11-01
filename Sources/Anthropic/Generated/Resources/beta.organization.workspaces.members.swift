@@ -34,7 +34,7 @@ public struct BetaOrganizationWorkspacesMembersResource: Sendable {
     func _retrieve(_ userID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaWorkspaceMember> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.retrieve", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -63,7 +63,7 @@ public struct BetaOrganizationWorkspacesMembersResource: Sendable {
         try requireNonEmpty(userID, "user_id")
         var body = ParamsBuilder()
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.update", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.update", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -99,7 +99,7 @@ public struct BetaOrganizationWorkspacesMembersResource: Sendable {
         try query.set("after_id", afterID)
         try query.set("before_id", beforeID)
         try query.set("limit", limit)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), query: query, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.list", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members", spanAttributes: ["anthropic.organization.workspace.id": workspaceID], qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(Page<BetaWorkspaceMember>.self, options, stream: _mode == .stream)
     }
 
@@ -128,7 +128,7 @@ public struct BetaOrganizationWorkspacesMembersResource: Sendable {
         var body = ParamsBuilder()
         try body.set("user_id", userID)
         try body.set("workspace_role", workspaceRole)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.add", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members", ["workspace_id": workspaceID]), body: body, headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.add", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members", spanAttributes: ["anthropic.organization.workspace.id": workspaceID], spanCreatedID: SpanCreatedID("anthropic.organization.workspace.member.id", field: "user_id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaWorkspaceMember.self, options, stream: _mode == .stream)
     }
 
@@ -153,7 +153,7 @@ public struct BetaOrganizationWorkspacesMembersResource: Sendable {
     func _remove(_ userID: String, workspaceID: String, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaOrganizationWorkspacesMemberRemoveResponse> {
         try requireNonEmpty(workspaceID, "workspace_id")
         try requireNonEmpty(userID, "user_id")
-        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.remove", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "delete", url: try pathTemplate("/v1/organizations/workspaces/{workspace_id}/members/{user_id}", ["workspace_id": workspaceID, "user_id": userID]), headers: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.workspaces.members.remove", spanRoute: "/v1/organizations/workspaces/{workspace_id}/members/{user_id}", spanAttributes: ["anthropic.organization.workspace.id": workspaceID, "anthropic.organization.workspace.member.id": userID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaOrganizationWorkspacesMemberRemoveResponse.self, options, stream: _mode == .stream)
     }
 

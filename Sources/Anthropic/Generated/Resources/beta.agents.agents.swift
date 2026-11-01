@@ -82,7 +82,7 @@ public struct BetaAgentsResource: Sendable {
         try body.set("skills", skills)
         try body.set("system", system)
         try body.set("tools", tools)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/agents", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/agents", body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.create", spanRoute: "/v1/agents", spanCreatedID: SpanCreatedID("gen_ai.agent.id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsAgent.self, options, stream: _mode == .stream)
     }
 
@@ -119,7 +119,7 @@ public struct BetaAgentsResource: Sendable {
         try requireNonEmpty(agentID, "agent_id")
         var query = ParamsBuilder()
         try query.set("version", version)
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/agents/{agent_id}", ["agent_id": agentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/agents/{agent_id}", ["agent_id": agentID]), query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.retrieve", spanRoute: "/v1/agents/{agent_id}", spanAttributes: ["gen_ai.agent.id": agentID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsAgent.self, options, stream: _mode == .stream)
     }
 
@@ -201,7 +201,7 @@ public struct BetaAgentsResource: Sendable {
         try body.set("system", system)
         try body.set("tools", tools)
         try body.set("version", version)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/agents/{agent_id}", ["agent_id": agentID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.update", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/agents/{agent_id}", ["agent_id": agentID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.update", spanRoute: "/v1/agents/{agent_id}", spanAttributes: ["gen_ai.agent.id": agentID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsAgent.self, options, stream: _mode == .stream)
     }
 
@@ -246,7 +246,7 @@ public struct BetaAgentsResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/agents", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/agents", query: query, headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.list", spanRoute: "/v1/agents", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaManagedAgentsAgent>.self, options, stream: _mode == .stream)
     }
 
@@ -278,7 +278,7 @@ public struct BetaAgentsResource: Sendable {
 
     func _archive(_ agentID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaManagedAgentsAgent> {
         try requireNonEmpty(agentID, "agent_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/agents/{agent_id}/archive", ["agent_id": agentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.archive", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/agents/{agent_id}/archive", ["agent_id": agentID]), headers: mergeHeaderLayers(["anthropic-beta": "managed-agents-2026-04-01"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["managed-agents-2026-04-01"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.agents.archive", spanRoute: "/v1/agents/{agent_id}/archive", spanAttributes: ["gen_ai.agent.id": agentID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaManagedAgentsAgent.self, options, stream: _mode == .stream)
     }
 

@@ -15,7 +15,9 @@ extension BaseClient {
     /// (`make_request_options` plus the `_post(path, body=..., ...)` call).
     public func makeRequestOptions(method: String, url: String, body: ParamsBuilder? = nil, query: ParamsBuilder? = nil,
                                    headers: Headers?, extraQuery: Query?, extraBody: Body?, timeout: Timeout?,
-                                   mode: ResponseMode, spanName: String? = nil,
+                                   mode: ResponseMode, spanName: String? = nil, spanRoute: String? = nil,
+                                   spanContentQueryParams: [String] = [], spanAttributes: [String: String?]? = nil,
+                                   spanBodyAttributes: SpanBodyAttributes? = nil, spanCreatedID: SpanCreatedID? = nil,
                                    qualifiers: [String: String]? = nil) throws -> FinalRequestOptions
     {
         var o = FinalRequestOptions(method: method, url: url)
@@ -37,15 +39,23 @@ extension BaseClient {
         o.extraJSON = extraBody
         o.timeout = timeout
         o.spanName = spanName
+        o.spanRoute = spanRoute
+        // The names of the query parameters that the endpoint defines.
+        if spanName != nil, let query { o.spanQueryParams = query.keys }
+        o.spanContentQueryParams = spanContentQueryParams
+        o.spanAttributes = spanAttributes.map { tracingAttributes($0.mapValues { $0.map { AttributeValue.string($0) } }) }
+        o.spanBodyAttributes = spanBodyAttributes
+        o.spanCreatedID = spanCreatedID
         o.qualifiers = qualifiers
         return o
     }
 
     /// A JSON Lines response.
     public func requestJSONLResponse<T: Decodable & Sendable>(_ type: T.Type, _ options: FinalRequestOptions) async throws -> APIResponse<JSONLDecoder<T>> {
-        let raw = try await sendRequest(options, stream: true, castTo: JSONLDecoder<T>.self)
-        return APIResponse(raw, client: self) { resp in
-            JSONLDecoder<T>(response: resp.http, client: resp.client)
+        try await tracedRequest(options, stream: true, castTo: JSONLDecoder<T>.self) { raw in
+            APIResponse(raw, client: self) { resp in
+                JSONLDecoder<T>(response: resp.http, client: resp.client)
+            }
         }
     }
 }

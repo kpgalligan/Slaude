@@ -53,7 +53,7 @@ public struct BetaTunnelsResource: Sendable {
     func _create(displayName: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnel> {
         var body = ParamsBuilder()
         try body.set("display_name", displayName)
-        let options = try client.makeRequestOptions(method: "post", url: "/v1/tunnels", body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.create", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: "/v1/tunnels", body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.create", spanRoute: "/v1/tunnels", spanCreatedID: SpanCreatedID("anthropic.tunnel.id"), qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnel.self, options, stream: _mode == .stream)
     }
 
@@ -92,7 +92,7 @@ public struct BetaTunnelsResource: Sendable {
 
     func _retrieve(_ tunnelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnel> {
         try requireNonEmpty(tunnelID, "tunnel_id")
-        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.retrieve", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: try pathTemplate("/v1/tunnels/{tunnel_id}", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.retrieve", spanRoute: "/v1/tunnels/{tunnel_id}", spanAttributes: ["anthropic.tunnel.id": tunnelID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnel.self, options, stream: _mode == .stream)
     }
 
@@ -139,7 +139,7 @@ public struct BetaTunnelsResource: Sendable {
         try query.set("include_archived", includeArchived)
         try query.set("limit", limit)
         try query.set("page", page)
-        let options = try client.makeRequestOptions(method: "get", url: "/v1/tunnels", query: query, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.list", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "get", url: "/v1/tunnels", query: query, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.list", spanRoute: "/v1/tunnels", qualifiers: ["beta": "true"])
         return try await client.requestPageResponse(PageCursor<BetaTunnel>.self, options, stream: _mode == .stream)
     }
 
@@ -181,7 +181,7 @@ public struct BetaTunnelsResource: Sendable {
 
     func _archive(_ tunnelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnel> {
         try requireNonEmpty(tunnelID, "tunnel_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/archive", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.archive", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/archive", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.archive", spanRoute: "/v1/tunnels/{tunnel_id}/archive", spanAttributes: ["anthropic.tunnel.id": tunnelID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnel.self, options, stream: _mode == .stream)
     }
 
@@ -223,7 +223,7 @@ public struct BetaTunnelsResource: Sendable {
 
     func _revealToken(_ tunnelID: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaTunnelToken> {
         try requireNonEmpty(tunnelID, "tunnel_id")
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/reveal_token", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.reveal_token", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/reveal_token", ["tunnel_id": tunnelID]), headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.reveal_token", spanRoute: "/v1/tunnels/{tunnel_id}/reveal_token", spanAttributes: ["anthropic.tunnel.id": tunnelID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnelToken.self, options, stream: _mode == .stream)
     }
 
@@ -268,7 +268,7 @@ public struct BetaTunnelsResource: Sendable {
         try requireNonEmpty(tunnelID, "tunnel_id")
         var body = ParamsBuilder()
         try body.set("reason", reason)
-        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/rotate_token", ["tunnel_id": tunnelID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.rotate_token", qualifiers: ["beta": "true"])
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/tunnels/{tunnel_id}/rotate_token", ["tunnel_id": tunnelID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "mcp-tunnels-2026-06-22"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["mcp-tunnels-2026-06-22"], separator: ",")), ("anthropic-workspace-id", workspaceID)]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.tunnels.rotate_token", spanRoute: "/v1/tunnels/{tunnel_id}/rotate_token", spanAttributes: ["anthropic.tunnel.id": tunnelID], qualifiers: ["beta": "true"])
         return try await client.requestResponse(BetaTunnelToken.self, options, stream: _mode == .stream)
     }
 

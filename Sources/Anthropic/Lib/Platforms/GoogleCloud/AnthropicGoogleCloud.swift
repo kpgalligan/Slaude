@@ -15,6 +15,8 @@ public typealias GoogleTokenProvider = @Sendable () async throws -> String
 /// Auth precedence (unless `skipAuth`): `tokenProvider`, then `credentials`, then Application
 /// Default Credentials. A caller-supplied `Authorization` header always wins.
 open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
+    open override var otelPlatform: String? { "google_cloud" }
+
     static let locationURLTemplate = "https://claude.googleapis.com/v1/projects/{project}/locations/{location}"
     public static let defaultURLTemplate = locationURLTemplate + "/workspaces/{workspace_id}/invoke"
     public static let organizationURLTemplate = locationURLTemplate + "/claudeOrganization/invoke"
@@ -55,6 +57,7 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
                 credentials: GoogleCredentials? = nil, skipAuth: Bool = false, baseURL: String? = nil, timeout: Timeout? = nil,
                 maxRetries: Int = DEFAULT_MAX_RETRIES, defaultHeaders: Headers? = nil, defaultQuery: Query? = nil,
                 transport: HTTPTransport? = nil, middleware: [Middleware]? = nil, credentialsLoader: GoogleCredentialsLoader? = nil,
+                openTelemetry: OpenTelemetryOptions? = nil,
                 environment: [String: String] = ProcessInfo.processInfo.environment) throws
     {
         if skipAuth && (tokenProvider != nil || credentials != nil) {
@@ -103,7 +106,7 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
         // this client's, and an empty API key stops the parent reading ANTHROPIC_API_KEY.
         try super.init(apiKey: "", baseURL: resolvedURL?.absoluteString ?? "https://claude.googleapis.com/", timeout: timeout,
                        maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery, transport: transport,
-                       middleware: middleware, environment: environment)
+                       middleware: middleware, openTelemetry: openTelemetry, environment: environment)
         // Never inherit first-party static credentials: they would leak to the gateway host.
         self.apiKey = nil
         self.authToken = nil
@@ -215,7 +218,8 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
                             config: [String: JSONValue]? = nil, profile: String? = nil, webhookKey: String? = nil, baseURL: String? = nil,
                             timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil,
                             setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
-                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil) throws -> Anthropic
+                            transport: HTTPTransport? = nil, middleware: [Middleware]? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> Anthropic
     {
         if credentials != nil || config != nil || profile != nil {
             throw ArgumentTypeError("AnthropicGoogleCloud.copy() does not accept `credentials`, `config` or `profile`")
@@ -226,7 +230,7 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
         let c: AnthropicGoogleCloud = try copy(baseURL: baseURL, timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders,
                                                setDefaultHeaders: setDefaultHeaders, defaultQuery: defaultQuery,
                                                setDefaultQuery: setDefaultQuery, transport: transport, middleware: middleware,
-                                               project: nil)
+                                               project: nil, openTelemetry: openTelemetry)
         return c
     }
 
@@ -239,7 +243,8 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
                      setDefaultHeaders: Headers? = nil, defaultQuery: Query? = nil, setDefaultQuery: Query? = nil,
                      transport: HTTPTransport? = nil, middleware: [Middleware]? = nil, project: String? = nil,
                      location: String? = nil, workspaceID: String?? = nil, tokenProvider: GoogleTokenProvider?? = nil,
-                     credentials: GoogleCredentials?? = nil, skipAuth: Bool? = nil) throws -> AnthropicGoogleCloud
+                     credentials: GoogleCredentials?? = nil, skipAuth: Bool? = nil,
+                     openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicGoogleCloud
     {
         let (headers, params) = try copiedLayers(defaultHeaders: defaultHeaders, setDefaultHeaders: setDefaultHeaders,
                                                  defaultQuery: defaultQuery, setDefaultQuery: setDefaultQuery)
@@ -265,7 +270,7 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
             skipAuth: resolvedSkipAuth, baseURL: newBaseURL, timeout: timeout ?? (timeoutOverridden ? self.timeout : nil),
             maxRetries: maxRetries ?? self.maxRetries, defaultHeaders: headers, defaultQuery: params,
             transport: transport ?? self.transport, middleware: middleware ?? self.middleware,
-            credentialsLoader: credentialsLoader, environment: env)
+            credentialsLoader: credentialsLoader, openTelemetry: openTelemetry ?? self.openTelemetry, environment: env)
         client.timeoutOverridden = timeoutOverridden || timeout != nil
         client.sleeper = sleeper
         if !credentialOverridden && !resolvedSkipAuth {
@@ -277,9 +282,10 @@ open class AnthropicGoogleCloud: Anthropic, @unchecked Sendable {
 
     /// Alias for `copy`, for inline use.
     public func withOptions(timeout: Timeout? = nil, maxRetries: Int? = nil, defaultHeaders: Headers? = nil, defaultQuery: Query? = nil,
-                            project: String? = nil, location: String? = nil) throws -> AnthropicGoogleCloud
+                            project: String? = nil, location: String? = nil,
+                            openTelemetry: OpenTelemetryOptions? = nil) throws -> AnthropicGoogleCloud
     {
         try copy(timeout: timeout, maxRetries: maxRetries, defaultHeaders: defaultHeaders, defaultQuery: defaultQuery, project: project,
-                 location: location)
+                 location: location, openTelemetry: openTelemetry)
     }
 }

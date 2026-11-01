@@ -22,6 +22,7 @@ structs.
 | `Sources/Anthropic/Client.swift` | Port of `_client.AsyncAnthropic` | hand-ported |
 | `Sources/Anthropic/Lib/` | Port of `anthropic/lib/**` (helpers, tool runners, platform clients) | hand-ported |
 | `Sources/Anthropic/Lib/Platforms/`, `Lib/Crypto/` | AWS / Bedrock / Vertex / Google Cloud / Foundry clients, SigV4, pure-Swift SHA-256 / HMAC / CRC32 / RSA (see `docs/porting/platforms.md`) | hand-ported |
+| `Sources/Anthropic/Lib/Tracing/` | OpenTelemetry tracing of API calls: a small tracing API (tracer provider, spans, task-local context, W3C propagation) with an in-memory SDK, and the call spans (see `docs/porting/tracing.md`) | hand-ported |
 | `Tests/AnthropicTests/Generated/` | One file per `tests/api_resources/**.py` | **generated** |
 | `Tests/AnthropicTests/Support/` | Test helpers (`MockRoute`, ...) | hand-written |
 | `Tests/AnthropicTests/Core/`, `Tests/AnthropicTests/Lib/` | Ports of the other upstream tests | hand-ported |
