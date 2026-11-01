@@ -170,4 +170,52 @@ import Testing
         try await expectValueError("Expected a non-empty value for `skill_id` but received ''") { _ = try await client.beta.skills.versions.withRawResponse.delete("version", skillID: "") }
         try await expectValueError("Expected a non-empty value for `version` but received ''") { _ = try await client.beta.skills.versions.withRawResponse.delete("", skillID: "skill_id") }
     }
+
+    @Test func methodDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/skills/skill_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.skills.versions.download("version", skillID: "skill_id", extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func methodDownloadWithAllParams() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/skills/skill_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.skills.versions.download("version", skillID: "skill_id", betas: [AnthropicBetaParam(rawValue: "message-batches-2024-09-24")], workspaceID: "wrkspc_011CZkZaBF1tNoB5wlCeusgy", extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func rawResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/skills/skill_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.skills.versions.withRawResponse.download("version", skillID: "skill_id", extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func streamingResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/skills/skill_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.skills.versions.withStreamingResponse.download("version", skillID: "skill_id", extraQuery: ["beta": "true"], body: { file in
+            #expect(!file.isClosed)
+            #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+            let json = try await file.json()
+            #expect(json == ["foo": "bar"])
+            #expect(file.isClosed)
+            return file
+        })
+        #expect(file.isClosed)
+    }
+
+    @Test func pathParamsDownload() async throws {
+        let client = try mockClient()
+        try await expectValueError("Expected a non-empty value for `skill_id` but received ''") { _ = try await client.beta.skills.versions.withRawResponse.download("version", skillID: "") }
+        try await expectValueError("Expected a non-empty value for `version` but received ''") { _ = try await client.beta.skills.versions.withRawResponse.download("", skillID: "skill_id") }
+    }
 }

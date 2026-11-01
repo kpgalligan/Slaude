@@ -1,37 +1,12 @@
 Upstream tests not transformed (see reasons):
 
-api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_method_results: respx-mocked test
+api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_method_results: respx test shape
 api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_path_params_results: method BetaMessagesBatchesResource.results not generated
-api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_raw_response_results: respx-mocked test
-api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_streaming_response_results: respx-mocked test
-api_resources/beta/organization/claude_tag/bundles/test_targets.py::TestAsyncTargets::test_method_create: method BetaOrganizationClaudeTagBundlesTargetsResource.create not generated
-api_resources/beta/organization/claude_tag/bundles/test_targets.py::TestAsyncTargets::test_method_create_with_all_params: method BetaOrganizationClaudeTagBundlesTargetsResource.create not generated
-api_resources/beta/organization/claude_tag/bundles/test_targets.py::TestAsyncTargets::test_raw_response_create: method BetaOrganizationClaudeTagBundlesTargetsResource.create not generated
-api_resources/beta/organization/claude_tag/bundles/test_targets.py::TestAsyncTargets::test_streaming_response_create: method BetaOrganizationClaudeTagBundlesTargetsResource.create not generated
-api_resources/beta/organization/claude_tag/bundles/test_targets.py::TestAsyncTargets::test_path_params_create: method BetaOrganizationClaudeTagBundlesTargetsResource.create not generated
-api_resources/beta/organization/plugins/test_versions.py::TestAsyncVersions::test_method_download: respx-mocked test
-api_resources/beta/organization/plugins/test_versions.py::TestAsyncVersions::test_method_download_with_all_params: respx-mocked test
-api_resources/beta/organization/plugins/test_versions.py::TestAsyncVersions::test_raw_response_download: respx-mocked test
-api_resources/beta/organization/plugins/test_versions.py::TestAsyncVersions::test_streaming_response_download: respx-mocked test
-api_resources/beta/organization/plugins/test_versions.py::TestAsyncVersions::test_path_params_download: respx-mocked test
-api_resources/beta/skills/test_versions.py::TestAsyncVersions::test_method_download: respx-mocked test
-api_resources/beta/skills/test_versions.py::TestAsyncVersions::test_method_download_with_all_params: respx-mocked test
-api_resources/beta/skills/test_versions.py::TestAsyncVersions::test_raw_response_download: respx-mocked test
-api_resources/beta/skills/test_versions.py::TestAsyncVersions::test_streaming_response_download: respx-mocked test
-api_resources/beta/skills/test_versions.py::TestAsyncVersions::test_path_params_download: respx-mocked test
-api_resources/beta/test_files.py::TestAsyncFiles::test_method_download: respx-mocked test
-api_resources/beta/test_files.py::TestAsyncFiles::test_method_download_with_all_params: respx-mocked test
-api_resources/beta/test_files.py::TestAsyncFiles::test_raw_response_download: respx-mocked test
-api_resources/beta/test_files.py::TestAsyncFiles::test_streaming_response_download: respx-mocked test
-api_resources/beta/test_files.py::TestAsyncFiles::test_path_params_download: respx-mocked test
-api_resources/beta/test_output_format_conversion.py::TestAsyncOutputFormatConversion::test_async_parse_converts_pydantic: respx-mocked test
-api_resources/messages/test_batches.py::TestAsyncBatches::test_method_results: respx-mocked test
-api_resources/messages/test_batches.py::TestAsyncBatches::test_raw_response_results: respx-mocked test
-api_resources/messages/test_batches.py::TestAsyncBatches::test_streaming_response_results: respx-mocked test
+api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_raw_response_results: respx test shape
+api_resources/beta/messages/test_batches.py::TestAsyncBatches::test_streaming_response_results: respx test shape
+api_resources/beta/test_output_format_conversion.py::TestAsyncOutputFormatConversion::test_async_parse_converts_pydantic: respx test shape
+api_resources/messages/test_batches.py::TestAsyncBatches::test_method_results: respx test shape
+api_resources/messages/test_batches.py::TestAsyncBatches::test_raw_response_results: respx test shape
+api_resources/messages/test_batches.py::TestAsyncBatches::test_streaming_response_results: respx test shape
 api_resources/messages/test_batches.py::TestAsyncBatches::test_path_params_results: method MessagesBatchesResource.results not generated
-api_resources/test_files.py::TestAsyncFiles::test_method_download: respx-mocked test
-api_resources/test_files.py::TestAsyncFiles::test_method_download_with_all_params: respx-mocked test
-api_resources/test_files.py::TestAsyncFiles::test_raw_response_download: respx-mocked test
-api_resources/test_files.py::TestAsyncFiles::test_streaming_response_download: respx-mocked test
-api_resources/test_files.py::TestAsyncFiles::test_path_params_download: respx-mocked test
 api_resources/test_messages.py::TestAsyncMessages::test_deprecated_model_warning: test shape For

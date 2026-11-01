@@ -82,6 +82,53 @@ import Testing
         try await expectValueError("Expected a non-empty value for `file_id` but received ''") { _ = try await client.files.withRawResponse.delete("") }
     }
 
+    @Test func methodDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/files/file_id/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.files.download("file_id")
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func methodDownloadWithAllParams() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/files/file_id/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.files.download("file_id", workspaceID: "wrkspc_011CZkZaBF1tNoB5wlCeusgy")
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func rawResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/files/file_id/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.files.withRawResponse.download("file_id")
+        #expect(file.isClosed)
+        #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func streamingResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/files/file_id/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.files.withStreamingResponse.download("file_id", body: { file in
+            #expect(!file.isClosed)
+            #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+            let json = try await file.json()
+            #expect(json == ["foo": "bar"])
+            #expect(file.isClosed)
+            return file
+        })
+        #expect(file.isClosed)
+    }
+
+    @Test func pathParamsDownload() async throws {
+        let client = try mockClient()
+        try await expectValueError("Expected a non-empty value for `file_id` but received ''") { _ = try await client.files.withRawResponse.download("") }
+    }
+
     @Test func methodRetrieveMetadata() async throws {
         let route = MockRoute(method: "GET", path: "/v1/files/{file_id}", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "filename": "string", "mime_type": "string", "size_bytes": 0, "type": "file", "downloadable": true, "expires_at": "2024-01-01T00:00:00Z"}"#)
         let client = try route.client()

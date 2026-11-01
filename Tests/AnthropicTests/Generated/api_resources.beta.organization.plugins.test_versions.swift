@@ -128,4 +128,52 @@ import Testing
         let client = try mockClient()
         try await expectValueError("Expected a non-empty value for `plugin_id` but received ''") { _ = try await client.beta.organization.plugins.versions.withRawResponse.list("") }
     }
+
+    @Test func methodDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/organizations/plugins/plugin_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.organization.plugins.versions.download("version", pluginID: "plugin_id", extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func methodDownloadWithAllParams() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/organizations/plugins/plugin_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.organization.plugins.versions.download("version", pluginID: "plugin_id", organizationID: "organization_id", betas: [AnthropicBetaParam(rawValue: "message-batches-2024-09-24")], extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func rawResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/organizations/plugins/plugin_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.organization.plugins.versions.withRawResponse.download("version", pluginID: "plugin_id", extraQuery: ["beta": "true"])
+        #expect(file.isClosed)
+        #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+        let json = try await file.json()
+        #expect(json == ["foo": "bar"])
+    }
+
+    @Test func streamingResponseDownload() async throws {
+        let route = MockRoute(method: "GET", path: "/v1/organizations/plugins/plugin_id/versions/version/content", binary: #"{"foo": "bar"}"#)
+        let client = try route.client()
+        let file = try await client.beta.organization.plugins.versions.withStreamingResponse.download("version", pluginID: "plugin_id", extraQuery: ["beta": "true"], body: { file in
+            #expect(!file.isClosed)
+            #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")
+            let json = try await file.json()
+            #expect(json == ["foo": "bar"])
+            #expect(file.isClosed)
+            return file
+        })
+        #expect(file.isClosed)
+    }
+
+    @Test func pathParamsDownload() async throws {
+        let client = try mockClient()
+        try await expectValueError("Expected a non-empty value for `plugin_id` but received ''") { _ = try await client.beta.organization.plugins.versions.withRawResponse.download("version", pluginID: "") }
+        try await expectValueError("Expected a non-empty value for `version` but received ''") { _ = try await client.beta.organization.plugins.versions.withRawResponse.download("", pluginID: "plugin_id") }
+    }
 }

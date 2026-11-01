@@ -5,6 +5,47 @@ import Testing
 @testable import Anthropic
 
 @Suite struct TestBetaOrganizationClaudeTagBundlesTargets {
+    @Test func methodCreate() async throws {
+        let route = MockRoute(method: "POST", path: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "slack_channel_id": "string", "type": "slack_channel"}"#, validateBody: { try MockRoute.roundTrip(BetaClaudeTagBundleTargetCreateParam.self, $0) })
+        let client = try route.client()
+        let value = try await client.beta.organization.claudeTag.bundles.targets.create("capp_011CZkZjLP1cWxj5EtMmdgbq", target: BetaClaudeTagBundleTargetCreateParam.slackChannel(BetaClaudeTagSlackChannelBundleTargetCreateParam(slackChannelID: "xxxxxxxx", type: "slack_channel")), extraQuery: ["beta": "true"])
+        try route.verifyRoundTrip(value)
+    }
+
+    @Test func methodCreateWithAllParams() async throws {
+        let route = MockRoute(method: "POST", path: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "slack_channel_id": "string", "type": "slack_channel"}"#, validateBody: { try MockRoute.roundTrip(BetaClaudeTagBundleTargetCreateParam.self, $0) })
+        let client = try route.client()
+        let value = try await client.beta.organization.claudeTag.bundles.targets.create("capp_011CZkZjLP1cWxj5EtMmdgbq", target: BetaClaudeTagBundleTargetCreateParam.slackChannel(BetaClaudeTagSlackChannelBundleTargetCreateParam(slackChannelID: "xxxxxxxx", type: "slack_channel")), betas: [AnthropicBetaParam(rawValue: "message-batches-2024-09-24")], extraQuery: ["beta": "true"])
+        try route.verifyRoundTrip(value)
+    }
+
+    @Test func rawResponseCreate() async throws {
+        let route = MockRoute(method: "POST", path: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "slack_channel_id": "string", "type": "slack_channel"}"#, validateBody: { try MockRoute.roundTrip(BetaClaudeTagBundleTargetCreateParam.self, $0) })
+        let client = try route.client()
+        let response = try await client.beta.organization.claudeTag.bundles.targets.withRawResponse.create("capp_011CZkZjLP1cWxj5EtMmdgbq", target: BetaClaudeTagBundleTargetCreateParam.slackChannel(BetaClaudeTagSlackChannelBundleTargetCreateParam(slackChannelID: "xxxxxxxx", type: "slack_channel")), extraQuery: ["beta": "true"])
+        #expect(response.isClosed == true)
+        #expect(response.httpRequest.headers["X-Stainless-Lang"] == "swift")
+        let value = try await response.parse()
+        try route.verifyRoundTrip(value)
+    }
+
+    @Test func streamingResponseCreate() async throws {
+        let route = MockRoute(method: "POST", path: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "slack_channel_id": "string", "type": "slack_channel"}"#, validateBody: { try MockRoute.roundTrip(BetaClaudeTagBundleTargetCreateParam.self, $0) })
+        let client = try route.client()
+        let (response, value) = try await client.beta.organization.claudeTag.bundles.targets.withStreamingResponse.create("capp_011CZkZjLP1cWxj5EtMmdgbq", target: BetaClaudeTagBundleTargetCreateParam.slackChannel(BetaClaudeTagSlackChannelBundleTargetCreateParam(slackChannelID: "xxxxxxxx", type: "slack_channel")), extraQuery: ["beta": "true"], body: { response in
+            #expect(!response.isClosed)
+            #expect(response.httpRequest.headers["X-Stainless-Lang"] == "swift")
+            return (response, try await response.parse())
+        })
+        try route.verifyRoundTrip(value)
+        #expect(response.isClosed)
+    }
+
+    @Test func pathParamsCreate() async throws {
+        let client = try mockClient()
+        try await expectValueError("Expected a non-empty value for `bundle_id` but received ''") { _ = try await client.beta.organization.claudeTag.bundles.targets.withRawResponse.create("", target: BetaClaudeTagBundleTargetCreateParam.slackChannel(BetaClaudeTagSlackChannelBundleTargetCreateParam(slackChannelID: "xxxxxxxx", type: "slack_channel"))) }
+    }
+
     @Test func methodRetrieve() async throws {
         let route = MockRoute(method: "GET", path: "/v1/organizations/claude_tag/bundles/{bundle_id}/targets/{target_id}", json: #"{"id": "string", "created_at": "2024-01-01T00:00:00Z", "slack_channel_id": "string", "type": "slack_channel"}"#)
         let client = try route.client()

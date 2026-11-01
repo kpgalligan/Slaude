@@ -134,15 +134,7 @@ func collect<S: AsyncSequence>(_ s: S) async throws -> [S.Element] {
 
 /// Records `AnthropicWarnings` while `body` runs.
 func recordingWarnings(_ body: () async throws -> Void) async rethrows -> [String] {
-    let box = WarningBox()
-    AnthropicWarnings.setHandler { message, _ in box.append(message) }
-    defer {
-        AnthropicWarnings.setHandler { message, category in
-            FileHandle.standardError.write(Data("\(category.rawValue): \(message)\n".utf8))
-        }
-    }
-    try await body()
-    return box.messages
+    try await AnthropicWarnings.capture(body).map(\.message)
 }
 
 final class WarningBox: @unchecked Sendable {

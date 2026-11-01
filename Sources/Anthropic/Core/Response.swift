@@ -126,8 +126,13 @@ public struct BinaryResponse: Sendable {
     public let response: HTTPResponse
 
     public var headers: HTTPHeaders { response.headers }
+    public var statusCode: Int { response.statusCode }
+    public var httpRequest: HTTPRequest { response.request }
+    /// Whether the body has been read (or the response closed).
+    public var isClosed: Bool { response.isClosed }
     public func read() async throws -> Data { try await response.read() }
     public func text() async throws -> String { try await response.text() }
+    public func json() async throws -> JSONValue { try JSONValue.parse(try await response.read()) }
     public func iterBytes() -> ByteStream { response.bytes() }
 
     /// Writes the body to a file.

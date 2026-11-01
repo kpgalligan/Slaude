@@ -437,6 +437,9 @@ class TestGen:
     def params_type_for(self, plan) -> Optional[str]:
         if plan.multipart or not plan.body_entries:
             return None
+        if plan.body_entries[0][2] == "whole":
+            arg = next(a for a in plan.args if a.swift == plan.body_entries[0][1])
+            return arg.base_type
         keys = {k for k, _, _ in plan.body_entries}
         best = None
         for m in self.ctx.type_modules:
@@ -504,10 +507,8 @@ class TestGen:
             if t.startswith("pytest.mark.skip"):
                 m = re.search(r"reason=['\"](.*)['\"]", t)
                 skip_reason = m.group(1) if m else "skipped upstream"
-            if "respx" in t:
-                raise Skip("respx-mocked test")
         if any(a.arg == "respx_mock" for a in fn.args.args):
-            raise Skip("respx-mocked test")
+            return self.emit_respx_test(fn, name, skip_reason)
         swift_name = camel(name[len("test_"):])
         body = [s for s in fn.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
         attrs = f'@Test(.disabled({swift_string(skip_reason)}))' if skip_reason else "@Test"
@@ -564,6 +565,55 @@ class TestGen:
             lines.append(self.verify_expr(plan, "value", streaming))
             return self.wrap(attrs, swift_name, f"let route = {self.route(plan, streaming)}\n        let client = try route.client()", lines)
         raise Skip(f"test shape {type(first).__name__}")
+
+    def emit_respx_test(self, fn: ast.AsyncFunctionDef, name: str, skip_reason: Optional[str]) -> str:
+        """Tests that mock one route with respx and assert on a binary response wrapper."""
+        body = [s for s in fn.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+        mock = body[0]
+        if not (isinstance(mock, ast.Expr) and isinstance(mock.value, ast.Call) and ast.unparse(mock.value.func).endswith(".mock")):
+            raise Skip("respx test shape")
+        route_call = mock.value.func.value
+        http_method = route_call.func.attr.upper()
+        path = route_call.args[0].value
+        ret = next(k.value for k in mock.value.keywords if k.arg == "return_value")
+        payload = next((k.value for k in ret.keywords if k.arg == "json"), None)
+        if payload is None:
+            raise Skip("respx response without json")
+        payload_py = ast.literal_eval(payload)
+        expected = self.values.json_literal(payload)
+        attrs = f"@Test(.disabled({swift_string(skip_reason)}))" if skip_reason else "@Test"
+        route = f"MockRoute(method: {swift_string(http_method)}, path: {swift_string(path)}, binary: {raw_literal(json.dumps(payload_py))})"
+        setup = f"let route = {route}\n        let client = try route.client()"
+        lines: list[str] = []
+        stmt = body[1]
+        if isinstance(stmt, ast.AsyncWith):
+            call = stmt.items[0].context_expr
+            path_, mode, method, plan = self.resolve_call(call)
+            args, _ = self.call_args(call, plan)
+            sep = ", " if args else ""
+            lines.append(f"let file = try await client.{'.'.join(path_)}.withStreamingResponse.{plan.swift_name}({args}{sep}body: {{ file in")
+            lines.append("    #expect(!file.isClosed)")
+            lines.append('    #expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")')
+            lines.append("    let json = try await file.json()")
+            lines.append(f"    #expect(json == {expected})")
+            lines.append("    #expect(file.isClosed)")
+            lines.append("    return file")
+            lines.append("})")
+            lines.append("#expect(file.isClosed)")
+        elif isinstance(stmt, ast.Assign) and isinstance(stmt.value, ast.Await):
+            call = stmt.value.value
+            path_, mode, method, plan = self.resolve_call(call)
+            args, _ = self.call_args(call, plan)
+            acc = ".".join(path_) + (".withRawResponse" if mode == "raw" else "")
+            lines.append(f"let file = try await client.{acc}.{plan.swift_name}({args})")
+            lines.append("#expect(file.isClosed)")
+            if mode == "raw":
+                lines.append('#expect(file.httpRequest.headers["X-Stainless-Lang"] == "swift")')
+            lines.append("let json = try await file.json()")
+            lines.append(f"#expect(json == {expected})")
+        else:
+            raise Skip("respx test shape")
+        return self.wrap(attrs, camel(name[len("test_"):]), setup, lines)
 
     @staticmethod
     def method_name(plan, streaming: bool) -> str:

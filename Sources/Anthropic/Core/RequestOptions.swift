@@ -147,6 +147,14 @@ public struct ParamsBuilder: Sendable {
         try put(key, JSONValue.from(value))
     }
 
+    /// Uses every property of an encodable object as a body field (`body=params`).
+    public mutating func merge<T: Encodable>(_ value: T) throws {
+        guard case .object(let o) = try JSONValue.from(value) else {
+            throw ArgumentTypeError("Expected the request body to encode as a JSON object")
+        }
+        for (k, v) in o.sorted(by: { $0.key < $1.key }) { put(k, v) }
+    }
+
     /// Files are pulled out of the JSON payload into the multipart parts (`extract_files`).
     public mutating func setFile(_ key: String, _ value: FileUpload?) {
         guard let value else { return }

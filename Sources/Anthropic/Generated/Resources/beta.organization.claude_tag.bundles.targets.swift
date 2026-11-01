@@ -13,6 +13,39 @@ public struct BetaOrganizationClaudeTagBundlesTargetsResource: Sendable {
     /// Like `withRawResponse`, but the body is not read eagerly; the response is scoped to a closure.
     public var withStreamingResponse: WithStreamingResponse { WithStreamingResponse(resource: self) }
 
+    /// Attach a Bundle to a Slack channel or a Slack workspace.
+    ///
+    /// A Bundle attached to a
+    /// workspace can be used in the workspace and in every channel in it. Attaching a
+    /// Bundle to a channel or workspace it is already attached to returns the existing
+    /// Bundle Target. The channel or workspace must be set up: attaching never sets a
+    /// channel up. A group direct message takes no Bundle and returns 400.
+    ///
+    /// Args:
+    ///   bundle_id: The Bundle's identifier, starting with `capp_`.
+    ///
+    ///   betas: This endpoint is in beta: requests must send
+    ///       `experimental-claude-tag-2026-10-21` in this header.
+    ///
+    ///   extra_headers: Send extra headers
+    ///
+    ///   extra_query: Add additional query parameters to the request
+    ///
+    ///   extra_body: Add additional JSON properties to the request
+    ///
+    ///   timeout: Override the client-level default timeout for this request, in seconds
+    public func create(_ bundleID: String, target: BetaClaudeTagBundleTargetCreateParam, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil) async throws -> BetaClaudeTagBundleTarget {
+        try await _create(bundleID, target: target, betas: betas, extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, _mode: .parsed).parse()
+    }
+
+    func _create(_ bundleID: String, target: BetaClaudeTagBundleTargetCreateParam, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, _mode: ResponseMode) async throws -> APIResponse<BetaClaudeTagBundleTarget> {
+        try requireNonEmpty(bundleID, "bundle_id")
+        var body = ParamsBuilder()
+        try body.merge(target)
+        let options = try client.makeRequestOptions(method: "post", url: try pathTemplate("/v1/organizations/claude_tag/bundles/{bundle_id}/targets", ["bundle_id": bundleID]), body: body, headers: mergeHeaderLayers(["anthropic-beta": "experimental-claude-tag-2026-10-21"], mergeHeaderLayers(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: ["experimental-claude-tag-2026-10-21"], separator: ","))]), extraHeaders)), extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, mode: _mode, spanName: "anthropic.organization.claude_tag.bundles.targets.create", qualifiers: ["beta": "true"])
+        return try await client.requestResponse(BetaClaudeTagBundleTarget.self, options, stream: _mode == .stream)
+    }
+
     /// Get one Bundle Target.
     ///
     /// Returns 404 when `target_id` is the identifier of another
@@ -116,6 +149,31 @@ public struct BetaOrganizationClaudeTagBundlesTargetsResource: Sendable {
     public struct WithRawResponse: Sendable {
         let resource: BetaOrganizationClaudeTagBundlesTargetsResource
 
+    /// Attach a Bundle to a Slack channel or a Slack workspace.
+    ///
+    /// A Bundle attached to a
+    /// workspace can be used in the workspace and in every channel in it. Attaching a
+    /// Bundle to a channel or workspace it is already attached to returns the existing
+    /// Bundle Target. The channel or workspace must be set up: attaching never sets a
+    /// channel up. A group direct message takes no Bundle and returns 400.
+    ///
+    /// Args:
+    ///   bundle_id: The Bundle's identifier, starting with `capp_`.
+    ///
+    ///   betas: This endpoint is in beta: requests must send
+    ///       `experimental-claude-tag-2026-10-21` in this header.
+    ///
+    ///   extra_headers: Send extra headers
+    ///
+    ///   extra_query: Add additional query parameters to the request
+    ///
+    ///   extra_body: Add additional JSON properties to the request
+    ///
+    ///   timeout: Override the client-level default timeout for this request, in seconds
+        public func create(_ bundleID: String, target: BetaClaudeTagBundleTargetCreateParam, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil) async throws -> APIResponse<BetaClaudeTagBundleTarget> {
+            try await resource._create(bundleID, target: target, betas: betas, extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, _mode: .raw)
+        }
+
     /// Get one Bundle Target.
     ///
     /// Returns 404 when `target_id` is the identifier of another
@@ -196,6 +254,33 @@ public struct BetaOrganizationClaudeTagBundlesTargetsResource: Sendable {
 
     public struct WithStreamingResponse: Sendable {
         let resource: BetaOrganizationClaudeTagBundlesTargetsResource
+
+    /// Attach a Bundle to a Slack channel or a Slack workspace.
+    ///
+    /// A Bundle attached to a
+    /// workspace can be used in the workspace and in every channel in it. Attaching a
+    /// Bundle to a channel or workspace it is already attached to returns the existing
+    /// Bundle Target. The channel or workspace must be set up: attaching never sets a
+    /// channel up. A group direct message takes no Bundle and returns 400.
+    ///
+    /// Args:
+    ///   bundle_id: The Bundle's identifier, starting with `capp_`.
+    ///
+    ///   betas: This endpoint is in beta: requests must send
+    ///       `experimental-claude-tag-2026-10-21` in this header.
+    ///
+    ///   extra_headers: Send extra headers
+    ///
+    ///   extra_query: Add additional query parameters to the request
+    ///
+    ///   extra_body: Add additional JSON properties to the request
+    ///
+    ///   timeout: Override the client-level default timeout for this request, in seconds
+        public func create<R: Sendable>(_ bundleID: String, target: BetaClaudeTagBundleTargetCreateParam, betas: [AnthropicBetaParam]? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil, timeout: Timeout? = nil, body: (APIResponse<BetaClaudeTagBundleTarget>) async throws -> R) async throws -> R {
+            let response = try await resource._create(bundleID, target: target, betas: betas, extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody, timeout: timeout, _mode: .stream)
+            defer { response.close() }
+            return try await body(response)
+        }
 
     /// Get one Bundle Target.
     ///

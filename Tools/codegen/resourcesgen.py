@@ -448,6 +448,9 @@ class ResourceGen:
             bv = kws["body"]
             if isinstance(bv, ast.Name) and bv.id == "body":
                 pass
+            elif isinstance(bv, ast.Name) and bv.id in args:
+                # the whole body is one params object (`body=target`)
+                body_entries = [("", args[bv.id].swift, "whole")]
             else:
                 body_entries = self.dict_entries(bv, args)
         if "files" in kws:
@@ -556,7 +559,9 @@ class ResourceGen:
         if plan.body_entries or streaming:
             lines.append("var body = ParamsBuilder()")
             for key, expr, kind in plan.body_entries:
-                if kind == "file":
+                if kind == "whole":
+                    lines.append(f"try body.merge({expr})")
+                elif kind == "file":
                     lines.append(f"body.setFile({swift_string(key)}, {expr})")
                 elif kind == "files":
                     lines.append(f"body.setFiles({swift_string(key)}, {expr})")

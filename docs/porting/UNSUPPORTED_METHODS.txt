@@ -7,7 +7,6 @@ anthropic.resources.beta.messages.messages.AsyncMessages.parse: statement Expr: 
 anthropic.resources.beta.messages.messages.AsyncMessages.tool_runner: unsupported runtime type anthropic.lib.tools._beta_functions.BetaAsyncRunnableTool
 anthropic.resources.beta.messages.messages.AsyncMessages.thread: unsupported runtime type anthropic.lib.tools._beta_functions.BetaAsyncRunnableTool
 anthropic.resources.beta.messages.messages.AsyncMessages.stream: statement Expr: _validate_output_config_conflict(output_config, output_forma
-anthropic.resources.beta.organization.claude_tag.bundles.targets.AsyncTargets.create: dict target
 anthropic.resources.beta.sessions.events.AsyncEvents.tool_runner: unresolved name BetaAnyRunnableTool in anthropic.resources.beta.sessions.events
 anthropic.resources.beta.webhooks.AsyncWebhooks.parse_unverified: return construct_type(type_=BetaWebhookEvent, value=json.loads(payl
 anthropic.resources.beta.webhooks.AsyncWebhooks.unwrap: statement Try: try:

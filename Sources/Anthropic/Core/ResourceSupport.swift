@@ -172,10 +172,34 @@ public enum AnthropicWarnings {
         lock.withLock { handler = h }
     }
 
+    /// A handler scoped to the current task tree (see `capture`); it takes precedence over the global one.
+    @TaskLocal static var scopedHandler: (@Sendable (String, Category) -> Void)? = nil
+
     public static func warn(_ message: String, _ category: Category) {
+        if let scoped = scopedHandler {
+            scoped(message, category)
+            return
+        }
         let h = lock.withLock { handler }
         h(message, category)
     }
+
+    /// Runs `body`, collecting the warnings raised in it (and the tasks it starts) instead of
+    /// reporting them — like `pytest.warns` / `warnings.catch_warnings(record=True)`.
+    public static func capture(_ body: () async throws -> Void) async rethrows -> [(message: String, category: Category)] {
+        let box = WarningRecorder()
+        try await $scopedHandler.withValue({ message, category in box.append(message, category) }) {
+            try await body()
+        }
+        return box.items
+    }
+}
+
+final class WarningRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _items: [(message: String, category: AnthropicWarnings.Category)] = []
+    func append(_ message: String, _ category: AnthropicWarnings.Category) { lock.withLock { _items.append((message, category)) } }
+    var items: [(message: String, category: AnthropicWarnings.Category)] { lock.withLock { _items } }
 }
 
 func warnIfDeprecatedModel(_ model: String) {
