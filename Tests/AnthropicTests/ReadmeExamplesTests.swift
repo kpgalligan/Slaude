@@ -97,3 +97,77 @@ import Testing
         }
     }
 }
+
+/// README "Helpers" section.
+struct ReadmePerson: StructuredOutput {
+    let name: String
+    static let jsonSchema: JSONValue = ["type": "object", "properties": ["name": ["type": "string"]], "required": ["name"]]
+}
+
+@Suite struct ReadmeHelperExamplesTests {
+    static func reply(_ text: String, stop: String = "end_turn", content: JSONValue? = nil) -> Data {
+        let body: JSONValue = ["id": "msg_1", "type": "message", "role": "assistant", "model": "claude-opus-5-5",
+                               "content": content ?? [["type": "text", "text": .string(text)]], "stop_reason": .string(stop),
+                               "usage": ["input_tokens": 1, "output_tokens": 1]]
+        return try! JSONValue.serialize(body)
+    }
+
+    @Test func streamHelper() async throws {
+        let sse = [
+            #"event: message_start"#, #"data: {"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5","content":[],"usage":{"input_tokens":1,"output_tokens":0}}}"#, "",
+            #"event: content_block_start"#, #"data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"#, "",
+            #"event: content_block_delta"#, #"data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hi"}}"#, "",
+            #"event: content_block_stop"#, #"data: {"type":"content_block_stop","index":0}"#, "",
+            #"event: message_delta"#, #"data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":1}}"#, "",
+            #"event: message_stop"#, #"data: {"type":"message_stop"}"#, "", "",
+        ].joined(separator: "\n")
+        let client = try Anthropic(apiKey: "k", baseURL: "http://localhost", maxRetries: 0, transport: MockTransport { request in
+            HTTPResponse(statusCode: 200, headers: ["content-type": "text/event-stream"], stream: chunked(Data(sse.utf8)), request: request)
+        }, environment: [:])
+        let messages: [MessageParam] = [.user(UserMessageParam(content: "Hi"))]
+        let stream = try await client.messages.stream(maxTokens: 1024, messages: messages, model: "claude-opus-5-5")
+        var text = ""
+        for try await t in stream.textStream { text += t }
+        let final = try await stream.getFinalMessage()
+        #expect(text == "Hi")
+        #expect(final.stopReason == .endTurn)
+    }
+
+    @Test func parseHelper() async throws {
+        let client = try Anthropic(apiKey: "k", baseURL: "http://localhost", maxRetries: 0, transport: MockTransport { request in
+            #expect(request.jsonBody?["output_config"]?["format"]?["type"] == "json_schema")
+            return HTTPResponse(statusCode: 200, headers: ["content-type": "application/json"], body: Self.reply(#"{"name": "Ada"}"#), request: request)
+        }, environment: [:])
+        let messages: [MessageParam] = [.user(UserMessageParam(content: "Who?"))]
+        let parsed = try await client.messages.parse(maxTokens: 1024, messages: messages, model: "claude-opus-5-5", outputFormat: ReadmePerson.self)
+        #expect(parsed.parsedOutput?.name == "Ada")
+    }
+
+    @Test func toolRunner() async throws {
+        let calls = ReadmeCallCounter()
+        let client = try Anthropic(apiKey: "k", baseURL: "http://localhost", maxRetries: 0, transport: MockTransport { request in
+            if calls.next() == 0 {
+                let content: JSONValue = [["type": "tool_use", "id": "tu_1", "name": "get_weather", "input": ["city": "Paris"]]]
+                return HTTPResponse(statusCode: 200, headers: ["content-type": "application/json"], body: Self.reply("", stop: "tool_use", content: content), request: request)
+            }
+            let last = request.jsonBody?["messages"]?.arrayValue?.last
+            #expect(last?["content"]?[0]?["content"] == "Sunny in Paris" || last?["content"]?[0]?["content"]?[0]?["text"] == "Sunny in Paris")
+            return HTTPResponse(statusCode: 200, headers: ["content-type": "application/json"], body: Self.reply("Done"), request: request)
+        }, environment: [:])
+        let betaMessages: [BetaMessageParam] = try JSONValue.array([["role": "user", "content": "Weather in Paris?"]]).decode()
+        let weather = BetaFunctionTool(name: "get_weather", description: "Current weather",
+                                       inputSchema: ["type": "object", "properties": ["city": ["type": "string"]]]) { (input: BetaToolInput) in
+            .string("Sunny in \(input["city"]?.stringValue ?? "?")")
+        }
+        let runner = try client.beta.messages.toolRunner(maxTokens: 1024, messages: betaMessages, model: "claude-opus-5-5",
+                                                          tools: [weather], thread: false)
+        let last = try await runner.untilDone()
+        #expect(last.stopReason == .endTurn)
+    }
+}
+
+final class ReadmeCallCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var n = 0
+    func next() -> Int { lock.withLock { defer { n += 1 }; return n } }
+}

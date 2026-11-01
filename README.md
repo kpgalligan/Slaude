@@ -6,10 +6,15 @@ which it tracks version for version. Currently tracking **anthropic 2.3.0** (API
 
 - Every type in `anthropic/types` (2,181 modules) and every resource method in
   `anthropic/resources` is transformed by the transpiler in `Tools/codegen`.
-- The upstream API-resource test suite is transformed too: 1,549 tests, each checking the request's
+- The upstream API-resource test suite is transformed too: 1,574 tests, each checking the request's
   method, path and body schema and the decoding of the response.
-- The hand-written parts (`_base_client`, streaming, pagination, `lib/` helpers) are ported by hand
-  alongside their upstream tests.
+- The hand-written parts are ported by hand alongside their upstream tests: the client core (retries,
+  streaming, pagination, middleware), message stream helpers, structured outputs, tool runners (incl.
+  streaming and eager tools), memory/computer/browser/agent toolsets, message threads, environment
+  workers, credentials (profiles, workload identity federation), OpenTelemetry tracing, refusal
+  fallbacks, webhooks, and the AWS, Bedrock, Vertex, Google Cloud and Azure Foundry clients.
+- ~3,700 tests in all. See [docs/porting/STATUS.md](docs/porting/STATUS.md) for the upstream → Swift
+  map and what (if anything) was skipped, and why.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the transformation works and how Python
 constructs map to Swift.
@@ -104,6 +109,31 @@ do {
 Requests are retried twice by default on connection errors, 408, 409, 429 and 5xx, honouring
 `retry-after`/`retry-after-ms` (`maxRetries:` configures it), and time out after 10 minutes
 (`timeout:`).
+
+### Helpers
+
+```swift
+// Accumulating stream helper
+let stream = try await client.messages.stream(maxTokens: 1024, messages: messages, model: "claude-opus-5-5")
+for try await text in stream.textStream { print(text, terminator: "") }
+let final = try await stream.getFinalMessage()
+
+// Structured outputs: a Decodable type that supplies its JSON schema
+struct Person: StructuredOutput { let name: String; static let jsonSchema: JSONValue = [
+    "type": "object", "properties": ["name": ["type": "string"]], "required": ["name"]] }
+let parsed = try await client.messages.parse(maxTokens: 1024, messages: messages, model: "claude-opus-5-5", outputFormat: Person.self)
+
+// Tool runner
+let weather = BetaFunctionTool(name: "get_weather", description: "Current weather",
+                               inputSchema: ["type": "object", "properties": ["city": ["type": "string"]]]) { (input: BetaToolInput) in
+    .string("Sunny in \(input["city"]?.stringValue ?? "?")")
+}
+let runner = try client.beta.messages.toolRunner(maxTokens: 1024, messages: betaMessages, model: "claude-opus-5-5", tools: [weather])
+let last = try await runner.untilDone()
+```
+
+Platform clients: `AnthropicBedrock`, `AnthropicBedrockMantle`, `AnthropicVertex`, `AnthropicAWS`,
+`AnthropicGoogleCloud`, `AnthropicFoundry` expose the same resources with their own auth.
 
 ### Configuration
 
