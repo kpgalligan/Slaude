@@ -297,9 +297,13 @@ private final class BashOutput: @unchecked Sendable {
     private var buffer = Data()
     private var truncated = false
     private var eof = false
+    /// When the last bytes (or the end of the pipe) arrived. The pipe is read off the cooperative pool, so this is
+    /// when the shell wrote them, however late `exec`'s polling task gets to look.
+    private var arrived = Date()
 
     func append(_ data: Data) {
         lock.withLock {
+            arrived = Date()
             if data.isEmpty {
                 eof = true
                 return
@@ -316,6 +320,8 @@ private final class BashOutput: @unchecked Sendable {
     func reset() { lock.withLock { buffer = Data(); truncated = false } }
 
     var snapshot: (Data, Bool, Bool) { lock.withLock { (buffer, truncated, eof) } }
+
+    var lastArrival: Date { lock.withLock { arrived } }
 }
 
 private let ansiEscape = try! NSRegularExpression(pattern: "\u{1b}\\[[0-9;?]*[ -/]*[@-~]")
@@ -391,6 +397,12 @@ public final class BashSession: @unchecked Sendable {
         do {
             while true {
                 let (buffer, cut, eof) = output.snapshot
+                let finished = buffer.range(of: marker).map { buffer[$0.upperBound...].contains(0x0A) || eof } ?? eof
+                if finished && output.lastArrival > deadline {
+                    // The command finished after its deadline; a busy executor only let this poll see it late.
+                    await close()
+                    throw BashTimeoutError(timeout: timeout)
+                }
                 if let range = buffer.range(of: marker), buffer[range.upperBound...].contains(0x0A) || eof {
                     (data, truncated) = (buffer, cut)
                     break

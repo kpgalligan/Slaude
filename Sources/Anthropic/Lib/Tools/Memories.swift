@@ -427,7 +427,7 @@ public actor SessionMemoryStores {
                 if localSHA == nil, let baseSHA, let remoteItem, remoteItem.contentSHA256 == baseSHA, !store.readOnly {
                     sha = await corroboratedDelete(store, rel, remoteItem, baseSHA, deletes)
                 } else {
-                    sha = await syncPath(store, rel, remoteItem, localSHA, &pulls)
+                    sha = try await syncPath(store, rel, remoteItem, localSHA, &pulls)
                 }
                 if let sha { baseline[rel] = sha }
             }
@@ -510,7 +510,11 @@ public actor SessionMemoryStores {
                 uploads.append((rel, localSHA, existing))
             }
             await forEachConcurrently(uploads, limit: uploadConcurrency) { rel, localSHA, existing in
-                let sha = await self.upload(store, rel, localSHA, existing: existing)
+                // An upload cut off by cancellation stays unsent.
+                guard let sha = try? await self.upload(store, rel, localSHA, existing: existing) else {
+                    if !Task.isCancelled { await self.noteFlushed(store, rel, nil, unsent) }
+                    return
+                }
                 await self.noteFlushed(store, rel, sha, unsent)
             }
             if Task.isCancelled { throw CancellationError() }
@@ -588,7 +592,7 @@ public actor SessionMemoryStores {
     }
 
     private func syncPath(_ store: AttachedMemoryStore, _ rel: String, _ remote: SessionMemoryItem?, _ localSHA: String?,
-                          _ pulls: inout [(String, SessionMemoryItem)]) async -> String?
+                          _ pulls: inout [(String, SessionMemoryItem)]) async throws -> String?
     {
         var localSHA = localSHA
         let baseSHA = store.baseline[rel]
@@ -619,7 +623,7 @@ public actor SessionMemoryStores {
             }
             if store.readOnly { return nil }
             if store.refusedSHAs[rel] == localSHA { return nil }
-            return await upload(store, rel, localSHA, existing: nil)
+            return try await upload(store, rel, localSHA, existing: nil)
         }
 
         let remoteSHA = remote.contentSHA256
@@ -655,7 +659,7 @@ public actor SessionMemoryStores {
         }
         if localChanged {
             if store.refusedSHAs[rel] == localSHA { return remoteSHA }
-            return await upload(store, rel, localSHA, existing: remote) ?? remoteSHA
+            return try await upload(store, rel, localSHA, existing: remote) ?? remoteSHA
         }
         return remoteSHA
     }
@@ -749,7 +753,9 @@ public actor SessionMemoryStores {
 
     /// Push one local file; `nil` keeps the old baseline so the next pass retries. A refusal the server would repeat
     /// (400/413, the utf-8 gate) enters `refusedSHAs`: warned once, retried only after the file changes.
-    private func upload(_ store: AttachedMemoryStore, _ rel: String, _ localSHA: String?, existing: SessionMemoryItem?) async -> String? {
+    private func upload(_ store: AttachedMemoryStore, _ rel: String, _ localSHA: String?, existing: SessionMemoryItem?) async throws
+        -> String?
+    {
         let item: SessionMemoryItem
         do {
             guard let data = try await store.files.get(rel) else { return nil }
@@ -762,12 +768,12 @@ public actor SessionMemoryStores {
                 item = try await memories.create(store.memoryStoreID, path: "/" + rel, content: content)
             }
         } catch {
-            // A flush cut off by its caller: the path stays unsent, and the store logs how many were.
-            if error is CancellationError || Task.isCancelled { return nil }
+            // Cancellation is not a refusal: it ends the pass (a flush cut off by its caller logs what stayed unsent).
+            if error is CancellationError { throw CancellationError() }
             let status = (error as? APIStatusError)?.statusCode
             if existing != nil && status == 404 {
                 // Deleted remotely since the listing, so this file is now the only copy.
-                return await upload(store, rel, localSHA, existing: nil)
+                return try await upload(store, rel, localSHA, existing: nil)
             }
             let permanent = error is FileStoreError || status == 400 || status == 413
             if existing != nil && status == 409 {
