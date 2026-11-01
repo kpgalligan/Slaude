@@ -7,10 +7,10 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 
 | Upstream | Swift |
 | --- | --- |
-| `@beta_async_tool` / `BetaFunctionTool` | `BetaFunctionTool(name:description:inputSchema:...) { (input: T) in ... }` — explicit JSON schema; the closure takes the raw JSON object or any `Decodable` input (a decode failure is `ValueError("Invalid arguments for function <name>")`, as pydantic's validation is upstream) |
+| `@beta_async_tool` / `BetaAsyncFunctionTool` | `BetaFunctionTool(name:description:inputSchema:...) { (input: T) in ... }` — explicit JSON schema; the closure takes the raw JSON object or any `Decodable` input (a decode failure is `ValueError("Invalid arguments for function <name>")`, as pydantic's validation is upstream) |
 | `@beta_async_tool` over an `@asynccontextmanager` | `BetaFunctionTool(..., enter: { (function, exit) })`: entered on the first call, exited by `acloseRunnableTool` |
-| `BetaBuiltinFunctionTool` | `open class BetaBuiltinFunctionTool` (override `toDict()` / `call(_:)`) |
-| `BetaRunnableToolset` | `open class BetaRunnableToolset` (override `toolsetName`, `toDict()`, `call(context:name:input:)`) |
+| `BetaAsyncBuiltinFunctionTool` | `open class BetaBuiltinFunctionTool` (override `toDict()` / `call(_:)`) |
+| `BetaAsyncRunnableToolset` | `open class BetaRunnableToolset` (override `toolsetName`, `toDict()`, `call(context:name:input:)`) |
 | `ToolError` and the toolset refusals | `open class ToolError: Error` and subclasses; `ToolsetUsageError` family derive from `AnthropicError` |
 | `BetaToolLike` / `to_tool_params` | `protocol BetaToolLike` (function tools, builtin tools, toolsets, `BetaToolUnionParam`, `BetaToolParam` and a raw `JSONValue` definition conform) / `toToolParams` |
 | `client.beta.messages.tool_runner(...)` | `client.beta.messages.toolRunner(...)` (extension on `BetaMessagesResource`) → `BetaToolRunner` |
@@ -23,6 +23,10 @@ Hand port of `src/anthropic/lib/tools/` (and the parts of `lib/threads/` the too
 | `mcp.py` (`mcp_tool` / `async_mcp_tool`, `mcp_content`, `mcp_message`, `mcp_resource_to_content`, `mcp_resource_to_file`) | `mcpTool`, `mcpContent`, `mcpMessage`, `mcpResourceToContent`, `mcpResourceToFile` over small MCP value types (`MCPTool`, `MCPContentBlock`, `MCPResourceContents`, `MCPPromptMessage`, `MCPCallToolResult`, `MCPReadResourceResult`) and `protocol MCPClientSession` (no MCP client library is available). Only `mcpTool` carries its helper tag (`mcp_tool`): the value-type results can't carry `mcp_content` / `mcp_message` tags |
 | `_skills.py` (`download_session_skills`, `_extract_skill_archive`) | `downloadSessionSkills(_:workdir:session:)` (and `skills:` for explicit skill ids), `extractSkillArchive`; zip (stored / deflate), tar and tar.gz are read by small internal readers (`Archives.swift`: inflate, gunzip, zip and ustar/pax/GNU tar), since Foundation has no decompression on Linux. bzip2 / xz tarballs are refused |
 | `logging` / `warnings` in the helpers | `ToolDiagnostics` (log handler, `AnthropicWarnings` for warnings, task-local `capture` for tests) |
+
+As `AsyncAnthropic` is `Anthropic`, the async classes take the sync names (`BetaAsyncFunctionTool` →
+`BetaFunctionTool`, `BetaAsyncToolRunner` → `BetaToolRunner`, `BetaAsyncLocalFilesystemMemoryTool` →
+`BetaLocalFilesystemMemoryTool`, ...).
 
 Request fields and messages are held as JSON inside the runner, as Python holds them as dicts; the public API takes
 and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolResultBlockParam`).
@@ -44,6 +48,12 @@ and returns the generated types (`BetaMessageParam`, `BetaMessage`, `BetaToolRes
 * **`_memories.py` (`SessionMemoryStores`, memory-store sync for the environment worker)** and its tests
   (`memory_sync/`): not ported in this pass.
 * The public `client.beta.messages.thread(...)` API (`BetaMessageThread`) is not ported; only what the runners use.
+* **Not reached in this pass** (layer 4 of the port): `agent_toolset.py` (the bash / file tools and
+  `AgentToolContext`), `_deprecations.py`, `_toolsets/` (computer and browser toolsets, pipeline, enforcement,
+  security, confirm) and `src/anthropic/tools/{browser,computer}.py`, with their tests (`test_agent_toolset.py`,
+  `toolsets/*`). The runnable-toolset contract they build on (`_toolsets/_runnable.py`, `_errors.py`,
+  `_sanitize.py`) is ported.
+* `test_open_telemetry.py` belongs to the tracing port.
 
 ## Skipped tests (no Swift meaning)
 
@@ -114,11 +124,13 @@ shares and are ported as async tests.
 
 | Upstream file | Swift file | Ported |
 | --- | --- | --- |
-| `test_functions.py` | `FunctionsTests.swift` | 9 upstream tests (+4 Swift-specific checks) |
-| `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift` | 62 upstream tests/twin pairs (non-streaming) |
+| `test_functions.py` | `FunctionsTests.swift` | 9 of 19 (+4 Swift-specific checks) |
+| `test_runners.py` | `RunnersTests.swift`, `RunnerToolChangesTests.swift`, `RunnerCompactionTests.swift` | 71 of 82 test functions (twins counted; the 11 others are listed above), as 60 Swift tests |
 | `memory_tools/test_filesystem.py` | `MemoryToolTests.swift` | the 41 async tests (as 33 Swift tests, some parametrized) + 2 |
 | `test_file_store.py` | `FileStoreTests.swift` | 29 of 31 (+ SHA-256 vectors) |
 | `test_files.py` | `FileStoreTests.swift` (`FilesTests`) | 2 of 2 (+1) |
 | `test_mcp_tool.py` | `MCPToolTests.swift` | 37 of 38 (+1 runner integration test) |
 | `test_skills.py` | `SkillsTests.swift` | 18 of 18 (parametrized pairs as one) + inflate vectors |
 | `test_session_runner.py` | `SessionRunnerTests.swift` | 55 of 59 (2 merged into one parametrized test, 1 via HTTP) |
+
+No core or generated files were changed.
