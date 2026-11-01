@@ -145,7 +145,17 @@ func envHooks(_ record: EnvRunRecord, items: [BetaSelfHostedWork] = [], polls: T
         record.run = run
         return AsyncThrowingStream { continuation in
             let task = Task {
-                if let serve { await serve() } else { try? await Task.sleep(nanoseconds: 50_000_000) }
+                if let serve {
+                    await serve()
+                } else {
+                    // Upstream sleeps 50ms and relies on asyncio having run the first heartbeat by then; with a
+                    // multithreaded executor wait (bounded) for the heartbeat to report the lease TTL instead.
+                    try? await Task.sleep(nanoseconds: 50_000_000)
+                    let deadline = Date().addingTimeInterval(5)
+                    while run.sendRetryWindow() == nil && Date() < deadline {
+                        try? await Task.sleep(nanoseconds: 10_000_000)
+                    }
+                }
                 record.sendRetryWindow = .some(run.sendRetryWindow())
                 continuation.finish()
             }
