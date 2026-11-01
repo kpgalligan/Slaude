@@ -48,10 +48,31 @@ open class BetaRunnableToolset: BetaToolLike, @unchecked Sendable {
 
     public func toToolParam() throws -> JSONValue { try toDict() }
 
+    /// The `tools[]` entry as the generated param type, for `messages.create` and `countTokens` (where Python passes
+    /// the toolset instance itself).
+    public func toToolUnionParam() throws -> BetaToolUnionParam { try toDict().decode() }
+
     /// Whether `close()` ran. A member call on a closed toolset raises `ToolsetClosedError`.
     public var isClosed: Bool { closedLock.withLock { _toolsetClosed } }
 
     public func markClosed() { closedLock.withLock { _toolsetClosed = true } }
+
+    /// Runs `body` with the toolset open and closes it afterwards, unless `body` closed it already (Python's
+    /// `async with toolset:`). Entering a closed toolset throws `ToolsetClosedError`.
+    public func use<T>(_ body: () async throws -> T) async throws -> T {
+        try refuseIfClosed()
+        let result: Result<T, Error>
+        do {
+            result = .success(try await body())
+        } catch {
+            result = .failure(error)
+        }
+        if !isClosed {
+            defer { markClosed() }
+            try await close()
+        }
+        return try result.get()
+    }
 
     func refuseIfClosed() throws {
         if isClosed { throw ToolsetClosedError("this \(pythonStringRepr(toolsetName)) toolset is closed") }

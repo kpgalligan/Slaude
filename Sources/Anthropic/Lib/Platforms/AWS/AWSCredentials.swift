@@ -222,8 +222,14 @@ public final class AWSDefaultCredentialsChain: AWSCredentialsProvider, @unchecke
             process.standardOutput = out
             process.standardError = FileHandle.nullDevice
             try process.run()
-            let data = out.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
+            // Wait for the process off the cooperative thread pool: blocking reads and waits there stall other tasks.
+            let data: Data = await withCheckedContinuation { continuation in
+                DispatchQueue.global().async {
+                    let data = out.fileHandleForReading.readDataToEndOfFile()
+                    process.waitUntilExit()
+                    continuation.resume(returning: data)
+                }
+            }
             guard process.terminationStatus == 0 else {
                 throw AnthropicError("Error when retrieving credentials from custom-process: exit status \(process.terminationStatus)")
             }

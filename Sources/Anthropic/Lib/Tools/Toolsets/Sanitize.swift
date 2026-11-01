@@ -35,9 +35,20 @@ func folded(_ text: String) -> String {
     return pythonStrip(String(out))
 }
 
-/// Python's `str.strip()` (whitespace only).
+/// Python's `str.isspace()` for one code point.
+func isPythonSpace(_ scalar: Unicode.Scalar) -> Bool {
+    switch scalar.value {
+    case 0x09...0x0D, 0x1C...0x20, 0x85, 0xA0, 0x1680, 0x2000...0x200A, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000: return true
+    default: return false
+    }
+}
+
+/// Python's `str.strip()` (whitespace only, as `str.isspace()` defines it: a zero-width space is kept).
 func pythonStrip(_ s: String) -> String {
-    s.trimmingCharacters(in: .whitespacesAndNewlines)
+    var scalars = Substring(s).unicodeScalars[...]
+    while let first = scalars.first, isPythonSpace(first) { scalars = scalars.dropFirst() }
+    while let last = scalars.last, isPythonSpace(last) { scalars = scalars.dropLast() }
+    return String(String.UnicodeScalarView(scalars))
 }
 
 /// The first `limit` characters (code points, as Python slices) of `s`.
@@ -118,7 +129,8 @@ public func pythonExceptionRepr(_ error: Error) -> String {
     default:
         return String(reflecting: error)
     }
-    return "\(typeName)(\(pythonStringRepr(message)))"
+    // an error with no message reads as one raised without arguments: `ValueError()`
+    return message.isEmpty ? "\(typeName)()" : "\(typeName)(\(pythonStringRepr(message)))"
 }
 
 /// An error that renders its own Python-style `repr`, for the `is_error` result a tool's error becomes.
