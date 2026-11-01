@@ -342,7 +342,41 @@ private let clearToolUses: BetaContextManagementConfigParam = try! JSONValue.obj
         ],
     ]
 
-    /// `_REPLY_PARAMS_CASES` without the `output_format` (structured-output class) case.
+    /// `_REPLY_PARAMS_CASES`, `forced tool and output_format` case: the runner's output format is left off the
+    /// compaction request too, and the reply after it is parsed.
+    @Test func compactionRequestLeavesOffReplyParamsWithAnOutputFormat() async throws {
+        var forecast = endTurnResponse()
+        forecast["content"] = [["type": "text", "text": #"{"summary": "Sunny"}"#]]
+        let mock = MessagesMock([compactedResponse(), forecast])
+        let runner = try mock.client().beta.messages.toolRunner(
+            maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5", tools: [toolsWeatherTool()],
+            outputConfig: try JSONValue.object(["effort": "low"]).decode(), outputFormat: RunnerForecast.self,
+            stopSequences: ["STOP"], system: "Be brief.", toolChoice: try JSONValue.object(["type": "tool", "name": "get_weather"]).decode(),
+            betas: ["compact-2026-09-04"])
+        try await runner.compactBeforeNextTurn()
+        let final = try await runner.untilDone()
+        #expect(final.parsedOutput == RunnerForecast(summary: "Sunny"))
+
+        let requests = mock.bodies
+        #expect(requests.count == 2)
+        let (compaction, after) = (requests[0], requests[1])
+        #expect(compaction["compaction"] == ["type": "summarize"])
+        #expect(compaction["stop_sequences"] == nil)
+        #expect(compaction["output_format"] == nil)
+        #expect(compaction["output_config"] == ["effort": "low"])
+        #expect(compaction["tool_choice"] == nil)
+        #expect(compaction["fallbacks"] == nil)
+        for kept in ["max_tokens", "system", "tools"] { #expect(compaction[kept] == after[kept]) }
+        #expect(after["stop_sequences"] == ["STOP"])
+        #expect(after["tool_choice"] == ["type": "tool", "name": "get_weather"])
+        #expect(after["output_config"]?["effort"] == "low")
+        #expect(after["output_config"]?["format"]?["type"] == "json_schema")
+        #expect(after["output_config"]?["format"]?["schema"] == .object(try jsonOutputFormat(RunnerForecast.self)))
+        #expect(mock.requests.map { $0.headers["anthropic-beta"] } == Array(
+            repeating: "compact-2026-09-04,message-threads-2026-08-12", count: 2))
+    }
+
+    /// The other `_REPLY_PARAMS_CASES`.
     @Test(arguments: [
         ("any tool and output_config.format", JSONValue.object(["type": "any"]), JSONValue.null, JSONValue.null),
         ("auto tool_choice stays", JSONValue.object(["type": "auto"]), JSONValue.null, JSONValue.object(["type": "auto"])),
@@ -437,28 +471,70 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
     }
 }
 
+/// `_Forecast`: the structured output of the runner tests.
+struct RunnerForecast: StructuredOutput, Equatable {
+    var summary: String
+    static let jsonSchema: JSONValue = [
+        "title": "_Forecast", "type": "object", "properties": ["summary": ["title": "Summary", "type": "string"]],
+        "required": ["summary"],
+    ]
+}
+
+/// `_sse_message`: a streamed message with one content block.
+func runnerSSEMessage(_ contentBlock: JSONValue, _ stopReason: String, _ deltas: JSONValue...) -> MessagesMock.Reply {
+    var events: [JSONValue] = [
+        ["type": "message_start", "message": [
+            "id": "msg_streamed", "type": "message", "role": "assistant", "model": "claude-haiku-4-5", "content": [],
+            "stop_reason": nil, "stop_sequence": nil, "usage": ["input_tokens": 1, "output_tokens": 1],
+        ]],
+        ["type": "content_block_start", "index": 0, "content_block": contentBlock],
+    ]
+    events += deltas.map { ["type": "content_block_delta", "index": 0, "delta": $0] }
+    events.append(["type": "content_block_stop", "index": 0])
+    events.append(["type": "message_delta", "delta": ["stop_reason": .string(stopReason), "stop_sequence": nil], "usage": ["output_tokens": 1]])
+    events.append(["type": "message_stop"])
+    return .sse(events.map(streamingRunnerSSE).joined())
+}
+
+/// `_weather_then_browser_replies(stream=True)`.
+private func streamedWeatherThenBrowserReplies() -> [MessagesMock.Reply] {
+    let calls: [JSONValue] = [
+        ["type": "tool_use", "id": "toolu_weather", "name": "get_weather", "input": ["location": "SF", "units": "f"]],
+        ["type": "tool_use", "id": "toolu_open", "name": "open", "toolset_name": "browser", "input": ["url": "a.test"]],
+    ]
+    return calls.map { call in
+        var start = call
+        start["input"] = [:]
+        let partial = String(decoding: try! JSONValue.serialize(call["input"] ?? [:]), as: UTF8.self)
+        return runnerSSEMessage(start, "tool_use", ["type": "input_json_delta", "partial_json": .string(partial)])
+    } + [runnerSSEMessage(["type": "text", "text": ""], "end_turn", ["type": "text_delta", "text": "Done."])]
+}
+
 @Suite struct RunnerFromParamsTests {
-    @Test(arguments: ["message_thread", "thread_false", "client_without_message_threads"])
-    func aRunnerMadeFromParamsSendsTheRequestsOfToolRunner(threading: String) async throws {
+    @Test(arguments: ["message_thread", "thread_false", "client_without_message_threads"], ["plain", "streaming", "streaming_eagerly"])
+    func aRunnerMadeFromParamsSendsTheRequestsOfToolRunner(threading: String, stream: String) async throws {
         var fields = weatherFields
         fields["system"] = "Be brief."
         fields["betas"] = ["inline-tools-2026-09-15"]
         if threading == "thread_false" { fields["thread"] = false }
+        let eagerly = stream == "streaming_eagerly"
+        typealias UntilDone = () async throws -> Void
 
-        func requests(_ makeRunner: (Anthropic, BetaFunctionTool, TaggedEchoToolset) throws -> BetaToolRunner) async throws
+        func requests(_ makeRunner: (Anthropic, BetaFunctionTool, TaggedEchoToolset) throws -> UntilDone) async throws
             -> [(String, [String: String], JSONValue)]
         {
-            let mock = MessagesMock(weatherThenBrowserReplies())
+            let mock = stream == "plain" ? MessagesMock(weatherThenBrowserReplies()) : MessagesMock(replies: streamedWeatherThenBrowserReplies())
             let client: Anthropic = threading == "client_without_message_threads"
                 ? try NoThreadsClient(apiKey: testAPIKey, baseURL: testBaseURL, maxRetries: 0,
                                       transport: try mock.client().transport, environment: [:])
                 : try mock.client()
             let browser = TaggedEchoToolset()
-            _ = try await makeRunner(client, toolsWeatherTool(), browser).untilDone()
+            try await makeRunner(client, toolsWeatherTool(), browser)()
             #expect(browser.calls.value == [["open", ["url": "a.test"]]])
             return mock.requests.map { request in
                 var headers: [String: String] = [:]
-                for name in ["anthropic-beta", "x-example", "content-type", "anthropic-version"] { headers[name] = request.headers[name] }
+                for name in ["anthropic-beta", "x-example", "content-type", "anthropic-version", "x-stainless-helper-method",
+                             "x-stainless-stream-helper"] { headers[name] = request.headers[name] }
                 headers["x-stainless-helper"] = (request.headers["x-stainless-helper"] ?? "").split(separator: ",")
                     .map { $0.trimmingCharacters(in: .whitespaces) }.sorted().joined(separator: ",")
                 return (request.url.absoluteString, headers, request.jsonBody ?? .null)
@@ -466,16 +542,32 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
         }
 
         let fromToolRunner = try await requests { client, weather, browser in
-            try client.beta.messages.toolRunner(
+            let tools: [any BetaToolLike] = [weather, browser, webSearchWithMaxUses]
+            let threadArgument: Bool? = threading == "thread_false" ? false : nil
+            if stream == "plain" {
+                let runner = try client.beta.messages.toolRunner(
+                    maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
+                    tools: tools, maxIterations: 5, system: "Be brief.", thread: threadArgument, betas: ["inline-tools-2026-09-15"],
+                    extraHeaders: ["x-example": "yes"])
+                return { _ = try await runner.untilDone() }
+            }
+            let runner = try client.beta.messages.streamingToolRunner(
                 maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
-                tools: [weather, browser, webSearchWithMaxUses], maxIterations: 5, system: "Be brief.",
-                thread: threading == "thread_false" ? false : nil, betas: ["inline-tools-2026-09-15"], extraHeaders: ["x-example": "yes"])
+                tools: tools, maxIterations: 5, runToolsEagerly: eagerly, system: "Be brief.", thread: threadArgument,
+                betas: ["inline-tools-2026-09-15"], extraHeaders: ["x-example": "yes"])
+            return { _ = try await runner.untilDone() }
         }
         let fromParams = try await requests { client, weather, browser in
             var params = fields
             params["tools"] = [try weather.toToolParam(), try browser.toToolParam(), webSearchWithMaxUses]
-            return try BetaToolRunner(params: params, tools: [weather, browser], client: client,
-                                      options: ToolRunnerRequestOptions(extraHeaders: ["x-example": "yes"]), maxIterations: 5)
+            let options = ToolRunnerRequestOptions(extraHeaders: ["x-example": "yes"])
+            if stream == "plain" {
+                let runner = try BetaToolRunner(params: params, tools: [weather, browser], client: client, options: options, maxIterations: 5)
+                return { _ = try await runner.untilDone() }
+            }
+            let runner = try BetaStreamingToolRunner(params: params, tools: [weather, browser], client: client, options: options,
+                                                     maxIterations: 5, runToolsEagerly: eagerly)
+            return { _ = try await runner.untilDone() }
         }
         #expect(fromParams.count == 3)
         for (a, b) in zip(fromParams, fromToolRunner) {
@@ -485,31 +577,91 @@ private final class TaggedEchoToolset: BetaRunnableToolset, @unchecked Sendable 
         }
         #expect(fromParams.map { $0.2["thread"]?["type"]?.stringValue } ==
             (threading == "message_thread" ? ["create", "continue", "continue"] : [nil, nil, nil]))
+        #expect(fromParams.map { $0.2["stream"] } == Array(repeating: stream == "plain" ? nil : true, count: 3))
         let helpers = (["BetaToolRunner", "browser-toolset"] + (threading == "message_thread" ? ["message-thread"] : [])).sorted()
         #expect(fromParams.map { $0.1["x-stainless-helper"] } == Array(repeating: helpers.joined(separator: ","), count: 3))
     }
 
-    @Test func aRunnerMadeFromParamsSendsTheirToolDefinitionsAndRunsItsTools() async throws {
-        let replies = weatherThenBrowserReplies()
-        let mock = MessagesMock([replies[0], replies[2]])
+    @Test(arguments: [false, true])
+    func aRunnerMadeFromParamsSendsTheirToolDefinitionsAndRunsItsTools(stream: Bool) async throws {
+        let mock: MessagesMock
+        if stream {
+            let replies = streamedWeatherThenBrowserReplies()
+            mock = MessagesMock(replies: [replies[0], replies[2]])
+        } else {
+            let replies = weatherThenBrowserReplies()
+            mock = MessagesMock([replies[0], replies[2]])
+        }
         let tool = toolsWeatherTool()
         var definition = try tool.toToolParam()
         definition["cache_control"] = ["type": "ephemeral"]
         var params = weatherFields
         params["tools"] = [definition]
-        _ = try await BetaToolRunner(params: params, tools: [tool], client: try mock.client()).untilDone()
+        if stream {
+            _ = try await BetaStreamingToolRunner(params: params, tools: [tool], client: try mock.client()).untilDone()
+        } else {
+            _ = try await BetaToolRunner(params: params, tools: [tool], client: try mock.client()).untilDone()
+        }
         let requests = mock.bodies
         #expect(requests[0]["tools"] == [definition])
         #expect(requests[1]["messages"] == [toolResultMessage("toolu_weather", .string(getWeather("SF", "f")))])
     }
 
-    @Test func aRunnerMadeFromParamsRaisesTheErrorsOfToolRunner() async throws {
+    /// `two_output_formats`: the error of `toolRunner(outputFormat:outputConfig:)`, from the plain and the streaming
+    /// runner.
+    @Test(arguments: [false, true])
+    func aRunnerMadeFromParamsRaisesTheErrorsOfToolRunnerForTwoOutputFormats(stream: Bool) async throws {
+        let client = try mockClient()
+        let outputConfig: BetaOutputConfigParam = try JSONValue.object(["format": RunnerCompactionTests.forecastFormat]).decode()
+        func message(_ body: () throws -> Void) -> String? {
+            do {
+                try body()
+                Issue.record("expected an AnthropicError")
+                return nil
+            } catch let error as AnthropicError {
+                return error.message
+            } catch {
+                Issue.record("unexpected \(error)")
+                return nil
+            }
+        }
+        let fromToolRunner = message {
+            if stream {
+                _ = try client.beta.messages.streamingToolRunner(
+                    maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
+                    tools: [toolsWeatherTool()], outputConfig: outputConfig, outputFormat: RunnerForecast.self)
+            } else {
+                _ = try client.beta.messages.toolRunner(
+                    maxTokens: 1024, messages: [toolsUserMessage("What is the weather in SF?")], model: "claude-haiku-4-5",
+                    tools: [toolsWeatherTool()], outputConfig: outputConfig, outputFormat: RunnerForecast.self)
+            }
+        }
+        var params = weatherFields
+        params["output_config"] = ["format": RunnerCompactionTests.forecastFormat]
+        params["tools"] = [try toolsWeatherTool().toToolParam()]
+        let fromParams = message {
+            if stream {
+                _ = try BetaStreamingToolRunner(params: params, outputFormat: RunnerForecast.self, tools: [toolsWeatherTool()], client: client)
+            } else {
+                _ = try BetaParsedToolRunner(params: params, outputFormat: RunnerForecast.self, tools: [toolsWeatherTool()], client: client)
+            }
+        }
+        #expect(fromParams == fromToolRunner)
+        #expect(fromParams?.hasPrefix("Both output_format and output_config.format were provided.") == true)
+    }
+
+    @Test(arguments: [false, true])
+    func aRunnerMadeFromParamsRaisesTheErrorsOfToolRunner(stream: Bool) async throws {
         let client = try mockClient()
         var params = weatherFields
         params["thread"] = ["type": "create"]
         params["tools"] = [try toolsWeatherTool().toToolParam()]
         do {
-            _ = try BetaToolRunner(params: params, tools: [toolsWeatherTool()], client: client)
+            if stream {
+                _ = try BetaStreamingToolRunner(params: params, tools: [toolsWeatherTool()], client: client)
+            } else {
+                _ = try BetaToolRunner(params: params, tools: [toolsWeatherTool()], client: client)
+            }
             Issue.record("expected a TypeError")
         } catch let e as ArgumentTypeError {
             #expect(e.message.hasPrefix("`thread` cannot be set in the params of a tool runner, got {'type': 'create'}."))
