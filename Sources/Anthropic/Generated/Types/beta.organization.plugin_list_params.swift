@@ -16,7 +16,7 @@ public struct PluginListParams: Codable, Hashable, Sendable {
     /// Defaults to `20`. Ranges from `1` to `100`.
     public var limit: Int?
     /// Only Plugins in this plugin marketplace (prefixed `marketplace_`).
-    public var marketplaceId: String??
+    public var marketplaceID: String??
     /// For a `read:org_audit` or `read:compliance_org_data` key created for all of a
     /// parent organization's linked organizations: a child organization of that parent
     /// to read instead of the organization the key was created in, given as the
@@ -24,29 +24,29 @@ public struct PluginListParams: Codable, Hashable, Sendable {
     /// 400; an organization that is not a child of the key's parent, or where the
     /// Plugins API is not available, returns a 404. Any other key may pass only its own
     /// organization's ID here; another organization returns a 404.
-    public var organizationId: String??
+    public var organizationID: String??
     /// `organization` for Plugins in the organization's plugin marketplaces, `user` for
     /// Plugins in members' personal plugin marketplaces.
     public var ownerType: OwnerType??
     /// Only Plugins in this member's personal plugin marketplaces (prefixed `user_`); a
     /// removed member's ID is accepted.
-    public var ownerUserId: String??
+    public var ownerUserID: String??
     /// Optionally set to the `next_page` token from the previous response.
     public var page: String??
     /// This endpoint is in beta: requests must send `ce-plugins-2026-09-01` in this
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(createdAtGt: CreatedAtGt?? = nil, createdAtGte: CreatedAtGte?? = nil, createdAtLt: CreatedAtLt?? = nil, createdAtLte: CreatedAtLte?? = nil, limit: Int? = nil, marketplaceId: String?? = nil, organizationId: String?? = nil, ownerType: OwnerType?? = nil, ownerUserId: String?? = nil, page: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(createdAtGt: CreatedAtGt?? = nil, createdAtGte: CreatedAtGte?? = nil, createdAtLt: CreatedAtLt?? = nil, createdAtLte: CreatedAtLte?? = nil, limit: Int? = nil, marketplaceID: String?? = nil, organizationID: String?? = nil, ownerType: OwnerType?? = nil, ownerUserID: String?? = nil, page: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.createdAtGt = createdAtGt
         self.createdAtGte = createdAtGte
         self.createdAtLt = createdAtLt
         self.createdAtLte = createdAtLte
         self.limit = limit
-        self.marketplaceId = marketplaceId
-        self.organizationId = organizationId
+        self.marketplaceID = marketplaceID
+        self.organizationID = organizationID
         self.ownerType = ownerType
-        self.ownerUserId = ownerUserId
+        self.ownerUserID = ownerUserID
         self.page = page
         self.betas = betas
     }
@@ -57,10 +57,10 @@ public struct PluginListParams: Codable, Hashable, Sendable {
         case createdAtLt = "created_at_lt"
         case createdAtLte = "created_at_lte"
         case limit
-        case marketplaceId = "marketplace_id"
-        case organizationId = "organization_id"
+        case marketplaceID = "marketplace_id"
+        case organizationID = "organization_id"
         case ownerType = "owner_type"
-        case ownerUserId = "owner_user_id"
+        case ownerUserID = "owner_user_id"
         case page
         case betas
     }

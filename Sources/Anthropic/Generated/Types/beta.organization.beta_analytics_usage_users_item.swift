@@ -25,7 +25,7 @@ public struct BetaAnalyticsUsageUsersItem: Codable, Hashable, Sendable {
     /// `monitoring`, and `proactive` usage Claude initiated), so per-user rows can sum
     /// to less than the Claude Tag total. Cannot be combined with
     /// `group_by[]=rbac_group_id` or the `rbac_group_ids[]` filter.
-    public var claudeTagUserId: String?
+    public var claudeTagUserID: String?
     /// Context-window pricing tier of the usage or cost.
     ///
     /// Null unless `context_window` is in `group_by[]`; it can also be null on grouped
@@ -68,7 +68,7 @@ public struct BetaAnalyticsUsageUsersItem: Codable, Hashable, Sendable {
     /// and their sum can exceed the org total. A null value is the single unassigned
     /// row: users in no group on that (UTC) day. For the true org total, run the same
     /// query without `group_by[]`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Number of API requests in this row's scope.
     ///
     /// For sandbox / code-execution events, this counts execution spans rather than
@@ -80,7 +80,7 @@ public struct BetaAnalyticsUsageUsersItem: Codable, Hashable, Sendable {
     ///
     /// Populated only when `slack_channel_id` is in `group_by[]`; null for usage
     /// outside Slack (and for rows recorded before channel attribution was enabled).
-    public var slackChannelId: String?
+    public var slackChannelID: String?
     /// Inference speed mode of the usage or cost: `fast` or `standard`.
     ///
     /// Null unless `speed` is in `group_by[]`.
@@ -97,22 +97,22 @@ public struct BetaAnalyticsUsageUsersItem: Codable, Hashable, Sendable {
     /// The number of uncached input tokens processed.
     public var uncachedInputTokens: Int
 
-    public init(actor: BetaAnalyticsUserActor, cacheCreation: BetaCacheCreation, cacheReadInputTokens: Int, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserId: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, endingAt: Date? = nil, inferenceGeo: InferenceGeo? = nil, model: String? = nil, outputTokens: Int, product: String? = nil, rbacGroupId: String? = nil, requests: Int? = nil, serverToolUse: BetaAnalyticsServerToolUse, slackChannelId: String? = nil, speed: Speed? = nil, startingAt: Date? = nil, totalTokens: Int, uncachedInputTokens: Int) {
+    public init(actor: BetaAnalyticsUserActor, cacheCreation: BetaCacheCreation, cacheReadInputTokens: Int, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserID: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, endingAt: Date? = nil, inferenceGeo: InferenceGeo? = nil, model: String? = nil, outputTokens: Int, product: String? = nil, rbacGroupID: String? = nil, requests: Int? = nil, serverToolUse: BetaAnalyticsServerToolUse, slackChannelID: String? = nil, speed: Speed? = nil, startingAt: Date? = nil, totalTokens: Int, uncachedInputTokens: Int) {
         self.actor = actor
         self.cacheCreation = cacheCreation
         self.cacheReadInputTokens = cacheReadInputTokens
         self.claudeTagCategory = claudeTagCategory
-        self.claudeTagUserId = claudeTagUserId
+        self.claudeTagUserID = claudeTagUserID
         self.contextWindow = contextWindow
         self.endingAt = endingAt
         self.inferenceGeo = inferenceGeo
         self.model = model
         self.outputTokens = outputTokens
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.requests = requests
         self.serverToolUse = serverToolUse
-        self.slackChannelId = slackChannelId
+        self.slackChannelID = slackChannelID
         self.speed = speed
         self.startingAt = startingAt
         self.totalTokens = totalTokens
@@ -124,17 +124,17 @@ public struct BetaAnalyticsUsageUsersItem: Codable, Hashable, Sendable {
         case cacheCreation = "cache_creation"
         case cacheReadInputTokens = "cache_read_input_tokens"
         case claudeTagCategory = "claude_tag_category"
-        case claudeTagUserId = "claude_tag_user_id"
+        case claudeTagUserID = "claude_tag_user_id"
         case contextWindow = "context_window"
         case endingAt = "ending_at"
         case inferenceGeo = "inference_geo"
         case model
         case outputTokens = "output_tokens"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case requests
         case serverToolUse = "server_tool_use"
-        case slackChannelId = "slack_channel_id"
+        case slackChannelID = "slack_channel_id"
         case speed
         case startingAt = "starting_at"
         case totalTokens = "total_tokens"

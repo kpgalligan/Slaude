@@ -10,16 +10,16 @@ public struct BetaOutputBehaviorUpdateExistingParam: Codable, Hashable, Sendable
     /// (`memstore_...`).
     ///
     /// It must be the memory store in the `memory_store` entry of `inputs`.
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     public var type: String
 
-    public init(memoryStoreId: String, type: String = "update_existing") {
-        self.memoryStoreId = memoryStoreId
+    public init(memoryStoreID: String, type: String = "update_existing") {
+        self.memoryStoreID = memoryStoreID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case type
     }
 }

@@ -12,7 +12,7 @@ public struct BetaManagedAgentsUserToolConfirmationEvent: Codable, Hashable, Sen
     /// corresponds to, which can be found in the last `session.status_idle`
     /// [event's](https://platform.claude.com/docs/en/api/beta/sessions/events/list#beta_managed_agents_session_requires_action.event_ids)
     /// `stop_reason.event_ids` field.
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Optional message providing context for a 'deny' decision.
     ///
@@ -23,26 +23,26 @@ public struct BetaManagedAgentsUserToolConfirmationEvent: Codable, Hashable, Sen
     /// Set by the server to the subagent thread this confirmation was routed to.
     ///
     /// Omitted when it was routed to the primary thread.
-    public var sessionThreadId: String?
+    public var sessionThreadID: String?
 
-    public init(id: String, result: Result, toolUseId: String, type: String = "user.tool_confirmation", denyMessage: String? = nil, processedAt: Date? = nil, sessionThreadId: String? = nil) {
+    public init(id: String, result: Result, toolUseID: String, type: String = "user.tool_confirmation", denyMessage: String? = nil, processedAt: Date? = nil, sessionThreadID: String? = nil) {
         self.id = id
         self.result = result
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.denyMessage = denyMessage
         self.processedAt = processedAt
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case result
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case denyMessage = "deny_message"
         case processedAt = "processed_at"
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
     }
 
     public enum Result: OpenEnum, CaseIterable {

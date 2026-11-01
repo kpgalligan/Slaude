@@ -34,15 +34,15 @@ public struct UserProfileListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(enforcementStatus: [UserProfileEnforcementStatus]? = nil, limit: Int? = nil, order: UserProfileListOrder? = nil, orderBy: UserProfileListOrderBy? = nil, page: String? = nil, workspaceId: String? = nil) {
+    public init(enforcementStatus: [UserProfileEnforcementStatus]? = nil, limit: Int? = nil, order: UserProfileListOrder? = nil, orderBy: UserProfileListOrderBy? = nil, page: String? = nil, workspaceID: String? = nil) {
         self.enforcementStatus = enforcementStatus
         self.limit = limit
         self.order = order
         self.orderBy = orderBy
         self.page = page
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -51,6 +51,6 @@ public struct UserProfileListParams: Codable, Hashable, Sendable {
         case order
         case orderBy = "order_by"
         case page
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

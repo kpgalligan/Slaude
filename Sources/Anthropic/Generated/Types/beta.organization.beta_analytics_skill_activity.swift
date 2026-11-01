@@ -112,7 +112,7 @@ public struct BetaAnalyticsSkillActivity: Codable, Hashable, Sendable {
     public var product: String?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -140,9 +140,9 @@ public struct BetaAnalyticsSkillActivity: Codable, Hashable, Sendable {
     /// Tagged user identifier (e.g.
     ///
     /// `user_...`). Present only when the request grouped by `user_id`.
-    public var userId: String?
+    public var userID: String?
 
-    public init(chatMetrics: BetaAnalyticsSkillChatMetrics, claudeCodeMetrics: BetaAnalyticsSkillClaudeCodeMetrics, coworkMetrics: BetaAnalyticsSkillCoworkMetrics, distinctUserCount: Int, officeMetrics: BetaAnalyticsSkillOfficeMetrics, skillName: String, attributedListPrice: String? = nil, chatCoworkUnifiedMetrics: BetaAnalyticsSkillActivity.ChatCoworkUnifiedMetrics? = nil, currency: String? = nil, enableCount: Int? = nil, estimatedOverageSpend: String? = nil, invocationCount: Int? = nil, product: String? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, shareStatus: ShareStatus? = nil, skillDisplayName: String? = nil, userId: String? = nil) {
+    public init(chatMetrics: BetaAnalyticsSkillChatMetrics, claudeCodeMetrics: BetaAnalyticsSkillClaudeCodeMetrics, coworkMetrics: BetaAnalyticsSkillCoworkMetrics, distinctUserCount: Int, officeMetrics: BetaAnalyticsSkillOfficeMetrics, skillName: String, attributedListPrice: String? = nil, chatCoworkUnifiedMetrics: BetaAnalyticsSkillActivity.ChatCoworkUnifiedMetrics? = nil, currency: String? = nil, enableCount: Int? = nil, estimatedOverageSpend: String? = nil, invocationCount: Int? = nil, product: String? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, shareStatus: ShareStatus? = nil, skillDisplayName: String? = nil, userID: String? = nil) {
         self.chatMetrics = chatMetrics
         self.claudeCodeMetrics = claudeCodeMetrics
         self.coworkMetrics = coworkMetrics
@@ -156,11 +156,11 @@ public struct BetaAnalyticsSkillActivity: Codable, Hashable, Sendable {
         self.estimatedOverageSpend = estimatedOverageSpend
         self.invocationCount = invocationCount
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
         self.shareStatus = shareStatus
         self.skillDisplayName = skillDisplayName
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -177,11 +177,11 @@ public struct BetaAnalyticsSkillActivity: Codable, Hashable, Sendable {
         case estimatedOverageSpend = "estimated_overage_spend"
         case invocationCount = "invocation_count"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
         case shareStatus = "share_status"
         case skillDisplayName = "skill_display_name"
-        case userId = "user_id"
+        case userID = "user_id"
     }
 
     public enum ShareStatus: OpenEnum, CaseIterable {

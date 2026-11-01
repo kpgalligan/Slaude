@@ -10,15 +10,15 @@ public struct BetaBrowserFindInput: Codable, Hashable, Sendable {
     /// Natural-language description of the element(s) to find.
     public var query: String
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(query: String, tabId: String? = nil) {
+    public init(query: String, tabID: String? = nil) {
         self.query = query
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case query
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

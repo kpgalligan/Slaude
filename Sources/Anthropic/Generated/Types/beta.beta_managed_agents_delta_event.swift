@@ -16,18 +16,18 @@ public struct BetaManagedAgentsDeltaEvent: Codable, Hashable, Sendable {
     ///
     /// Matches event.id on the corresponding event_start and the buffered event that
     /// reconciles the preview.
-    public var eventId: String
+    public var eventID: String
     public var type: String
 
-    public init(delta: BetaManagedAgentsDeltaContent, eventId: String, type: String = "event_delta") {
+    public init(delta: BetaManagedAgentsDeltaContent, eventID: String, type: String = "event_delta") {
         self.delta = delta
-        self.eventId = eventId
+        self.eventID = eventID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case delta
-        case eventId = "event_id"
+        case eventID = "event_id"
         case type
     }
 }

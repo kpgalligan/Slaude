@@ -7,16 +7,16 @@ public struct CitationCharLocation: Codable, Hashable, Sendable {
     public var documentIndex: Int
     public var documentTitle: String?
     public var endCharIndex: Int
-    public var fileId: String?
+    public var fileID: String?
     public var startCharIndex: Int
     public var type: String
 
-    public init(citedText: String, documentIndex: Int, documentTitle: String? = nil, endCharIndex: Int, fileId: String? = nil, startCharIndex: Int, type: String = "char_location") {
+    public init(citedText: String, documentIndex: Int, documentTitle: String? = nil, endCharIndex: Int, fileID: String? = nil, startCharIndex: Int, type: String = "char_location") {
         self.citedText = citedText
         self.documentIndex = documentIndex
         self.documentTitle = documentTitle
         self.endCharIndex = endCharIndex
-        self.fileId = fileId
+        self.fileID = fileID
         self.startCharIndex = startCharIndex
         self.type = type
     }
@@ -26,7 +26,7 @@ public struct CitationCharLocation: Codable, Hashable, Sendable {
         case documentIndex = "document_index"
         case documentTitle = "document_title"
         case endCharIndex = "end_char_index"
-        case fileId = "file_id"
+        case fileID = "file_id"
         case startCharIndex = "start_char_index"
         case type
     }

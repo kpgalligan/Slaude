@@ -20,7 +20,7 @@ public struct APIKey: Codable, Hashable, Sendable {
     public var partialKeyHint: String?
     /// The principal the API key acts as (a User or a Service Account), or `null` if
     /// the API key is not bound to a principal.
-    public var principal: APIKey.Principal??
+    public var principal: APIKey.Principal?
     /// Where the API key belongs: its Workspace
     /// (`{"type": "workspace", "workspace_id": "wrkspc_..."}`, with the Workspace's
     /// real ID even when it is the organization's default Workspace), or the
@@ -34,7 +34,7 @@ public struct APIKey: Codable, Hashable, Sendable {
     /// For API Keys, this is always `"api_key"`.
     public var type: String
 
-    public init(id: String, createdAt: Date, createdBy: APIKeyCreatedBy? = nil, expiresAt: Date? = nil, name: String, partialKeyHint: String? = nil, principal: APIKey.Principal?? = nil, scope: APIKey.Scope, status: Status, type: String = "api_key") {
+    public init(id: String, createdAt: Date, createdBy: APIKeyCreatedBy? = nil, expiresAt: Date? = nil, name: String, partialKeyHint: String? = nil, principal: APIKey.Principal? = nil, scope: APIKey.Scope, status: Status, type: String = "api_key") {
         self.id = id
         self.createdAt = createdAt
         self.createdBy = createdBy

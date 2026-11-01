@@ -4,7 +4,7 @@ import Foundation
 
 public struct MemoryUpdateParams: Codable, Hashable, Sendable {
     /// The ID of the memory store that holds the memory (`memstore_...`).
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     /// Whether a `memory` or `memory_version` in the response includes its `content`.
     ///
     /// Defaults to `full` on retrieve operations and to `basic` on list, create, and
@@ -41,25 +41,25 @@ public struct MemoryUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(memoryStoreId: String, view: BetaManagedAgentsMemoryView? = nil, content: String?? = nil, path: String?? = nil, precondition: BetaManagedAgentsPreconditionParam? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.memoryStoreId = memoryStoreId
+    public init(memoryStoreID: String, view: BetaManagedAgentsMemoryView? = nil, content: String?? = nil, path: String?? = nil, precondition: BetaManagedAgentsPreconditionParam? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.memoryStoreID = memoryStoreID
         self.view = view
         self.content = content
         self.path = path
         self.precondition = precondition
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case view
         case content
         case path
         case precondition
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

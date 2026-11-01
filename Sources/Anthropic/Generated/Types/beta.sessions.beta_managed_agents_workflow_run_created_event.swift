@@ -22,16 +22,16 @@ public struct BetaManagedAgentsWorkflowRunCreatedEvent: Codable, Hashable, Senda
     /// Identifier of the run.
     ///
     /// The same value is on all of the run's `workflow_run.*` events.
-    public var workflowRunId: String
+    public var workflowRunID: String
 
-    public init(id: String, description: String? = nil, name: String, phases: [BetaManagedAgentsWorkflowRunPhase], processedAt: Date, type: String = "workflow_run.created", workflowRunId: String) {
+    public init(id: String, description: String? = nil, name: String, phases: [BetaManagedAgentsWorkflowRunPhase], processedAt: Date, type: String = "workflow_run.created", workflowRunID: String) {
         self.id = id
         self.description = description
         self.name = name
         self.phases = phases
         self.processedAt = processedAt
         self.type = type
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -41,6 +41,6 @@ public struct BetaManagedAgentsWorkflowRunCreatedEvent: Codable, Hashable, Senda
         case phases
         case processedAt = "processed_at"
         case type
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }

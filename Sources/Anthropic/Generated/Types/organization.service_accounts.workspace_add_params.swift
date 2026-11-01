@@ -4,17 +4,17 @@ import Foundation
 
 public struct WorkspaceAddParams: Codable, Hashable, Sendable {
     /// Tagged workspace ID to add the service account to.
-    public var workspaceId: String
+    public var workspaceID: String
     /// Role to assign to the service account in this workspace.
     public var workspaceRole: NoBillingWorkspaceRole
 
-    public init(workspaceId: String, workspaceRole: NoBillingWorkspaceRole) {
-        self.workspaceId = workspaceId
+    public init(workspaceID: String, workspaceRole: NoBillingWorkspaceRole) {
+        self.workspaceID = workspaceID
         self.workspaceRole = workspaceRole
     }
 
     enum CodingKeys: String, CodingKey {
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case workspaceRole = "workspace_role"
     }
 }

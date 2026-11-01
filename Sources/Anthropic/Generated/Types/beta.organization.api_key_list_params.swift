@@ -6,13 +6,13 @@ public struct BetaOrganizationAPIKeyListParams: Codable, Hashable, Sendable {
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately after this object.
-    public var afterId: String?
+    public var afterID: String?
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately before this object.
-    public var beforeId: String?
+    public var beforeID: String?
     /// Filter by the ID of the User who created the object.
-    public var createdByUserId: String??
+    public var createdByUserID: String??
     /// Number of items to return per page.
     ///
     /// Defaults to `20`. Ranges from `1` to `1000`.
@@ -20,24 +20,24 @@ public struct BetaOrganizationAPIKeyListParams: Codable, Hashable, Sendable {
     /// Filter by API key status.
     public var status: Status??
     /// Filter by Workspace ID.
-    public var workspaceId: String??
+    public var workspaceID: String??
 
-    public init(afterId: String? = nil, beforeId: String? = nil, createdByUserId: String?? = nil, limit: Int? = nil, status: Status?? = nil, workspaceId: String?? = nil) {
-        self.afterId = afterId
-        self.beforeId = beforeId
-        self.createdByUserId = createdByUserId
+    public init(afterID: String? = nil, beforeID: String? = nil, createdByUserID: String?? = nil, limit: Int? = nil, status: Status?? = nil, workspaceID: String?? = nil) {
+        self.afterID = afterID
+        self.beforeID = beforeID
+        self.createdByUserID = createdByUserID
         self.limit = limit
         self.status = status
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case afterId = "after_id"
-        case beforeId = "before_id"
-        case createdByUserId = "created_by_user_id"
+        case afterID = "after_id"
+        case beforeID = "before_id"
+        case createdByUserID = "created_by_user_id"
         case limit
         case status
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum Status: OpenEnum, CaseIterable {

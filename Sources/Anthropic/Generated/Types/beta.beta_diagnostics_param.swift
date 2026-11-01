@@ -13,13 +13,13 @@ public struct BetaDiagnosticsParam: Codable, Hashable, Sendable {
     /// returns `diagnostics.cache_miss_reason` when the prompt-cache prefix could not
     /// be reused. Pass `null` on the first turn to opt in without a prior message to
     /// compare.
-    public var previousMessageId: String??
+    public var previousMessageID: String??
 
-    public init(previousMessageId: String?? = nil) {
-        self.previousMessageId = previousMessageId
+    public init(previousMessageID: String?? = nil) {
+        self.previousMessageID = previousMessageID
     }
 
     enum CodingKeys: String, CodingKey {
-        case previousMessageId = "previous_message_id"
+        case previousMessageID = "previous_message_id"
     }
 }

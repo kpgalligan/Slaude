@@ -15,7 +15,7 @@ public struct PluginCreateParams: Codable, Hashable, Sendable {
     /// are uploaded rather than synchronized from a repository. When omitted, the
     /// Plugin is created in the organization's library marketplace, an
     /// organization-owned `manual` marketplace created on first use.
-    public var marketplaceId: String?
+    public var marketplaceID: String?
     /// Release notes stored with the version and shown in its version history in
     /// claude.ai; up to 5,000 characters.
     public var releaseNotes: String?
@@ -23,16 +23,16 @@ public struct PluginCreateParams: Codable, Hashable, Sendable {
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(files: [FileUpload], marketplaceId: String? = nil, releaseNotes: String? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(files: [FileUpload], marketplaceID: String? = nil, releaseNotes: String? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.files = files
-        self.marketplaceId = marketplaceId
+        self.marketplaceID = marketplaceID
         self.releaseNotes = releaseNotes
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
         case files
-        case marketplaceId = "marketplace_id"
+        case marketplaceID = "marketplace_id"
         case releaseNotes = "release_notes"
         case betas
     }

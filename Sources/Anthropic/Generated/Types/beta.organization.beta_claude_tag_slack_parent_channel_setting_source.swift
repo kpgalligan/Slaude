@@ -7,16 +7,16 @@ import Foundation
 /// A parent channel contributes `instructions` and `environment_id` only.
 public struct BetaClaudeTagSlackParentChannelSettingSource: Codable, Hashable, Sendable {
     /// The parent channel's identifier, starting with `slch_`.
-    public var slackChannelId: String
+    public var slackChannelID: String
     public var type: String
 
-    public init(slackChannelId: String, type: String = "slack_parent_channel") {
-        self.slackChannelId = slackChannelId
+    public init(slackChannelID: String, type: String = "slack_parent_channel") {
+        self.slackChannelID = slackChannelID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case slackChannelId = "slack_channel_id"
+        case slackChannelID = "slack_channel_id"
         case type
     }
 }

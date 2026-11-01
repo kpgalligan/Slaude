@@ -16,7 +16,7 @@ public struct BetaUserProfileUpdateParams: Codable, Hashable, Sendable {
     /// Omit to leave unchanged. Maximum 255 characters. Legacy field, accepted only
     /// under the `user-profiles-2026-03-24` and `user-profiles-2026-08-18` beta
     /// headers; without one of them, send `external_user_details.reference_id`.
-    public var externalId: String??
+    public var externalID: String??
     /// Details about the entity this profile represents, as the platform states them.
     ///
     /// Each field sent replaces the stored value; omit a field to leave it unchanged.
@@ -50,28 +50,28 @@ public struct BetaUserProfileUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(accessType: AccessType?? = nil, externalId: String?? = nil, externalUserDetails: BetaUserProfileExternalUserDetailsParams? = nil, externalUserOnboardedAt: ExternalUserOnboardedAt? = nil, metadata: [String: String]? = nil, name: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(accessType: AccessType?? = nil, externalID: String?? = nil, externalUserDetails: BetaUserProfileExternalUserDetailsParams? = nil, externalUserOnboardedAt: ExternalUserOnboardedAt? = nil, metadata: [String: String]? = nil, name: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.accessType = accessType
-        self.externalId = externalId
+        self.externalID = externalID
         self.externalUserDetails = externalUserDetails
         self.externalUserOnboardedAt = externalUserOnboardedAt
         self.metadata = metadata
         self.name = name
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case accessType = "access_type"
-        case externalId = "external_id"
+        case externalID = "external_id"
         case externalUserDetails = "external_user_details"
         case externalUserOnboardedAt = "external_user_onboarded_at"
         case metadata
         case name
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum AccessType: OpenEnum, CaseIterable {

@@ -19,17 +19,17 @@ public struct FileUploadParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(file: FileUpload, expiresInSeconds: Int? = nil, workspaceId: String? = nil) {
+    public init(file: FileUpload, expiresInSeconds: Int? = nil, workspaceID: String? = nil) {
         self.file = file
         self.expiresInSeconds = expiresInSeconds
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case file
         case expiresInSeconds = "expires_in_seconds"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

@@ -3,7 +3,7 @@
 import Foundation
 
 public struct ResourceUpdateParams: Codable, Hashable, Sendable {
-    public var sessionId: String
+    public var sessionID: String
     /// New authorization token for the resource.
     ///
     /// Currently only `github_repository` resources support token rotation.
@@ -18,19 +18,19 @@ public struct ResourceUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(sessionId: String, authorizationToken: String, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.sessionId = sessionId
+    public init(sessionID: String, authorizationToken: String, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.sessionID = sessionID
         self.authorizationToken = authorizationToken
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case sessionId = "session_id"
+        case sessionID = "session_id"
         case authorizationToken = "authorization_token"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

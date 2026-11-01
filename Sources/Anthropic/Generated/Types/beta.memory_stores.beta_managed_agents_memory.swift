@@ -27,7 +27,7 @@ public struct BetaManagedAgentsMemory: Codable, Hashable, Sendable {
     /// When this memory was created, in RFC 3339 format.
     public var createdAt: Date
     /// ID of the memory store this memory belongs to (a `memstore_...` value).
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     /// The ID of the memory version that holds the memory's current content
     /// (`memver_...`).
     ///
@@ -37,7 +37,7 @@ public struct BetaManagedAgentsMemory: Codable, Hashable, Sendable {
     /// See the
     /// [memory guide](https://platform.claude.com/docs/en/managed-agents/memory#audit-memory-changes)
     /// to learn more about memory versions.
-    public var memoryVersionId: String
+    public var memoryVersionID: String
     /// Hierarchical path of the memory within the store, e.g.
     ///
     /// `/projects/foo/notes.md`. Always starts with `/`. Paths are case-sensitive and
@@ -54,13 +54,13 @@ public struct BetaManagedAgentsMemory: Codable, Hashable, Sendable {
     /// The maximum size is 100 kB (102,400 bytes).
     public var content: String?
 
-    public init(id: String, contentSha256: String, contentSizeBytes: Int, createdAt: Date, memoryStoreId: String, memoryVersionId: String, path: String, type: String = "memory", updatedAt: Date, content: String? = nil) {
+    public init(id: String, contentSha256: String, contentSizeBytes: Int, createdAt: Date, memoryStoreID: String, memoryVersionID: String, path: String, type: String = "memory", updatedAt: Date, content: String? = nil) {
         self.id = id
         self.contentSha256 = contentSha256
         self.contentSizeBytes = contentSizeBytes
         self.createdAt = createdAt
-        self.memoryStoreId = memoryStoreId
-        self.memoryVersionId = memoryVersionId
+        self.memoryStoreID = memoryStoreID
+        self.memoryVersionID = memoryVersionID
         self.path = path
         self.type = type
         self.updatedAt = updatedAt
@@ -72,8 +72,8 @@ public struct BetaManagedAgentsMemory: Codable, Hashable, Sendable {
         case contentSha256 = "content_sha256"
         case contentSizeBytes = "content_size_bytes"
         case createdAt = "created_at"
-        case memoryStoreId = "memory_store_id"
-        case memoryVersionId = "memory_version_id"
+        case memoryStoreID = "memory_store_id"
+        case memoryVersionID = "memory_version_id"
         case path
         case type
         case updatedAt = "updated_at"

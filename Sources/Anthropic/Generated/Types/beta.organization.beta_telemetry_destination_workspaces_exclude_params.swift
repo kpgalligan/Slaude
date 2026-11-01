@@ -23,15 +23,15 @@ public struct BetaTelemetryDestinationWorkspacesExcludeParams: Codable, Hashable
     ///
     /// An ID sent more than once is added once. An archived workspace can't be added to
     /// a list. An update can keep an archived workspace that is already on the list.
-    public var workspaceIds: [String]?
+    public var workspaceIDs: [String]?
 
-    public init(type: String = "exclude", workspaceIds: [String]? = nil) {
+    public init(type: String = "exclude", workspaceIDs: [String]? = nil) {
         self.type = type
-        self.workspaceIds = workspaceIds
+        self.workspaceIDs = workspaceIDs
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case workspaceIds = "workspace_ids"
+        case workspaceIDs = "workspace_ids"
     }
 }

@@ -10,11 +10,11 @@ public struct BetaManagedAgentsGitHubRepositoryResourceConfig: Codable, Hashable
     /// Github URL of the repository
     public var url: String
     /// Branch or commit to check out. Defaults to the repository's default branch.
-    public var checkout: BetaManagedAgentsGitHubRepositoryResourceConfig.Checkout??
+    public var checkout: BetaManagedAgentsGitHubRepositoryResourceConfig.Checkout?
     /// Mount path in the container. Defaults to `/workspace/<repo-name>`.
     public var mountPath: String?
 
-    public init(type: String = "github_repository", url: String, checkout: BetaManagedAgentsGitHubRepositoryResourceConfig.Checkout?? = nil, mountPath: String? = nil) {
+    public init(type: String = "github_repository", url: String, checkout: BetaManagedAgentsGitHubRepositoryResourceConfig.Checkout? = nil, mountPath: String? = nil) {
         self.type = type
         self.url = url
         self.checkout = checkout

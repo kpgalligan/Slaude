@@ -11,17 +11,17 @@ public struct BetaBrowserMiddleClickInput: Codable, Hashable, Sendable {
     /// "shift", "ctrl+shift", "cmd+alt").
     public var modifiers: String?
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BetaBrowserClickTarget, modifiers: String? = nil, tabId: String? = nil) {
+    public init(target: BetaBrowserClickTarget, modifiers: String? = nil, tabID: String? = nil) {
         self.target = target
         self.modifiers = modifiers
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
         case modifiers
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

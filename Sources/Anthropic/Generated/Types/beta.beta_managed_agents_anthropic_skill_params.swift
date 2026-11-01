@@ -5,19 +5,19 @@ import Foundation
 /// An Anthropic-managed skill.
 public struct BetaManagedAgentsAnthropicSkillParams: Codable, Hashable, Sendable {
     /// Identifier of the Anthropic skill (e.g., "xlsx").
-    public var skillId: String
+    public var skillID: String
     public var type: String
     /// Version to pin. Defaults to latest if omitted.
     public var version: String??
 
-    public init(skillId: String, type: String = "anthropic", version: String?? = nil) {
-        self.skillId = skillId
+    public init(skillID: String, type: String = "anthropic", version: String?? = nil) {
+        self.skillID = skillID
         self.type = type
         self.version = version
     }
 
     enum CodingKeys: String, CodingKey {
-        case skillId = "skill_id"
+        case skillID = "skill_id"
         case type
         case version
     }

@@ -8,16 +8,16 @@ public struct BetaManagedAgentsSessionActor: Codable, Hashable, Sendable {
     ///
     /// Look up the session via [Retrieve a session](/en/api/beta/sessions/retrieve) for
     /// further provenance.
-    public var sessionId: String
+    public var sessionID: String
     public var type: String
 
-    public init(sessionId: String, type: String = "session_actor") {
-        self.sessionId = sessionId
+    public init(sessionID: String, type: String = "session_actor") {
+        self.sessionID = sessionID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case sessionId = "session_id"
+        case sessionID = "session_id"
         case type
     }
 }

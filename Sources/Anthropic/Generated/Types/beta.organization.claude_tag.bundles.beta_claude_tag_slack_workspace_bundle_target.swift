@@ -16,20 +16,20 @@ public struct BetaClaudeTagSlackWorkspaceBundleTarget: Codable, Hashable, Sendab
     public var createdAt: Date
     /// The identifier of the Slack workspace the Bundle is attached to, starting with
     /// `slws_`.
-    public var slackWorkspaceId: String
+    public var slackWorkspaceID: String
     public var type: String
 
-    public init(id: String, createdAt: Date, slackWorkspaceId: String, type: String = "slack_workspace") {
+    public init(id: String, createdAt: Date, slackWorkspaceID: String, type: String = "slack_workspace") {
         self.id = id
         self.createdAt = createdAt
-        self.slackWorkspaceId = slackWorkspaceId
+        self.slackWorkspaceID = slackWorkspaceID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
-        case slackWorkspaceId = "slack_workspace_id"
+        case slackWorkspaceID = "slack_workspace_id"
         case type
     }
 }

@@ -7,30 +7,30 @@ public struct FederationRuleWorkspace: Codable, Hashable, Sendable {
     public var createdAt: Date
     /// Tagged ID (`user_...` or `svac_...`) of the actor that enabled this workspace
     /// for the rule, if known.
-    public var createdByActorId: String?
+    public var createdByActorID: String?
     /// Tagged ID of the federation rule.
-    public var federationRuleId: String
+    public var federationRuleID: String
     public var type: String
     /// Tagged ID of the workspace this rule is enabled for.
-    public var workspaceId: String
+    public var workspaceID: String
     /// Workspace display name. Populated when listing; null in the enable response.
     public var workspaceName: String?
 
-    public init(createdAt: Date, createdByActorId: String? = nil, federationRuleId: String, type: String = "federation_rule_workspace", workspaceId: String, workspaceName: String? = nil) {
+    public init(createdAt: Date, createdByActorID: String? = nil, federationRuleID: String, type: String = "federation_rule_workspace", workspaceID: String, workspaceName: String? = nil) {
         self.createdAt = createdAt
-        self.createdByActorId = createdByActorId
-        self.federationRuleId = federationRuleId
+        self.createdByActorID = createdByActorID
+        self.federationRuleID = federationRuleID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
         self.workspaceName = workspaceName
     }
 
     enum CodingKeys: String, CodingKey {
         case createdAt = "created_at"
-        case createdByActorId = "created_by_actor_id"
-        case federationRuleId = "federation_rule_id"
+        case createdByActorID = "created_by_actor_id"
+        case federationRuleID = "federation_rule_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case workspaceName = "workspace_name"
     }
 }

@@ -4,20 +4,20 @@ import Foundation
 
 public struct BetaWebFetchToolResultBlock: Codable, Hashable, Sendable {
     public var content: BetaWebFetchToolResultBlock.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     public var caller: BetaWebFetchToolResultBlock.Caller?
 
-    public init(content: BetaWebFetchToolResultBlock.Content, toolUseId: String, type: String = "web_fetch_tool_result", caller: BetaWebFetchToolResultBlock.Caller? = nil) {
+    public init(content: BetaWebFetchToolResultBlock.Content, toolUseID: String, type: String = "web_fetch_tool_result", caller: BetaWebFetchToolResultBlock.Caller? = nil) {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.caller = caller
     }
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case caller
     }

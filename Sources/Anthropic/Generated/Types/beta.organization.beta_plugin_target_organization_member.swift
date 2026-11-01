@@ -6,15 +6,15 @@ public struct BetaPluginTargetOrganizationMember: Codable, Hashable, Sendable {
     /// One member of the organization.
     public var type: String
     /// The member's User ID.
-    public var userId: String
+    public var userID: String
 
-    public init(type: String = "organization_member", userId: String) {
+    public init(type: String = "organization_member", userID: String) {
         self.type = type
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

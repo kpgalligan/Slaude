@@ -3,15 +3,15 @@
 import Foundation
 
 public struct BetaRequestMCPToolResultBlockParam: Codable, Hashable, Sendable {
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Create a cache control breakpoint at this content block.
     public var cacheControl: BetaCacheControlEphemeralParam??
     public var content: Content?
     public var isError: Bool?
 
-    public init(toolUseId: String, type: String = "mcp_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil, content: Content? = nil, isError: Bool? = nil) {
-        self.toolUseId = toolUseId
+    public init(toolUseID: String, type: String = "mcp_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil, content: Content? = nil, isError: Bool? = nil) {
+        self.toolUseID = toolUseID
         self.type = type
         self.cacheControl = cacheControl
         self.content = content
@@ -19,7 +19,7 @@ public struct BetaRequestMCPToolResultBlockParam: Codable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case cacheControl = "cache_control"
         case content

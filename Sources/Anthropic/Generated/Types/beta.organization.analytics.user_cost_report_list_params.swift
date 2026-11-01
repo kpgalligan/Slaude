@@ -28,7 +28,7 @@ public struct UserCostReportListParams: Codable, Hashable, Sendable {
     /// by Slack user ID (for example `U0123ABCDEF`), not claude.ai user ID. Usage that
     /// is not Claude Tag, and Claude Tag usage not attributed to a single user, never
     /// matches. Use `group_by[]=claude_tag_user_id` to break out per-user values.
-    public var claudeTagUserIds: [String]??
+    public var claudeTagUserIDs: [String]??
     /// Filter to specific context-window pricing tiers.
     ///
     /// Use `group_by[]=context_window` to break out per-tier values.
@@ -82,23 +82,23 @@ public struct UserCostReportListParams: Codable, Hashable, Sendable {
     /// Accepts tagged RBAC group IDs (`rbac_group_...`) or bare group UUIDs. A row
     /// matches when the user belonged to any of the listed groups on the (UTC) day the
     /// usage occurred; usage with no group attribution never matches.
-    public var rbacGroupIds: [String]??
+    public var rbacGroupIDs: [String]??
     /// Filter to usage originating from specific Slack channels.
     ///
     /// Use `group_by[]=slack_channel_id` to break out per-channel values.
-    public var slackChannelIds: [String]??
+    public var slackChannelIDs: [String]??
     /// Filter to fast or standard inference mode.
     ///
     /// Use `group_by[]=speed` to break out per-mode values.
     public var speeds: [Speeds]??
     /// Filter to specific users by tagged user ID.
-    public var userIds: [String]??
+    public var userIDs: [String]??
 
-    public init(startingAt: StartingAt, bucketWidth: BucketWidth?? = nil, claudeTagCategories: [BetaAnalyticsClaudeTagCategory]?? = nil, claudeTagUserIds: [String]?? = nil, contextWindows: [BetaAnalyticsContextWindow]?? = nil, endingAt: EndingAt?? = nil, excludeDeletedUsers: Bool? = nil, groupBy: [GroupBy]?? = nil, inferenceGeos: [BetaAnalyticsInferenceGeoFilter]?? = nil, limit: Int? = nil, models: [String]?? = nil, order: Order? = nil, orderBy: OrderBy? = nil, page: String?? = nil, products: [BetaAnalyticsProductFilter]?? = nil, rbacGroupIds: [String]?? = nil, slackChannelIds: [String]?? = nil, speeds: [Speeds]?? = nil, userIds: [String]?? = nil) {
+    public init(startingAt: StartingAt, bucketWidth: BucketWidth?? = nil, claudeTagCategories: [BetaAnalyticsClaudeTagCategory]?? = nil, claudeTagUserIDs: [String]?? = nil, contextWindows: [BetaAnalyticsContextWindow]?? = nil, endingAt: EndingAt?? = nil, excludeDeletedUsers: Bool? = nil, groupBy: [GroupBy]?? = nil, inferenceGeos: [BetaAnalyticsInferenceGeoFilter]?? = nil, limit: Int? = nil, models: [String]?? = nil, order: Order? = nil, orderBy: OrderBy? = nil, page: String?? = nil, products: [BetaAnalyticsProductFilter]?? = nil, rbacGroupIDs: [String]?? = nil, slackChannelIDs: [String]?? = nil, speeds: [Speeds]?? = nil, userIDs: [String]?? = nil) {
         self.startingAt = startingAt
         self.bucketWidth = bucketWidth
         self.claudeTagCategories = claudeTagCategories
-        self.claudeTagUserIds = claudeTagUserIds
+        self.claudeTagUserIDs = claudeTagUserIDs
         self.contextWindows = contextWindows
         self.endingAt = endingAt
         self.excludeDeletedUsers = excludeDeletedUsers
@@ -110,17 +110,17 @@ public struct UserCostReportListParams: Codable, Hashable, Sendable {
         self.orderBy = orderBy
         self.page = page
         self.products = products
-        self.rbacGroupIds = rbacGroupIds
-        self.slackChannelIds = slackChannelIds
+        self.rbacGroupIDs = rbacGroupIDs
+        self.slackChannelIDs = slackChannelIDs
         self.speeds = speeds
-        self.userIds = userIds
+        self.userIDs = userIDs
     }
 
     enum CodingKeys: String, CodingKey {
         case startingAt = "starting_at"
         case bucketWidth = "bucket_width"
         case claudeTagCategories = "claude_tag_categories"
-        case claudeTagUserIds = "claude_tag_user_ids"
+        case claudeTagUserIDs = "claude_tag_user_ids"
         case contextWindows = "context_windows"
         case endingAt = "ending_at"
         case excludeDeletedUsers = "exclude_deleted_users"
@@ -132,10 +132,10 @@ public struct UserCostReportListParams: Codable, Hashable, Sendable {
         case orderBy = "order_by"
         case page
         case products
-        case rbacGroupIds = "rbac_group_ids"
-        case slackChannelIds = "slack_channel_ids"
+        case rbacGroupIDs = "rbac_group_ids"
+        case slackChannelIDs = "slack_channel_ids"
         case speeds
-        case userIds = "user_ids"
+        case userIDs = "user_ids"
     }
 
     public indirect enum StartingAt: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

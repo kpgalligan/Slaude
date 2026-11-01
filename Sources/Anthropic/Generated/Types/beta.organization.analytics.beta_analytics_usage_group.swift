@@ -19,11 +19,11 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     ///
     /// Populated only when `agent_id` is in `group_by[]`; null for usage outside a
     /// managed session.
-    public var agentId: String?
+    public var agentID: String?
     /// API key that authenticated the requests, as a tagged API key ID, whichever
     /// identity `actor` resolves to. Populated only when `api_key_id` is in
     /// `group_by[]`; null for usage not authenticated by an API key.
-    public var apiKeyId: String?
+    public var apiKeyID: String?
     /// Claude Tag (Claude in Slack) spend category: `engaged` (a person addressed
     /// Claude in a channel or thread), `proactive` (Claude responded without being
     /// addressed), `scheduled` (a scheduled routine ran), `monitoring` (Claude watching
@@ -40,7 +40,7 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     /// `monitoring`, and `proactive` usage Claude initiated), so per-user rows can sum
     /// to less than the Claude Tag total. Cannot be combined with
     /// `group_by[]=rbac_group_id` or the `rbac_group_ids[]` filter.
-    public var claudeTagUserId: String?
+    public var claudeTagUserID: String?
     /// Context-window pricing tier of the usage or cost.
     ///
     /// Null unless `context_window` is in `group_by[]`; it can also be null on grouped
@@ -50,12 +50,12 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     ///
     /// Populated only when `deployment_id` is in `group_by[]`; null for usage outside a
     /// managed session and for sessions no deployment started.
-    public var deploymentId: String?
+    public var deploymentID: String?
     /// Claude Managed Agents environment the session ran in.
     ///
     /// Populated only when `environment_id` is in `group_by[]`; null for usage outside
     /// a managed session.
-    public var environmentId: String?
+    public var environmentID: String?
     /// Inference region of the usage or cost.
     ///
     /// Null unless `inference_geo` is in `group_by[]`; it can also be null on grouped
@@ -88,7 +88,7 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     /// and their sum can exceed the org total. A null value is the single unassigned
     /// row: users in no group on that (UTC) day. For the true org total, run the same
     /// query without `group_by[]`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Service tier the usage was served at.
     ///
     /// Populated only when `service_tier` is in `group_by[]`; null for usage with no
@@ -98,12 +98,12 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     ///
     /// Populated only when `session_id` is in `group_by[]`; null for usage outside a
     /// managed session.
-    public var sessionId: String?
+    public var sessionID: String?
     /// Slack channel the usage originated from.
     ///
     /// Populated only when `slack_channel_id` is in `group_by[]`; null for usage
     /// outside Slack (and for rows recorded before channel attribution was enabled).
-    public var slackChannelId: String?
+    public var slackChannelID: String?
     /// Inference speed mode of the usage or cost: `fast` or `standard`.
     ///
     /// Null unless `speed` is in `group_by[]`.
@@ -112,53 +112,53 @@ public struct BetaAnalyticsUsageGroup: Codable, Hashable, Sendable {
     ///
     /// Populated only when `user_profile_id` is in `group_by[]`; null for usage that
     /// named no profile and for Claude Enterprise usage.
-    public var userProfileId: String?
+    public var userProfileID: String?
     /// Workspace the usage occurred in, as a tagged workspace ID, including the
     /// organization's default workspace. Populated only when `workspace_id` is in
     /// `group_by[]`; null for Claude Enterprise usage.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(actor: BetaAnalyticsActor? = nil, actorType: BetaAnalyticsActorType? = nil, agentId: String? = nil, apiKeyId: String? = nil, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserId: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, deploymentId: String? = nil, environmentId: String? = nil, inferenceGeo: BetaAnalyticsUsageCostInferenceGeo? = nil, model: String? = nil, product: String? = nil, rbacGroupId: String? = nil, serviceTier: BetaAnalyticsServiceTier? = nil, sessionId: String? = nil, slackChannelId: String? = nil, speed: BetaAnalyticsSpeed? = nil, userProfileId: String? = nil, workspaceId: String? = nil) {
+    public init(actor: BetaAnalyticsActor? = nil, actorType: BetaAnalyticsActorType? = nil, agentID: String? = nil, apiKeyID: String? = nil, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserID: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, deploymentID: String? = nil, environmentID: String? = nil, inferenceGeo: BetaAnalyticsUsageCostInferenceGeo? = nil, model: String? = nil, product: String? = nil, rbacGroupID: String? = nil, serviceTier: BetaAnalyticsServiceTier? = nil, sessionID: String? = nil, slackChannelID: String? = nil, speed: BetaAnalyticsSpeed? = nil, userProfileID: String? = nil, workspaceID: String? = nil) {
         self.actor = actor
         self.actorType = actorType
-        self.agentId = agentId
-        self.apiKeyId = apiKeyId
+        self.agentID = agentID
+        self.apiKeyID = apiKeyID
         self.claudeTagCategory = claudeTagCategory
-        self.claudeTagUserId = claudeTagUserId
+        self.claudeTagUserID = claudeTagUserID
         self.contextWindow = contextWindow
-        self.deploymentId = deploymentId
-        self.environmentId = environmentId
+        self.deploymentID = deploymentID
+        self.environmentID = environmentID
         self.inferenceGeo = inferenceGeo
         self.model = model
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.serviceTier = serviceTier
-        self.sessionId = sessionId
-        self.slackChannelId = slackChannelId
+        self.sessionID = sessionID
+        self.slackChannelID = slackChannelID
         self.speed = speed
-        self.userProfileId = userProfileId
-        self.workspaceId = workspaceId
+        self.userProfileID = userProfileID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case actor
         case actorType = "actor_type"
-        case agentId = "agent_id"
-        case apiKeyId = "api_key_id"
+        case agentID = "agent_id"
+        case apiKeyID = "api_key_id"
         case claudeTagCategory = "claude_tag_category"
-        case claudeTagUserId = "claude_tag_user_id"
+        case claudeTagUserID = "claude_tag_user_id"
         case contextWindow = "context_window"
-        case deploymentId = "deployment_id"
-        case environmentId = "environment_id"
+        case deploymentID = "deployment_id"
+        case environmentID = "environment_id"
         case inferenceGeo = "inference_geo"
         case model
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case serviceTier = "service_tier"
-        case sessionId = "session_id"
-        case slackChannelId = "slack_channel_id"
+        case sessionID = "session_id"
+        case slackChannelID = "slack_channel_id"
         case speed
-        case userProfileId = "user_profile_id"
-        case workspaceId = "workspace_id"
+        case userProfileID = "user_profile_id"
+        case workspaceID = "workspace_id"
     }
 }

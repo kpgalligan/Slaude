@@ -23,7 +23,7 @@ public struct BetaTelemetryDestinationTracesParams: Codable, Hashable, Sendable 
     /// On create, `null` is the same as leaving it out. On update, `null` removes it.
     /// The API then posts traces to `endpoint_url` with `/v1/traces` appended. A change
     /// of this URL alone keeps the registered headers.
-    public var endpointUrl: String??
+    public var endpointURL: String??
     /// The most bytes of content that one exported span can contain, from 1 up to the
     /// API's maximum. `null` sets no bound, so only the API's maximum applies.
     ///
@@ -31,17 +31,17 @@ public struct BetaTelemetryDestinationTracesParams: Codable, Hashable, Sendable 
     /// maximum states the maximum.
     public var maxContentBytes: Int??
 
-    public init(contentMode: BetaTelemetryDestinationContentMode?? = nil, enabled: Bool? = nil, endpointUrl: String?? = nil, maxContentBytes: Int?? = nil) {
+    public init(contentMode: BetaTelemetryDestinationContentMode?? = nil, enabled: Bool? = nil, endpointURL: String?? = nil, maxContentBytes: Int?? = nil) {
         self.contentMode = contentMode
         self.enabled = enabled
-        self.endpointUrl = endpointUrl
+        self.endpointURL = endpointURL
         self.maxContentBytes = maxContentBytes
     }
 
     enum CodingKeys: String, CodingKey {
         case contentMode = "content_mode"
         case enabled
-        case endpointUrl = "endpoint_url"
+        case endpointURL = "endpoint_url"
         case maxContentBytes = "max_content_bytes"
     }
 }

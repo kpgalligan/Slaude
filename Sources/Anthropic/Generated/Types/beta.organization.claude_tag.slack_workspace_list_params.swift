@@ -15,16 +15,16 @@ public struct SlackWorkspaceListParams: Codable, Hashable, Sendable {
     /// Slack's identifier for one workspace, as in the workspace object's
     /// `slack.workspace_id`, not its `id`. With it `data` holds that workspace alone,
     /// or nothing when it is not set up.
-    public var slackWorkspaceId: String?
+    public var slackWorkspaceID: String?
     /// This endpoint is in beta: requests must send
     /// `experimental-claude-tag-2026-10-21` in this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(includeInherited: Bool? = nil, limit: Int? = nil, page: String? = nil, slackWorkspaceId: String? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(includeInherited: Bool? = nil, limit: Int? = nil, page: String? = nil, slackWorkspaceID: String? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.includeInherited = includeInherited
         self.limit = limit
         self.page = page
-        self.slackWorkspaceId = slackWorkspaceId
+        self.slackWorkspaceID = slackWorkspaceID
         self.betas = betas
     }
 
@@ -32,7 +32,7 @@ public struct SlackWorkspaceListParams: Codable, Hashable, Sendable {
         case includeInherited = "include_inherited"
         case limit
         case page
-        case slackWorkspaceId = "slack_workspace_id"
+        case slackWorkspaceID = "slack_workspace_id"
         case betas
     }
 }

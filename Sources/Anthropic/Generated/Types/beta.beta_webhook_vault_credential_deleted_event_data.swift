@@ -5,25 +5,25 @@ import Foundation
 public struct BetaWebhookVaultCredentialDeletedEventData: Codable, Hashable, Sendable {
     /// ID of the vault credential that triggered the event.
     public var id: String
-    public var organizationId: String
+    public var organizationID: String
     public var type: String
     /// ID of the vault that owns this credential.
-    public var vaultId: String
-    public var workspaceId: String
+    public var vaultID: String
+    public var workspaceID: String
 
-    public init(id: String, organizationId: String, type: String = "vault_credential.deleted", vaultId: String, workspaceId: String) {
+    public init(id: String, organizationID: String, type: String = "vault_credential.deleted", vaultID: String, workspaceID: String) {
         self.id = id
-        self.organizationId = organizationId
+        self.organizationID = organizationID
         self.type = type
-        self.vaultId = vaultId
-        self.workspaceId = workspaceId
+        self.vaultID = vaultID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case organizationId = "organization_id"
+        case organizationID = "organization_id"
         case type
-        case vaultId = "vault_id"
-        case workspaceId = "workspace_id"
+        case vaultID = "vault_id"
+        case workspaceID = "workspace_id"
     }
 }

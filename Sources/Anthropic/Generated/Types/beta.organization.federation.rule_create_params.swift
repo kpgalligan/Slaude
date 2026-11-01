@@ -4,7 +4,7 @@ import Foundation
 
 public struct BetaOrganizationFederationRuleCreateParams: Codable, Hashable, Sendable {
     /// Tagged ID of the federation issuer.
-    public var issuerId: String
+    public var issuerID: String
     /// Conditions the verified JWT must satisfy for this rule to apply.
     ///
     /// At least one of `subject_prefix` (other than a wildcard-only value like `*`),
@@ -42,12 +42,12 @@ public struct BetaOrganizationFederationRuleCreateParams: Codable, Hashable, Sen
     /// Required unless `applies_to_all_workspaces` is true. Additional workspaces can
     /// be added via the `/federation_rules/{federation_rule_id}/workspaces`
     /// sub-resource.
-    public var workspaceId: String??
+    public var workspaceID: String??
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
 
-    public init(issuerId: String, match: BetaFederationRuleMatchParam, name: String, oauthScope: String, target: BetaServiceAccountTargetParam, appliesToAllWorkspaces: Bool? = nil, attributes: [String: String]?? = nil, description: String?? = nil, tokenLifetimeSeconds: Int? = nil, workspaceId: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
-        self.issuerId = issuerId
+    public init(issuerID: String, match: BetaFederationRuleMatchParam, name: String, oauthScope: String, target: BetaServiceAccountTargetParam, appliesToAllWorkspaces: Bool? = nil, attributes: [String: String]?? = nil, description: String?? = nil, tokenLifetimeSeconds: Int? = nil, workspaceID: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+        self.issuerID = issuerID
         self.match = match
         self.name = name
         self.oauthScope = oauthScope
@@ -56,12 +56,12 @@ public struct BetaOrganizationFederationRuleCreateParams: Codable, Hashable, Sen
         self.attributes = attributes
         self.description = description
         self.tokenLifetimeSeconds = tokenLifetimeSeconds
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
-        case issuerId = "issuer_id"
+        case issuerID = "issuer_id"
         case match
         case name
         case oauthScope = "oauth_scope"
@@ -70,7 +70,7 @@ public struct BetaOrganizationFederationRuleCreateParams: Codable, Hashable, Sen
         case attributes
         case description
         case tokenLifetimeSeconds = "token_lifetime_seconds"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case betas
     }
 }

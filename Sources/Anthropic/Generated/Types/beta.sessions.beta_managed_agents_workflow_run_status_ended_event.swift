@@ -16,14 +16,14 @@ public struct BetaManagedAgentsWorkflowRunStatusEndedEvent: Codable, Hashable, S
     /// Identifier of the run.
     ///
     /// The same value is on all of the run's `workflow_run.*` events.
-    public var workflowRunId: String
+    public var workflowRunID: String
 
-    public init(id: String, processedAt: Date, result: BetaManagedAgentsWorkflowRunResult, type: String = "workflow_run.status_ended", workflowRunId: String) {
+    public init(id: String, processedAt: Date, result: BetaManagedAgentsWorkflowRunResult, type: String = "workflow_run.status_ended", workflowRunID: String) {
         self.id = id
         self.processedAt = processedAt
         self.result = result
         self.type = type
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -31,6 +31,6 @@ public struct BetaManagedAgentsWorkflowRunStatusEndedEvent: Codable, Hashable, S
         case processedAt = "processed_at"
         case result
         case type
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }

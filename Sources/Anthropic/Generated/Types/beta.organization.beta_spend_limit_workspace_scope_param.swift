@@ -7,15 +7,15 @@ public struct BetaSpendLimitWorkspaceScopeParam: Codable, Hashable, Sendable {
     /// Scope type. Always `workspace` for this scope.
     public var type: String
     /// Tagged ID of the workspace the spend limit applies to.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(type: String = "workspace", workspaceId: String) {
+    public init(type: String = "workspace", workspaceID: String) {
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

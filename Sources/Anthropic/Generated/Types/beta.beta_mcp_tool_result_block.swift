@@ -5,20 +5,20 @@ import Foundation
 public struct BetaMCPToolResultBlock: Codable, Hashable, Sendable {
     public var content: Content
     public var isError: Bool
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
 
-    public init(content: Content, isError: Bool, toolUseId: String, type: String = "mcp_tool_result") {
+    public init(content: Content, isError: Bool, toolUseID: String, type: String = "mcp_tool_result") {
         self.content = content
         self.isError = isError
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case content
         case isError = "is_error"
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
     }
 

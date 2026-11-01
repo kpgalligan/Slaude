@@ -5,7 +5,7 @@ import Foundation
 /// OAuth refresh token configuration returned in credential responses.
 public struct BetaManagedAgentsMCPOAuthRefreshResponse: Codable, Hashable, Sendable {
     /// The OAuth client ID used when refreshing the access token.
-    public var clientId: String
+    public var clientID: String
     /// Token endpoint URL used to refresh the access token.
     public var tokenEndpoint: String
     public var tokenEndpointAuth: BetaManagedAgentsMCPOAuthRefreshResponse.TokenEndpointAuth
@@ -14,8 +14,8 @@ public struct BetaManagedAgentsMCPOAuthRefreshResponse: Codable, Hashable, Senda
     /// OAuth scope for the refresh request.
     public var scope: String?
 
-    public init(clientId: String, tokenEndpoint: String, tokenEndpointAuth: BetaManagedAgentsMCPOAuthRefreshResponse.TokenEndpointAuth, resource: String? = nil, scope: String? = nil) {
-        self.clientId = clientId
+    public init(clientID: String, tokenEndpoint: String, tokenEndpointAuth: BetaManagedAgentsMCPOAuthRefreshResponse.TokenEndpointAuth, resource: String? = nil, scope: String? = nil) {
+        self.clientID = clientID
         self.tokenEndpoint = tokenEndpoint
         self.tokenEndpointAuth = tokenEndpointAuth
         self.resource = resource
@@ -23,7 +23,7 @@ public struct BetaManagedAgentsMCPOAuthRefreshResponse: Codable, Hashable, Senda
     }
 
     enum CodingKeys: String, CodingKey {
-        case clientId = "client_id"
+        case clientID = "client_id"
         case tokenEndpoint = "token_endpoint"
         case tokenEndpointAuth = "token_endpoint_auth"
         case resource

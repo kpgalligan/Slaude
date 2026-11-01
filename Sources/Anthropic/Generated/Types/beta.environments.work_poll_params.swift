@@ -16,19 +16,19 @@ public struct WorkPollParams: Codable, Hashable, Sendable {
     public var betas: [AnthropicBetaParam]?
     /// Unique identifier for the specific worker polling, used to track aggregated
     /// environment-level work metrics in Console
-    public var anthropicWorkerId: String?
+    public var anthropicWorkerID: String?
 
-    public init(blockMs: Int?? = nil, reclaimOlderThanMs: Int?? = nil, betas: [AnthropicBetaParam]? = nil, anthropicWorkerId: String? = nil) {
+    public init(blockMs: Int?? = nil, reclaimOlderThanMs: Int?? = nil, betas: [AnthropicBetaParam]? = nil, anthropicWorkerID: String? = nil) {
         self.blockMs = blockMs
         self.reclaimOlderThanMs = reclaimOlderThanMs
         self.betas = betas
-        self.anthropicWorkerId = anthropicWorkerId
+        self.anthropicWorkerID = anthropicWorkerID
     }
 
     enum CodingKeys: String, CodingKey {
         case blockMs = "block_ms"
         case reclaimOlderThanMs = "reclaim_older_than_ms"
         case betas
-        case anthropicWorkerId = "anthropic_worker_id"
+        case anthropicWorkerID = "anthropic_worker_id"
     }
 }

@@ -23,9 +23,9 @@ public struct BetaSpendSummary: Codable, Hashable, Sendable {
     public var periodToDateSpend: String
     public var scope: BetaSpendSummary.Scope
     public var source: BetaSpendSummary.Source
-    public var spendLimitId: String
+    public var spendLimitID: String
 
-    public init(actor: BetaSpendSummary.Actor, amount: String? = nil, currency: String, period: BetaSpendLimitPeriod, periodToDateSpend: String, scope: BetaSpendSummary.Scope, source: BetaSpendSummary.Source, spendLimitId: String) {
+    public init(actor: BetaSpendSummary.Actor, amount: String? = nil, currency: String, period: BetaSpendLimitPeriod, periodToDateSpend: String, scope: BetaSpendSummary.Scope, source: BetaSpendSummary.Source, spendLimitID: String) {
         self.actor = actor
         self.amount = amount
         self.currency = currency
@@ -33,7 +33,7 @@ public struct BetaSpendSummary: Codable, Hashable, Sendable {
         self.periodToDateSpend = periodToDateSpend
         self.scope = scope
         self.source = source
-        self.spendLimitId = spendLimitId
+        self.spendLimitID = spendLimitID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -44,7 +44,7 @@ public struct BetaSpendSummary: Codable, Hashable, Sendable {
         case periodToDateSpend = "period_to_date_spend"
         case scope
         case source
-        case spendLimitId = "spend_limit_id"
+        case spendLimitID = "spend_limit_id"
     }
 }
 

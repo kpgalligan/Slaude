@@ -15,7 +15,7 @@ public struct BetaManagedAgentsSession: Codable, Hashable, Sendable {
     public var budget: BetaManagedAgentsBudgetLimit?
     /// A timestamp in RFC 3339 format
     public var createdAt: Date
-    public var environmentId: String
+    public var environmentID: String
     public var metadata: [String: String]
     /// Per-outcome evaluation state.
     ///
@@ -39,19 +39,19 @@ public struct BetaManagedAgentsSession: Codable, Hashable, Sendable {
     /// Vault IDs attached to the session at creation.
     ///
     /// Empty when no vaults were supplied.
-    public var vaultIds: [String]
+    public var vaultIDs: [String]
     /// Deployment ID when the session was created from a deployment reference.
     ///
     /// Null otherwise.
-    public var deploymentId: String?
+    public var deploymentID: String?
 
-    public init(id: String, agent: BetaManagedAgentsSessionAgent, archivedAt: Date? = nil, budget: BetaManagedAgentsBudgetLimit? = nil, createdAt: Date, environmentId: String, metadata: [String: String], outcomeEvaluations: [BetaManagedAgentsOutcomeEvaluationResource], resources: [BetaManagedAgentsSessionResource], stats: BetaManagedAgentsSessionStats, status: Status, title: String? = nil, type: String = "session", updatedAt: Date, usage: BetaManagedAgentsSessionUsage, vaultIds: [String], deploymentId: String? = nil) {
+    public init(id: String, agent: BetaManagedAgentsSessionAgent, archivedAt: Date? = nil, budget: BetaManagedAgentsBudgetLimit? = nil, createdAt: Date, environmentID: String, metadata: [String: String], outcomeEvaluations: [BetaManagedAgentsOutcomeEvaluationResource], resources: [BetaManagedAgentsSessionResource], stats: BetaManagedAgentsSessionStats, status: Status, title: String? = nil, type: String = "session", updatedAt: Date, usage: BetaManagedAgentsSessionUsage, vaultIDs: [String], deploymentID: String? = nil) {
         self.id = id
         self.agent = agent
         self.archivedAt = archivedAt
         self.budget = budget
         self.createdAt = createdAt
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.metadata = metadata
         self.outcomeEvaluations = outcomeEvaluations
         self.resources = resources
@@ -61,8 +61,8 @@ public struct BetaManagedAgentsSession: Codable, Hashable, Sendable {
         self.type = type
         self.updatedAt = updatedAt
         self.usage = usage
-        self.vaultIds = vaultIds
-        self.deploymentId = deploymentId
+        self.vaultIDs = vaultIDs
+        self.deploymentID = deploymentID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -71,7 +71,7 @@ public struct BetaManagedAgentsSession: Codable, Hashable, Sendable {
         case archivedAt = "archived_at"
         case budget
         case createdAt = "created_at"
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case metadata
         case outcomeEvaluations = "outcome_evaluations"
         case resources
@@ -81,8 +81,8 @@ public struct BetaManagedAgentsSession: Codable, Hashable, Sendable {
         case type
         case updatedAt = "updated_at"
         case usage
-        case vaultIds = "vault_ids"
-        case deploymentId = "deployment_id"
+        case vaultIDs = "vault_ids"
+        case deploymentID = "deployment_id"
     }
 
     public enum Status: OpenEnum, CaseIterable {

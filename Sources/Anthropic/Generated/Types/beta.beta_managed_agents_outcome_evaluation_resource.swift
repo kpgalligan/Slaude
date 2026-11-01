@@ -18,7 +18,7 @@ public struct BetaManagedAgentsOutcomeEvaluationResource: Codable, Hashable, Sen
     /// 0-indexed revision cycle the outcome is currently on.
     public var iteration: Int
     /// Server-generated outc\__ ID for this outcome.
-    public var outcomeId: String
+    public var outcomeID: String
     /// Current evaluation state.
     ///
     /// `pending` before the agent begins work; `running` while producing or revising;
@@ -27,12 +27,12 @@ public struct BetaManagedAgentsOutcomeEvaluationResource: Codable, Hashable, Sen
     public var result: String
     public var type: String
 
-    public init(completedAt: Date? = nil, description: String, explanation: String? = nil, iteration: Int, outcomeId: String, result: String, type: String = "outcome_evaluation") {
+    public init(completedAt: Date? = nil, description: String, explanation: String? = nil, iteration: Int, outcomeID: String, result: String, type: String = "outcome_evaluation") {
         self.completedAt = completedAt
         self.description = description
         self.explanation = explanation
         self.iteration = iteration
-        self.outcomeId = outcomeId
+        self.outcomeID = outcomeID
         self.result = result
         self.type = type
     }
@@ -42,7 +42,7 @@ public struct BetaManagedAgentsOutcomeEvaluationResource: Codable, Hashable, Sen
         case description
         case explanation
         case iteration
-        case outcomeId = "outcome_id"
+        case outcomeID = "outcome_id"
         case result
         case type
     }

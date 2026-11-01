@@ -14,7 +14,7 @@ public struct InstallationSettingListParams: Codable, Hashable, Sendable {
     /// 400; an organization that is not a child of the key's parent, or where the
     /// Plugins API is not available, returns a 404. Any other key may pass only its own
     /// organization's ID here; another organization returns a 404.
-    public var organizationId: String??
+    public var organizationID: String??
     /// Optionally set to the `next_page` token from the previous response.
     public var page: String??
     /// Only settings for this kind of target: `organization` (the organization-wide
@@ -24,9 +24,9 @@ public struct InstallationSettingListParams: Codable, Hashable, Sendable {
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(limit: Int? = nil, organizationId: String?? = nil, page: String?? = nil, targetType: TargetType?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(limit: Int? = nil, organizationID: String?? = nil, page: String?? = nil, targetType: TargetType?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.limit = limit
-        self.organizationId = organizationId
+        self.organizationID = organizationID
         self.page = page
         self.targetType = targetType
         self.betas = betas
@@ -34,7 +34,7 @@ public struct InstallationSettingListParams: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case limit
-        case organizationId = "organization_id"
+        case organizationID = "organization_id"
         case page
         case targetType = "target_type"
         case betas

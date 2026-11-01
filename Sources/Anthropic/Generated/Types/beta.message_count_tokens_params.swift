@@ -214,7 +214,7 @@ public struct BetaMessageCountTokensParams: Codable, Hashable, Sendable {
     /// The user profile ID to attribute this request to.
     ///
     /// Use when acting on behalf of a party other than your organization.
-    public var userProfileId: String?
+    public var userProfileID: String?
     /// Optional header to select the Workspace for this request.
     ///
     /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -222,9 +222,9 @@ public struct BetaMessageCountTokensParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(messages: [BetaMessageParam], model: ModelParam, cacheControl: BetaCacheControlEphemeralParam?? = nil, compaction: BetaCompactionConfigParam?? = nil, contextManagement: BetaContextManagementConfigParam?? = nil, mcpServers: [BetaRequestMCPServerURLDefinitionParam]? = nil, outputConfig: BetaOutputConfigParam? = nil, speed: Speed?? = nil, system: System? = nil, thinking: BetaThinkingConfigParam? = nil, toolChoice: BetaToolChoiceParam? = nil, tools: [BetaMessageCountTokensParams.Tool]? = nil, betas: [AnthropicBetaParam]? = nil, userProfileId: String? = nil, workspaceId: String? = nil) {
+    public init(messages: [BetaMessageParam], model: ModelParam, cacheControl: BetaCacheControlEphemeralParam?? = nil, compaction: BetaCompactionConfigParam?? = nil, contextManagement: BetaContextManagementConfigParam?? = nil, mcpServers: [BetaRequestMCPServerURLDefinitionParam]? = nil, outputConfig: BetaOutputConfigParam? = nil, speed: Speed?? = nil, system: System? = nil, thinking: BetaThinkingConfigParam? = nil, toolChoice: BetaToolChoiceParam? = nil, tools: [BetaMessageCountTokensParams.Tool]? = nil, betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil) {
         self.messages = messages
         self.model = model
         self.cacheControl = cacheControl
@@ -238,8 +238,8 @@ public struct BetaMessageCountTokensParams: Codable, Hashable, Sendable {
         self.toolChoice = toolChoice
         self.tools = tools
         self.betas = betas
-        self.userProfileId = userProfileId
-        self.workspaceId = workspaceId
+        self.userProfileID = userProfileID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -256,8 +256,8 @@ public struct BetaMessageCountTokensParams: Codable, Hashable, Sendable {
         case toolChoice = "tool_choice"
         case tools
         case betas
-        case userProfileId = "user_profile_id"
-        case workspaceId = "workspace_id"
+        case userProfileID = "user_profile_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum Speed: OpenEnum, CaseIterable {

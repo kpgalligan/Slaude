@@ -4,7 +4,7 @@ import Foundation
 
 public struct MemoryVersionListParams: Codable, Hashable, Sendable {
     /// Return only versions written with the API key that has this ID.
-    public var apiKeyId: String?
+    public var apiKeyID: String?
     /// Return versions created at or after this time (inclusive).
     public var createdAtGte: CreatedAtGte?
     /// Return versions created at or before this time (inclusive).
@@ -19,7 +19,7 @@ public struct MemoryVersionListParams: Codable, Hashable, Sendable {
     ///
     /// The filter still works after the memory is deleted. While that memory's versions
     /// are retained, the results include the version whose `operation` is `deleted`.
-    public var memoryId: String?
+    public var memoryID: String?
     /// Return only versions that record this kind of change.
     public var operation: BetaManagedAgentsMemoryVersionOperation?
     /// The `next_page` value from a previous response, to get the next page.
@@ -27,9 +27,9 @@ public struct MemoryVersionListParams: Codable, Hashable, Sendable {
     /// Omit it to get the first page.
     public var page: String?
     /// Return only versions written by the service account with this ID (`svac_...`).
-    public var serviceAccountId: String?
+    public var serviceAccountID: String?
     /// Return only versions written by the session with this ID.
-    public var sessionId: String?
+    public var sessionID: String?
     /// Whether a `memory` or `memory_version` in the response includes its `content`.
     ///
     /// Defaults to `full` on retrieve operations and to `basic` on list, create, and
@@ -47,36 +47,36 @@ public struct MemoryVersionListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(apiKeyId: String? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, limit: Int? = nil, memoryId: String? = nil, operation: BetaManagedAgentsMemoryVersionOperation? = nil, page: String? = nil, serviceAccountId: String? = nil, sessionId: String? = nil, view: BetaManagedAgentsMemoryView? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.apiKeyId = apiKeyId
+    public init(apiKeyID: String? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, limit: Int? = nil, memoryID: String? = nil, operation: BetaManagedAgentsMemoryVersionOperation? = nil, page: String? = nil, serviceAccountID: String? = nil, sessionID: String? = nil, view: BetaManagedAgentsMemoryView? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.apiKeyID = apiKeyID
         self.createdAtGte = createdAtGte
         self.createdAtLte = createdAtLte
         self.limit = limit
-        self.memoryId = memoryId
+        self.memoryID = memoryID
         self.operation = operation
         self.page = page
-        self.serviceAccountId = serviceAccountId
-        self.sessionId = sessionId
+        self.serviceAccountID = serviceAccountID
+        self.sessionID = sessionID
         self.view = view
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case apiKeyId = "api_key_id"
+        case apiKeyID = "api_key_id"
         case createdAtGte = "created_at_gte"
         case createdAtLte = "created_at_lte"
         case limit
-        case memoryId = "memory_id"
+        case memoryID = "memory_id"
         case operation
         case page
-        case serviceAccountId = "service_account_id"
-        case sessionId = "session_id"
+        case serviceAccountID = "service_account_id"
+        case sessionID = "session_id"
         case view
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGte: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

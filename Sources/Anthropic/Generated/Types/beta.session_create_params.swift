@@ -9,7 +9,7 @@ public struct SessionCreateParams: Codable, Hashable, Sendable {
     /// an `agent` object with both id and version specified.
     public var agent: SessionCreateParams.Agent
     /// ID of the `environment` defining the container configuration for this session.
-    public var environmentId: String
+    public var environmentID: String
     /// Enforced spend ceiling for the session.
     ///
     /// Omit to create an uncapped session. Every model the session can run — the
@@ -29,7 +29,7 @@ public struct SessionCreateParams: Codable, Hashable, Sendable {
     /// Human-readable session title.
     public var title: String??
     /// Vault IDs for stored credentials the agent can use during the session.
-    public var vaultIds: [String]?
+    public var vaultIDs: [String]?
     /// This endpoint is in beta: requests must send `managed-agents-2026-04-01` in this
     /// header.
     public var betas: [AnthropicBetaParam]?
@@ -40,32 +40,32 @@ public struct SessionCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(agent: SessionCreateParams.Agent, environmentId: String, budget: BetaManagedAgentsBudgetLimitParam? = nil, initialEvents: [SessionCreateParams.InitialEvent]? = nil, metadata: [String: String]? = nil, resources: [SessionCreateParams.Resource]? = nil, title: String?? = nil, vaultIds: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(agent: SessionCreateParams.Agent, environmentID: String, budget: BetaManagedAgentsBudgetLimitParam? = nil, initialEvents: [SessionCreateParams.InitialEvent]? = nil, metadata: [String: String]? = nil, resources: [SessionCreateParams.Resource]? = nil, title: String?? = nil, vaultIDs: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.agent = agent
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.budget = budget
         self.initialEvents = initialEvents
         self.metadata = metadata
         self.resources = resources
         self.title = title
-        self.vaultIds = vaultIds
+        self.vaultIDs = vaultIDs
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case agent
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case budget
         case initialEvents = "initial_events"
         case metadata
         case resources
         case title
-        case vaultIds = "vault_ids"
+        case vaultIDs = "vault_ids"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }
 

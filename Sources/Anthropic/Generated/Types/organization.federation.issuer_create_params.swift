@@ -4,7 +4,7 @@ import Foundation
 
 public struct IssuerCreateParams: Codable, Hashable, Sendable {
     /// The `iss` claim value to match against.
-    public var issuerUrl: String
+    public var issuerURL: String
     /// Slug identifier (lowercase, digits, hyphens).
     ///
     /// Unique within the organization; a duplicate name returns 409.
@@ -20,8 +20,8 @@ public struct IssuerCreateParams: Codable, Hashable, Sendable {
     /// `iat` and `exp`; a missing `iat` is rejected.
     public var maxJwtLifetimeSeconds: Int??
 
-    public init(issuerUrl: String, name: String, checkJti: Bool?? = nil, jwks: IssuerCreateParams.JWKS? = nil, maxJwtLifetimeSeconds: Int?? = nil) {
-        self.issuerUrl = issuerUrl
+    public init(issuerURL: String, name: String, checkJti: Bool?? = nil, jwks: IssuerCreateParams.JWKS? = nil, maxJwtLifetimeSeconds: Int?? = nil) {
+        self.issuerURL = issuerURL
         self.name = name
         self.checkJti = checkJti
         self.jwks = jwks
@@ -29,7 +29,7 @@ public struct IssuerCreateParams: Codable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case issuerUrl = "issuer_url"
+        case issuerURL = "issuer_url"
         case name
         case checkJti = "check_jti"
         case jwks

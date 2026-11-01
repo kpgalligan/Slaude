@@ -6,22 +6,22 @@ import Foundation
 public struct BrowserStateChangeDownloadFailedParam: Codable, Hashable, Sendable {
     /// The caller-assigned identifier for this download, stable across the state
     /// changes reporting it.
-    public var downloadId: String
+    public var downloadID: String
     public var type: String
     /// The final post-redirect URL the download was served from.
     public var url: String
     /// The failure or cancellation detail, when known.
     public var error: String??
 
-    public init(downloadId: String, type: String = "download_failed", url: String, error: String?? = nil) {
-        self.downloadId = downloadId
+    public init(downloadID: String, type: String = "download_failed", url: String, error: String?? = nil) {
+        self.downloadID = downloadID
         self.type = type
         self.url = url
         self.error = error
     }
 
     enum CodingKeys: String, CodingKey {
-        case downloadId = "download_id"
+        case downloadID = "download_id"
         case type
         case url
         case error

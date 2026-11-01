@@ -8,13 +8,13 @@ public struct BetaSpendLimitIncreaseRequest: Codable, Hashable, Sendable {
     public var createdAt: Date
     public var period: BetaSpendLimitPeriod
     public var resolvedAt: Date?
-    public var resolvedBy: BetaSpendLimitIncreaseRequest.ResolvedBy??
+    public var resolvedBy: BetaSpendLimitIncreaseRequest.ResolvedBy?
     /// Per-member effective-limit report row (`GET /spend_limits/effective`).
     public var spendSummary: BetaSpendSummary?
     public var status: BetaSpendLimitIncreaseRequestStatus
     public var type: String
 
-    public init(id: String, actor: BetaSpendLimitIncreaseRequest.Actor, createdAt: Date, period: BetaSpendLimitPeriod, resolvedAt: Date? = nil, resolvedBy: BetaSpendLimitIncreaseRequest.ResolvedBy?? = nil, spendSummary: BetaSpendSummary? = nil, status: BetaSpendLimitIncreaseRequestStatus, type: String = "spend_limit_increase_request") {
+    public init(id: String, actor: BetaSpendLimitIncreaseRequest.Actor, createdAt: Date, period: BetaSpendLimitPeriod, resolvedAt: Date? = nil, resolvedBy: BetaSpendLimitIncreaseRequest.ResolvedBy? = nil, spendSummary: BetaSpendSummary? = nil, status: BetaSpendLimitIncreaseRequestStatus, type: String = "spend_limit_increase_request") {
         self.id = id
         self.actor = actor
         self.createdAt = createdAt

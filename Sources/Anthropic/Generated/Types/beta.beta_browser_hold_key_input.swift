@@ -12,17 +12,17 @@ public struct BetaBrowserHoldKeyInput: Codable, Hashable, Sendable {
     /// The key or chord to hold.
     public var text: String
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(duration: Double, text: String, tabId: String? = nil) {
+    public init(duration: Double, text: String, tabID: String? = nil) {
         self.duration = duration
         self.text = text
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case duration
         case text
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

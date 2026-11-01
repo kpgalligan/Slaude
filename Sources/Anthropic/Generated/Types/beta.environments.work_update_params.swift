@@ -3,7 +3,7 @@
 import Foundation
 
 public struct WorkUpdateParams: Codable, Hashable, Sendable {
-    public var environmentId: String
+    public var environmentID: String
     /// Metadata patch.
     ///
     /// Set a key to a string to upsert it, or to null to delete it. Omit the field to
@@ -18,19 +18,19 @@ public struct WorkUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(environmentId: String, metadata: [String: String?], betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.environmentId = environmentId
+    public init(environmentID: String, metadata: [String: String?], betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.environmentID = environmentID
         self.metadata = metadata
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case metadata
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

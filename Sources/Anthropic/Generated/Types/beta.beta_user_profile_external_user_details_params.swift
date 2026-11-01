@@ -38,16 +38,16 @@ public struct BetaUserProfileExternalUserDetailsParams: Codable, Hashable, Senda
     /// The platform's own reference for the entity, for example the key of the
     /// end-user's row in the platform's database. Not interpreted by Anthropic and not
     /// enforced unique. 1 to 255 characters.
-    public var referenceId: String??
+    public var referenceID: String??
 
-    public init(accountStatus: AccountStatus?? = nil, country: String?? = nil, emailHash: String?? = nil, entityType: EntityType?? = nil, nameHash: String?? = nil, onboardedAt: OnboardedAt? = nil, referenceId: String?? = nil) {
+    public init(accountStatus: AccountStatus?? = nil, country: String?? = nil, emailHash: String?? = nil, entityType: EntityType?? = nil, nameHash: String?? = nil, onboardedAt: OnboardedAt? = nil, referenceID: String?? = nil) {
         self.accountStatus = accountStatus
         self.country = country
         self.emailHash = emailHash
         self.entityType = entityType
         self.nameHash = nameHash
         self.onboardedAt = onboardedAt
-        self.referenceId = referenceId
+        self.referenceID = referenceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -57,7 +57,7 @@ public struct BetaUserProfileExternalUserDetailsParams: Codable, Hashable, Senda
         case entityType = "entity_type"
         case nameHash = "name_hash"
         case onboardedAt = "onboarded_at"
-        case referenceId = "reference_id"
+        case referenceID = "reference_id"
     }
 
     public enum AccountStatus: OpenEnum, CaseIterable {

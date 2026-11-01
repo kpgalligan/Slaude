@@ -4,7 +4,7 @@ import Foundation
 
 public struct RuleCreateParams: Codable, Hashable, Sendable {
     /// Tagged ID of the federation issuer.
-    public var issuerId: String
+    public var issuerID: String
     /// Conditions the verified JWT must satisfy for this rule to apply.
     ///
     /// At least one of `subject_prefix` (other than a wildcard-only value like `*`),
@@ -38,10 +38,10 @@ public struct RuleCreateParams: Codable, Hashable, Sendable {
     /// Required unless `applies_to_all_workspaces` is true. Additional workspaces can
     /// be added via the `/federation_rules/{federation_rule_id}/workspaces`
     /// sub-resource.
-    public var workspaceId: String??
+    public var workspaceID: String??
 
-    public init(issuerId: String, match: FederationRuleMatchParam, name: String, oauthScope: String, target: ServiceAccountTargetParam, appliesToAllWorkspaces: Bool? = nil, description: String?? = nil, tokenLifetimeSeconds: Int? = nil, workspaceId: String?? = nil) {
-        self.issuerId = issuerId
+    public init(issuerID: String, match: FederationRuleMatchParam, name: String, oauthScope: String, target: ServiceAccountTargetParam, appliesToAllWorkspaces: Bool? = nil, description: String?? = nil, tokenLifetimeSeconds: Int? = nil, workspaceID: String?? = nil) {
+        self.issuerID = issuerID
         self.match = match
         self.name = name
         self.oauthScope = oauthScope
@@ -49,11 +49,11 @@ public struct RuleCreateParams: Codable, Hashable, Sendable {
         self.appliesToAllWorkspaces = appliesToAllWorkspaces
         self.description = description
         self.tokenLifetimeSeconds = tokenLifetimeSeconds
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case issuerId = "issuer_id"
+        case issuerID = "issuer_id"
         case match
         case name
         case oauthScope = "oauth_scope"
@@ -61,6 +61,6 @@ public struct RuleCreateParams: Codable, Hashable, Sendable {
         case appliesToAllWorkspaces = "applies_to_all_workspaces"
         case description
         case tokenLifetimeSeconds = "token_lifetime_seconds"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

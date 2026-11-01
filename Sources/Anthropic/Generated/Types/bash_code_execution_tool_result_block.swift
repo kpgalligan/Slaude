@@ -4,18 +4,18 @@ import Foundation
 
 public struct BashCodeExecutionToolResultBlock: Codable, Hashable, Sendable {
     public var content: BashCodeExecutionToolResultBlock.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
 
-    public init(content: BashCodeExecutionToolResultBlock.Content, toolUseId: String, type: String = "bash_code_execution_tool_result") {
+    public init(content: BashCodeExecutionToolResultBlock.Content, toolUseID: String, type: String = "bash_code_execution_tool_result") {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
     }
 }

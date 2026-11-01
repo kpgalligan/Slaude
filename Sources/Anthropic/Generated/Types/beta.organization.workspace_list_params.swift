@@ -6,11 +6,11 @@ public struct BetaOrganizationWorkspaceListParams: Codable, Hashable, Sendable {
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately after this object.
-    public var afterId: String?
+    public var afterID: String?
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately before this object.
-    public var beforeId: String?
+    public var beforeID: String?
     /// Whether to include Workspaces that have been archived in the response
     public var includeArchived: Bool?
     /// Whether to include the organization's default Workspace in the response
@@ -20,17 +20,17 @@ public struct BetaOrganizationWorkspaceListParams: Codable, Hashable, Sendable {
     /// Defaults to `20`. Ranges from `1` to `1000`.
     public var limit: Int?
 
-    public init(afterId: String? = nil, beforeId: String? = nil, includeArchived: Bool? = nil, includeDefault: Bool? = nil, limit: Int? = nil) {
-        self.afterId = afterId
-        self.beforeId = beforeId
+    public init(afterID: String? = nil, beforeID: String? = nil, includeArchived: Bool? = nil, includeDefault: Bool? = nil, limit: Int? = nil) {
+        self.afterID = afterID
+        self.beforeID = beforeID
         self.includeArchived = includeArchived
         self.includeDefault = includeDefault
         self.limit = limit
     }
 
     enum CodingKeys: String, CodingKey {
-        case afterId = "after_id"
-        case beforeId = "before_id"
+        case afterID = "after_id"
+        case beforeID = "before_id"
         case includeArchived = "include_archived"
         case includeDefault = "include_default"
         case limit

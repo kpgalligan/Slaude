@@ -1,0 +1,18 @@
+Methods not handled by the transpiler (ported by hand in Sources/Anthropic/Lib):
+
+anthropic.resources.beta.environments.work.AsyncWork.poller: statement ImportFrom: from ....lib._scoped_client import _copy_client_with_bearer_
+anthropic.resources.beta.environments.work.AsyncWork.worker: unresolved name EnvironmentWorkerTools in anthropic.resources.beta.environments.work
+anthropic.resources.beta.messages.batches.AsyncBatches.results: assign batch = await self.retrieve(message_batch_id=message_batch_id, works
+anthropic.resources.beta.messages.messages.AsyncMessages.parse: statement Expr: _validate_output_config_conflict(output_config, output_forma
+anthropic.resources.beta.messages.messages.AsyncMessages.tool_runner: unsupported runtime type anthropic.lib.tools._beta_functions.BetaAsyncRunnableTool
+anthropic.resources.beta.messages.messages.AsyncMessages.thread: unsupported runtime type anthropic.lib.tools._beta_functions.BetaAsyncRunnableTool
+anthropic.resources.beta.messages.messages.AsyncMessages.stream: statement Expr: _validate_output_config_conflict(output_config, output_forma
+anthropic.resources.beta.organization.claude_tag.bundles.targets.AsyncTargets.create: dict target
+anthropic.resources.beta.sessions.events.AsyncEvents.tool_runner: unresolved name BetaAnyRunnableTool in anthropic.resources.beta.sessions.events
+anthropic.resources.beta.webhooks.AsyncWebhooks.parse_unverified: return construct_type(type_=BetaWebhookEvent, value=json.loads(payl
+anthropic.resources.beta.webhooks.AsyncWebhooks.unwrap: statement Try: try:
+    from standardwebhooks import Webhook
+except ImportE
+anthropic.resources.messages.batches.AsyncBatches.results: assign batch = await self.retrieve(message_batch_id=message_batch_id, works
+anthropic.resources.messages.messages.AsyncMessages.stream: non-constant plain header
+anthropic.resources.messages.messages.AsyncMessages.parse: headers _helper_header('messages.parse')

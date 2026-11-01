@@ -7,16 +7,16 @@ public struct BetaManagedAgentsAPIActor: Codable, Hashable, Sendable {
     /// ID of the API key (an `apikey_...` value).
     ///
     /// This identifies the key, not the secret.
-    public var apiKeyId: String
+    public var apiKeyID: String
     public var type: String
 
-    public init(apiKeyId: String, type: String = "api_actor") {
-        self.apiKeyId = apiKeyId
+    public init(apiKeyID: String, type: String = "api_actor") {
+        self.apiKeyID = apiKeyID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case apiKeyId = "api_key_id"
+        case apiKeyID = "api_key_id"
         case type
     }
 }

@@ -10,22 +10,22 @@ public struct BetaManagedAgentsUserToolResultEventParams: Codable, Hashable, Sen
     /// found in the last `session.status_idle`
     /// [event's](https://platform.claude.com/docs/en/api/beta/sessions/events/list#beta_managed_agents_session_requires_action.event_ids)
     /// `stop_reason.event_ids` field.
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// The result content returned by the tool.
     public var content: [BetaManagedAgentsUserToolResultEventParams.Content]?
     /// Whether the tool execution resulted in an error.
     public var isError: Bool??
 
-    public init(toolUseId: String, type: String = "user.tool_result", content: [BetaManagedAgentsUserToolResultEventParams.Content]? = nil, isError: Bool?? = nil) {
-        self.toolUseId = toolUseId
+    public init(toolUseID: String, type: String = "user.tool_result", content: [BetaManagedAgentsUserToolResultEventParams.Content]? = nil, isError: Bool?? = nil) {
+        self.toolUseID = toolUseID
         self.type = type
         self.content = content
         self.isError = isError
     }
 
     enum CodingKeys: String, CodingKey {
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case content
         case isError = "is_error"

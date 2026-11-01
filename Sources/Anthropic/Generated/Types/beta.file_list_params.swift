@@ -21,7 +21,7 @@ public struct BetaFileListParams: Codable, Hashable, Sendable {
     /// Filter by scope ID.
     ///
     /// Only returns files associated with the specified scope (e.g., a session ID).
-    public var scopeId: String?
+    public var scopeID: String?
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
     /// Optional header to select the Workspace for this request.
@@ -31,23 +31,23 @@ public struct BetaFileListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(ids: [String]?? = nil, limit: Int? = nil, page: String?? = nil, scopeId: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(ids: [String]?? = nil, limit: Int? = nil, page: String?? = nil, scopeID: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.ids = ids
         self.limit = limit
         self.page = page
-        self.scopeId = scopeId
+        self.scopeID = scopeID
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case ids
         case limit
         case page
-        case scopeId = "scope_id"
+        case scopeID = "scope_id"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

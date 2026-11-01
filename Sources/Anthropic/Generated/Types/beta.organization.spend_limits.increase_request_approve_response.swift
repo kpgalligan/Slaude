@@ -8,7 +8,7 @@ public struct IncreaseRequestApproveResponse: Codable, Hashable, Sendable {
     public var createdAt: Date
     public var period: BetaSpendLimitPeriod
     public var resolvedAt: Date?
-    public var resolvedBy: IncreaseRequestApproveResponse.ResolvedBy??
+    public var resolvedBy: IncreaseRequestApproveResponse.ResolvedBy?
     /// A configured spend limit: a cap on metered spend for one scope and period.
     public var spendLimit: BetaSpendLimit
     /// Per-member effective-limit report row (`GET /spend_limits/effective`).
@@ -16,7 +16,7 @@ public struct IncreaseRequestApproveResponse: Codable, Hashable, Sendable {
     public var status: BetaSpendLimitIncreaseRequestStatus
     public var type: String
 
-    public init(id: String, actor: IncreaseRequestApproveResponse.Actor, createdAt: Date, period: BetaSpendLimitPeriod, resolvedAt: Date? = nil, resolvedBy: IncreaseRequestApproveResponse.ResolvedBy?? = nil, spendLimit: BetaSpendLimit, spendSummary: BetaSpendSummary? = nil, status: BetaSpendLimitIncreaseRequestStatus, type: String = "spend_limit_increase_request") {
+    public init(id: String, actor: IncreaseRequestApproveResponse.Actor, createdAt: Date, period: BetaSpendLimitPeriod, resolvedAt: Date? = nil, resolvedBy: IncreaseRequestApproveResponse.ResolvedBy? = nil, spendLimit: BetaSpendLimit, spendSummary: BetaSpendSummary? = nil, status: BetaSpendLimitIncreaseRequestStatus, type: String = "spend_limit_increase_request") {
         self.id = id
         self.actor = actor
         self.createdAt = createdAt

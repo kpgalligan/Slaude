@@ -8,18 +8,18 @@ import Foundation
 public struct BetaClaudeTagSlackChannelIdentifiersParam: Codable, Hashable, Sendable {
     /// Slack's identifier for the channel, starting with `C` or `G`, such as
     /// `C0456EFGH`.
-    public var channelId: String
+    public var channelID: String
     /// Slack's identifier for the workspace the channel is in, starting with `T`, such
     /// as `T0123ABCD`.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(channelId: String, workspaceId: String) {
-        self.channelId = channelId
-        self.workspaceId = workspaceId
+    public init(channelID: String, workspaceID: String) {
+        self.channelID = channelID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case channelId = "channel_id"
-        case workspaceId = "workspace_id"
+        case channelID = "channel_id"
+        case workspaceID = "workspace_id"
     }
 }

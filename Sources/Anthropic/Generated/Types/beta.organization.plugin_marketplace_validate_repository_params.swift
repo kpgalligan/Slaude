@@ -8,7 +8,7 @@ public struct PluginMarketplaceValidateRepositoryParams: Codable, Hashable, Send
     /// with a port other than 443 or 80, with credentials in it, or that does not name
     /// exactly `owner/repo` (a trailing `.git` or `/` is accepted) is a 400. A private
     /// or missing repository is reported in the response, not refused.
-    public var repositoryUrl: String
+    public var repositoryURL: String
     /// The branch to validate the tip of, or the full 40-character SHA of the commit to
     /// validate. When omitted, the branch a synchronization would read (usually the
     /// repository's default branch); if that is not the default branch, the report's
@@ -22,14 +22,14 @@ public struct PluginMarketplaceValidateRepositoryParams: Codable, Hashable, Send
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(repositoryUrl: String, ref: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
-        self.repositoryUrl = repositoryUrl
+    public init(repositoryURL: String, ref: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+        self.repositoryURL = repositoryURL
         self.ref = ref
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
-        case repositoryUrl = "repository_url"
+        case repositoryURL = "repository_url"
         case ref
         case betas
     }

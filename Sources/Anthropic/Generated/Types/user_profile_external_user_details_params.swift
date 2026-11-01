@@ -31,16 +31,16 @@ public struct UserProfileExternalUserDetailsParams: Codable, Hashable, Sendable 
     /// The platform's own reference for the entity, for example the key of the
     /// end-user's row in the platform's database. Not interpreted by Anthropic and not
     /// enforced unique. 1 to 255 characters.
-    public var referenceId: String??
+    public var referenceID: String??
 
-    public init(accountStatus: UserProfileExternalUserAccountStatus?? = nil, country: String?? = nil, emailHash: String?? = nil, entityType: UserProfileExternalUserEntityType?? = nil, nameHash: String?? = nil, onboardedAt: OnboardedAt? = nil, referenceId: String?? = nil) {
+    public init(accountStatus: UserProfileExternalUserAccountStatus?? = nil, country: String?? = nil, emailHash: String?? = nil, entityType: UserProfileExternalUserEntityType?? = nil, nameHash: String?? = nil, onboardedAt: OnboardedAt? = nil, referenceID: String?? = nil) {
         self.accountStatus = accountStatus
         self.country = country
         self.emailHash = emailHash
         self.entityType = entityType
         self.nameHash = nameHash
         self.onboardedAt = onboardedAt
-        self.referenceId = referenceId
+        self.referenceID = referenceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -50,7 +50,7 @@ public struct UserProfileExternalUserDetailsParams: Codable, Hashable, Sendable 
         case entityType = "entity_type"
         case nameHash = "name_hash"
         case onboardedAt = "onboarded_at"
-        case referenceId = "reference_id"
+        case referenceID = "reference_id"
     }
 
     public indirect enum OnboardedAt: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

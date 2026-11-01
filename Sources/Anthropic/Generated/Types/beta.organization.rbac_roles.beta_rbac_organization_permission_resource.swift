@@ -4,17 +4,17 @@ import Foundation
 
 public struct BetaRBACOrganizationPermissionResource: Codable, Hashable, Sendable {
     /// UUID of the organization the permission applies to.
-    public var organizationId: String
+    public var organizationID: String
     /// Kind of resource the permission applies to.
     public var type: String
 
-    public init(organizationId: String, type: String = "organization") {
-        self.organizationId = organizationId
+    public init(organizationID: String, type: String = "organization") {
+        self.organizationID = organizationID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case organizationId = "organization_id"
+        case organizationID = "organization_id"
         case type
     }
 }

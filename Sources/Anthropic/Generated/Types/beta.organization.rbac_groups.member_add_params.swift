@@ -4,13 +4,13 @@ import Foundation
 
 public struct BetaOrganizationRbacGroupsMemberAddParams: Codable, Hashable, Sendable {
     /// ID of the User.
-    public var userId: String
+    public var userID: String
 
-    public init(userId: String) {
-        self.userId = userId
+    public init(userID: String) {
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

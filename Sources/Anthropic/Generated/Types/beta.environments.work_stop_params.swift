@@ -3,7 +3,7 @@
 import Foundation
 
 public struct WorkStopParams: Codable, Hashable, Sendable {
-    public var environmentId: String
+    public var environmentID: String
     /// If true, immediately stop work without graceful shutdown
     public var force: Bool?
     /// Optional header to specify the beta version(s) you want to use.
@@ -15,19 +15,19 @@ public struct WorkStopParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(environmentId: String, force: Bool? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.environmentId = environmentId
+    public init(environmentID: String, force: Bool? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.environmentID = environmentID
         self.force = force
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case force
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

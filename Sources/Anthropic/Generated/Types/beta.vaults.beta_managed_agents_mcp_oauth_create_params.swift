@@ -7,7 +7,7 @@ public struct BetaManagedAgentsMCPOAuthCreateParams: Codable, Hashable, Sendable
     /// The OAuth access token to send to the MCP server.
     public var accessToken: String
     /// URL of the MCP server this credential authenticates against.
-    public var mcpServerUrl: String
+    public var mcpServerURL: String
     public var type: String
     /// When `access_token` expires, in RFC 3339.
     ///
@@ -16,9 +16,9 @@ public struct BetaManagedAgentsMCPOAuthCreateParams: Codable, Hashable, Sendable
     /// Refresh token configuration, if the credential supports token refresh.
     public var refresh: BetaManagedAgentsMCPOAuthRefreshParams??
 
-    public init(accessToken: String, mcpServerUrl: String, type: String = "mcp_oauth", expiresAt: ExpiresAt?? = nil, refresh: BetaManagedAgentsMCPOAuthRefreshParams?? = nil) {
+    public init(accessToken: String, mcpServerURL: String, type: String = "mcp_oauth", expiresAt: ExpiresAt?? = nil, refresh: BetaManagedAgentsMCPOAuthRefreshParams?? = nil) {
         self.accessToken = accessToken
-        self.mcpServerUrl = mcpServerUrl
+        self.mcpServerURL = mcpServerURL
         self.type = type
         self.expiresAt = expiresAt
         self.refresh = refresh
@@ -26,7 +26,7 @@ public struct BetaManagedAgentsMCPOAuthCreateParams: Codable, Hashable, Sendable
 
     enum CodingKeys: String, CodingKey {
         case accessToken = "access_token"
-        case mcpServerUrl = "mcp_server_url"
+        case mcpServerURL = "mcp_server_url"
         case type
         case expiresAt = "expires_at"
         case refresh

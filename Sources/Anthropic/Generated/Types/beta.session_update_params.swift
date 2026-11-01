@@ -30,7 +30,7 @@ public struct SessionUpdateParams: Codable, Hashable, Sendable {
     ///
     /// Not yet supported; requests setting this field are rejected. Reserved for future
     /// use.
-    public var vaultIds: [String]?
+    public var vaultIDs: [String]?
     /// This endpoint is in beta: requests must send `managed-agents-2026-04-01` in this
     /// header.
     public var betas: [AnthropicBetaParam]?
@@ -41,16 +41,16 @@ public struct SessionUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(agent: BetaManagedAgentsSessionAgentUpdateParam? = nil, budget: BetaManagedAgentsBudgetLimitParam?? = nil, metadata: [String: String?]?? = nil, title: String?? = nil, vaultIds: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(agent: BetaManagedAgentsSessionAgentUpdateParam? = nil, budget: BetaManagedAgentsBudgetLimitParam?? = nil, metadata: [String: String?]?? = nil, title: String?? = nil, vaultIDs: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.agent = agent
         self.budget = budget
         self.metadata = metadata
         self.title = title
-        self.vaultIds = vaultIds
+        self.vaultIDs = vaultIDs
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -58,8 +58,8 @@ public struct SessionUpdateParams: Codable, Hashable, Sendable {
         case budget
         case metadata
         case title
-        case vaultIds = "vault_ids"
+        case vaultIDs = "vault_ids"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

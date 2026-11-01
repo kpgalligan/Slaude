@@ -16,9 +16,9 @@ public struct BetaManagedAgentsSpanOutcomeEvaluationEndEvent: Codable, Hashable,
     /// `span.outcome_evaluation_start`.
     public var iteration: Int
     /// The id of the corresponding `span.outcome_evaluation_start` event.
-    public var outcomeEvaluationStartId: String
+    public var outcomeEvaluationStartID: String
     /// The `outc_` ID of the outcome being evaluated.
-    public var outcomeId: String
+    public var outcomeID: String
     /// Timestamp when outcome evaluation ended.
     public var processedAt: Date
     /// Evaluation verdict.
@@ -36,12 +36,12 @@ public struct BetaManagedAgentsSpanOutcomeEvaluationEndEvent: Codable, Hashable,
     /// Sums across all grader model requests within the cycle.
     public var usage: BetaManagedAgentsSpanModelUsage
 
-    public init(id: String, explanation: String, iteration: Int, outcomeEvaluationStartId: String, outcomeId: String, processedAt: Date, result: String, type: String = "span.outcome_evaluation_end", usage: BetaManagedAgentsSpanModelUsage) {
+    public init(id: String, explanation: String, iteration: Int, outcomeEvaluationStartID: String, outcomeID: String, processedAt: Date, result: String, type: String = "span.outcome_evaluation_end", usage: BetaManagedAgentsSpanModelUsage) {
         self.id = id
         self.explanation = explanation
         self.iteration = iteration
-        self.outcomeEvaluationStartId = outcomeEvaluationStartId
-        self.outcomeId = outcomeId
+        self.outcomeEvaluationStartID = outcomeEvaluationStartID
+        self.outcomeID = outcomeID
         self.processedAt = processedAt
         self.result = result
         self.type = type
@@ -52,8 +52,8 @@ public struct BetaManagedAgentsSpanOutcomeEvaluationEndEvent: Codable, Hashable,
         case id
         case explanation
         case iteration
-        case outcomeEvaluationStartId = "outcome_evaluation_start_id"
-        case outcomeId = "outcome_id"
+        case outcomeEvaluationStartID = "outcome_evaluation_start_id"
+        case outcomeID = "outcome_id"
         case processedAt = "processed_at"
         case result
         case type

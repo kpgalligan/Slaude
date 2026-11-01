@@ -13,7 +13,7 @@ public struct TelemetryDestinationCreateParams: Codable, Hashable, Sendable {
     /// A path prefix, such as `/otlp`, is allowed. Don't include the per-signal path
     /// (`/v1/traces`), because the API appends it on delivery. If your collector takes
     /// traces on another path, also set `traces.endpoint_url`.
-    public var endpointUrl: String
+    public var endpointURL: String
     /// Which of the organization's workspaces the destination covers.
     public var workspaces: BetaTelemetryDestinationWorkspacesParams
     /// Human-readable name for the destination. Optional. 1 to 255 characters.
@@ -40,8 +40,8 @@ public struct TelemetryDestinationCreateParams: Codable, Hashable, Sendable {
     /// in this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(endpointUrl: String, workspaces: BetaTelemetryDestinationWorkspacesParams, displayName: String?? = nil, headers: [String: String]? = nil, traces: BetaTelemetryDestinationTracesParams? = nil, betas: [AnthropicBetaParam]? = nil) {
-        self.endpointUrl = endpointUrl
+    public init(endpointURL: String, workspaces: BetaTelemetryDestinationWorkspacesParams, displayName: String?? = nil, headers: [String: String]? = nil, traces: BetaTelemetryDestinationTracesParams? = nil, betas: [AnthropicBetaParam]? = nil) {
+        self.endpointURL = endpointURL
         self.workspaces = workspaces
         self.displayName = displayName
         self.headers = headers
@@ -50,7 +50,7 @@ public struct TelemetryDestinationCreateParams: Codable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case endpointUrl = "endpoint_url"
+        case endpointURL = "endpoint_url"
         case workspaces
         case displayName = "display_name"
         case headers

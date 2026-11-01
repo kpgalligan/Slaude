@@ -5,25 +5,25 @@ import Foundation
 public struct BetaWebhookSessionThreadTerminatedEventData: Codable, Hashable, Sendable {
     /// ID of the session that triggered the event.
     public var id: String
-    public var organizationId: String
+    public var organizationID: String
     /// ID of the session thread this event refers to.
-    public var sessionThreadId: String
+    public var sessionThreadID: String
     public var type: String
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(id: String, organizationId: String, sessionThreadId: String, type: String = "session.thread_terminated", workspaceId: String) {
+    public init(id: String, organizationID: String, sessionThreadID: String, type: String = "session.thread_terminated", workspaceID: String) {
         self.id = id
-        self.organizationId = organizationId
-        self.sessionThreadId = sessionThreadId
+        self.organizationID = organizationID
+        self.sessionThreadID = sessionThreadID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case organizationId = "organization_id"
-        case sessionThreadId = "session_thread_id"
+        case organizationID = "organization_id"
+        case sessionThreadID = "session_thread_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

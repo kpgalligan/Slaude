@@ -4,16 +4,16 @@ import Foundation
 
 public struct BetaAnalyticsAPIActor: Codable, Hashable, Sendable {
     /// Tagged API key ID.
-    public var apiKeyId: String
+    public var apiKeyID: String
     public var type: String
 
-    public init(apiKeyId: String, type: String = "api_actor") {
-        self.apiKeyId = apiKeyId
+    public init(apiKeyID: String, type: String = "api_actor") {
+        self.apiKeyID = apiKeyID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case apiKeyId = "api_key_id"
+        case apiKeyID = "api_key_id"
         case type
     }
 }

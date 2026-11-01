@@ -7,15 +7,15 @@ public struct BetaAPIKeyWorkspaceScope: Codable, Hashable, Sendable {
     public var type: String
     /// ID of the Workspace the API key belongs to, including when it is the
     /// organization's default Workspace.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(type: String = "workspace", workspaceId: String) {
+    public init(type: String = "workspace", workspaceID: String) {
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

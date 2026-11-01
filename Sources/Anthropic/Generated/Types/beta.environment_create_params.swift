@@ -27,16 +27,16 @@ public struct EnvironmentCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(name: String, config: EnvironmentCreateParams.Config?? = nil, description: String?? = nil, metadata: [String: String]? = nil, scope: Scope?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(name: String, config: EnvironmentCreateParams.Config?? = nil, description: String?? = nil, metadata: [String: String]? = nil, scope: Scope?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.name = name
         self.config = config
         self.description = description
         self.metadata = metadata
         self.scope = scope
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -46,7 +46,7 @@ public struct EnvironmentCreateParams: Codable, Hashable, Sendable {
         case metadata
         case scope
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum Scope: OpenEnum, CaseIterable {

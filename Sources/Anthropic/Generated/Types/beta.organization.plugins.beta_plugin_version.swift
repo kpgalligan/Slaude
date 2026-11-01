@@ -12,7 +12,7 @@ public struct BetaPluginVersion: Codable, Hashable, Sendable {
     /// RFC 3339.
     public var createdAt: Date
     /// Who uploaded this version; null when not recorded.
-    public var createdBy: BetaPluginVersion.CreatedBy??
+    public var createdBy: BetaPluginVersion.CreatedBy?
     /// The manifest's description; null when it declares none.
     public var description: String?
     /// The manifest's display name; null when it declares none.
@@ -26,7 +26,7 @@ public struct BetaPluginVersion: Codable, Hashable, Sendable {
     /// stored before claude.ai began recording this field (August 2026).
     public var manifestVersion: String?
     /// The Plugin's ID.
-    public var pluginId: String
+    public var pluginID: String
     /// How far the version reaches: `remote`, `privileged`, `contained`, or `null`, as
     /// defined on the Plugin's `reach`.
     public var reach: Reach?
@@ -35,7 +35,7 @@ public struct BetaPluginVersion: Codable, Hashable, Sendable {
     /// Always `plugin_version`.
     public var type: String
 
-    public init(id: String, components: [BetaPluginComponent]? = nil, contentScan: BetaPluginContentScan? = nil, createdAt: Date, createdBy: BetaPluginVersion.CreatedBy?? = nil, description: String? = nil, displayName: String? = nil, manifestVersion: String? = nil, pluginId: String, reach: Reach? = nil, releaseNotes: String? = nil, type: String = "plugin_version") {
+    public init(id: String, components: [BetaPluginComponent]? = nil, contentScan: BetaPluginContentScan? = nil, createdAt: Date, createdBy: BetaPluginVersion.CreatedBy? = nil, description: String? = nil, displayName: String? = nil, manifestVersion: String? = nil, pluginID: String, reach: Reach? = nil, releaseNotes: String? = nil, type: String = "plugin_version") {
         self.id = id
         self.components = components
         self.contentScan = contentScan
@@ -44,7 +44,7 @@ public struct BetaPluginVersion: Codable, Hashable, Sendable {
         self.description = description
         self.displayName = displayName
         self.manifestVersion = manifestVersion
-        self.pluginId = pluginId
+        self.pluginID = pluginID
         self.reach = reach
         self.releaseNotes = releaseNotes
         self.type = type
@@ -59,7 +59,7 @@ public struct BetaPluginVersion: Codable, Hashable, Sendable {
         case description
         case displayName = "display_name"
         case manifestVersion = "manifest_version"
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case reach
         case releaseNotes = "release_notes"
         case type

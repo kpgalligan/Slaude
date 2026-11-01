@@ -6,16 +6,16 @@ import Foundation
 public struct BetaClaudeTagSlackChannelBundleTargetCreateParam: Codable, Hashable, Sendable {
     /// The identifier of the Slack channel to attach the Bundle to, starting with
     /// `slch_`. It is the channel object's `id`, not Slack's `channel_id`.
-    public var slackChannelId: String
+    public var slackChannelID: String
     public var type: String
 
-    public init(slackChannelId: String, type: String = "slack_channel") {
-        self.slackChannelId = slackChannelId
+    public init(slackChannelID: String, type: String = "slack_channel") {
+        self.slackChannelID = slackChannelID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case slackChannelId = "slack_channel_id"
+        case slackChannelID = "slack_channel_id"
         case type
     }
 }

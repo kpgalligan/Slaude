@@ -43,7 +43,7 @@ public struct BetaAnalyticsUserActivity: Codable, Hashable, Sendable {
     public var lastActivityDate: ISODate?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -51,7 +51,7 @@ public struct BetaAnalyticsUserActivity: Codable, Hashable, Sendable {
     /// The user this row describes. Null on rows aggregated across users.
     public var user: BetaAnalyticsUser?
 
-    public init(chatMetrics: BetaAnalyticsChatMetrics, claudeCodeMetrics: BetaAnalyticsClaudeCodeMetrics, coworkMetrics: BetaAnalyticsCoworkMetrics, designMetrics: BetaAnalyticsDesignMetrics, officeMetrics: BetaAnalyticsOfficeMetrics, scienceMetrics: BetaAnalyticsScienceMetrics, webSearchCount: Int, chatCoworkUnifiedMetrics: BetaAnalyticsUserActivity.ChatCoworkUnifiedMetrics? = nil, distinctUserCount: Int? = nil, lastActivityDate: ISODate? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, user: BetaAnalyticsUser? = nil) {
+    public init(chatMetrics: BetaAnalyticsChatMetrics, claudeCodeMetrics: BetaAnalyticsClaudeCodeMetrics, coworkMetrics: BetaAnalyticsCoworkMetrics, designMetrics: BetaAnalyticsDesignMetrics, officeMetrics: BetaAnalyticsOfficeMetrics, scienceMetrics: BetaAnalyticsScienceMetrics, webSearchCount: Int, chatCoworkUnifiedMetrics: BetaAnalyticsUserActivity.ChatCoworkUnifiedMetrics? = nil, distinctUserCount: Int? = nil, lastActivityDate: ISODate? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, user: BetaAnalyticsUser? = nil) {
         self.chatMetrics = chatMetrics
         self.claudeCodeMetrics = claudeCodeMetrics
         self.coworkMetrics = coworkMetrics
@@ -62,7 +62,7 @@ public struct BetaAnalyticsUserActivity: Codable, Hashable, Sendable {
         self.chatCoworkUnifiedMetrics = chatCoworkUnifiedMetrics
         self.distinctUserCount = distinctUserCount
         self.lastActivityDate = lastActivityDate
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
         self.user = user
     }
@@ -78,7 +78,7 @@ public struct BetaAnalyticsUserActivity: Codable, Hashable, Sendable {
         case chatCoworkUnifiedMetrics = "chat_cowork_unified_metrics"
         case distinctUserCount = "distinct_user_count"
         case lastActivityDate = "last_activity_date"
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
         case user
     }

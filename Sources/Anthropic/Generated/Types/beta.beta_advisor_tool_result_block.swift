@@ -4,18 +4,18 @@ import Foundation
 
 public struct BetaAdvisorToolResultBlock: Codable, Hashable, Sendable {
     public var content: BetaAdvisorToolResultBlock.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
 
-    public init(content: BetaAdvisorToolResultBlock.Content, toolUseId: String, type: String = "advisor_tool_result") {
+    public init(content: BetaAdvisorToolResultBlock.Content, toolUseID: String, type: String = "advisor_tool_result") {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
     }
 }

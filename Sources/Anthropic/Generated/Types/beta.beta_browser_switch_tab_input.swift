@@ -6,13 +6,13 @@ import Foundation
 /// a tab_id apply to.
 public struct BetaBrowserSwitchTabInput: Codable, Hashable, Sendable {
     /// The tab to switch to.
-    public var tabId: String
+    public var tabID: String
 
-    public init(tabId: String) {
-        self.tabId = tabId
+    public init(tabID: String) {
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

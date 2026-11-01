@@ -34,9 +34,9 @@ public struct RuleUpdateParams: Codable, Hashable, Sendable {
     ///
     /// Rejected with 400 if the rule is enabled for more than one workspace; use the
     /// `/federation_rules/{federation_rule_id}/workspaces` sub-resource instead.
-    public var workspaceId: String??
+    public var workspaceID: String??
 
-    public init(appliesToAllWorkspaces: Bool?? = nil, description: String?? = nil, match: FederationRuleMatchParam?? = nil, name: String?? = nil, oauthScope: String?? = nil, target: ServiceAccountTargetParam?? = nil, tokenLifetimeSeconds: Int?? = nil, workspaceId: String?? = nil) {
+    public init(appliesToAllWorkspaces: Bool?? = nil, description: String?? = nil, match: FederationRuleMatchParam?? = nil, name: String?? = nil, oauthScope: String?? = nil, target: ServiceAccountTargetParam?? = nil, tokenLifetimeSeconds: Int?? = nil, workspaceID: String?? = nil) {
         self.appliesToAllWorkspaces = appliesToAllWorkspaces
         self.description = description
         self.match = match
@@ -44,7 +44,7 @@ public struct RuleUpdateParams: Codable, Hashable, Sendable {
         self.oauthScope = oauthScope
         self.target = target
         self.tokenLifetimeSeconds = tokenLifetimeSeconds
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -55,6 +55,6 @@ public struct RuleUpdateParams: Codable, Hashable, Sendable {
         case oauthScope = "oauth_scope"
         case target
         case tokenLifetimeSeconds = "token_lifetime_seconds"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

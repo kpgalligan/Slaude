@@ -4,21 +4,21 @@ import Foundation
 
 public struct BetaTextEditorCodeExecutionToolResultBlockParam: Codable, Hashable, Sendable {
     public var content: BetaTextEditorCodeExecutionToolResultBlockParam.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Create a cache control breakpoint at this content block.
     public var cacheControl: BetaCacheControlEphemeralParam??
 
-    public init(content: BetaTextEditorCodeExecutionToolResultBlockParam.Content, toolUseId: String, type: String = "text_editor_code_execution_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil) {
+    public init(content: BetaTextEditorCodeExecutionToolResultBlockParam.Content, toolUseID: String, type: String = "text_editor_code_execution_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil) {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.cacheControl = cacheControl
     }
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case cacheControl = "cache_control"
     }

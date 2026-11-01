@@ -4,15 +4,15 @@ import Foundation
 
 public struct WebFetchToolResultBlockParam: Codable, Hashable, Sendable {
     public var content: WebFetchToolResultBlockParam.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Create a cache control breakpoint at this content block.
     public var cacheControl: CacheControlEphemeralParam??
     public var caller: WebFetchToolResultBlockParam.Caller?
 
-    public init(content: WebFetchToolResultBlockParam.Content, toolUseId: String, type: String = "web_fetch_tool_result", cacheControl: CacheControlEphemeralParam?? = nil, caller: WebFetchToolResultBlockParam.Caller? = nil) {
+    public init(content: WebFetchToolResultBlockParam.Content, toolUseID: String, type: String = "web_fetch_tool_result", cacheControl: CacheControlEphemeralParam?? = nil, caller: WebFetchToolResultBlockParam.Caller? = nil) {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.cacheControl = cacheControl
         self.caller = caller
@@ -20,7 +20,7 @@ public struct WebFetchToolResultBlockParam: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case cacheControl = "cache_control"
         case caller

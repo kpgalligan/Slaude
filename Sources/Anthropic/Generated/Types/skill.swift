@@ -17,7 +17,7 @@ public struct Skill: Codable, Hashable, Sendable {
     /// ID of the newest Skill Version — what `latest` references resolve to.
     ///
     /// Always set: a Skill holds at least one version.
-    public var latestVersionId: String
+    public var latestVersionID: String
     /// Where the Skill comes from.
     ///
     /// Possible values:
@@ -34,11 +34,11 @@ public struct Skill: Codable, Hashable, Sendable {
     /// ISO 8601 timestamp of when the skill was last updated.
     public var updatedAt: Date
 
-    public init(id: String, createdAt: Date, displayName: String, latestVersionId: String, source: SkillSource, type: String = "skill", updatedAt: Date) {
+    public init(id: String, createdAt: Date, displayName: String, latestVersionID: String, source: SkillSource, type: String = "skill", updatedAt: Date) {
         self.id = id
         self.createdAt = createdAt
         self.displayName = displayName
-        self.latestVersionId = latestVersionId
+        self.latestVersionID = latestVersionID
         self.source = source
         self.type = type
         self.updatedAt = updatedAt
@@ -48,7 +48,7 @@ public struct Skill: Codable, Hashable, Sendable {
         case id
         case createdAt = "created_at"
         case displayName = "display_name"
-        case latestVersionId = "latest_version_id"
+        case latestVersionID = "latest_version_id"
         case source
         case type
         case updatedAt = "updated_at"

@@ -15,7 +15,7 @@ public struct OrganizationInvite: Codable, Hashable, Sendable {
     public var invitedAt: Date
     /// RBAC group IDs recorded on the Invite (Claude Enterprise organizations), to be
     /// assigned to the User when the Invite is accepted. `[]` when none.
-    public var rbacGroupIds: [String]
+    public var rbacGroupIDs: [String]
     /// Organization role of the User.
     public var role: OrganizationRole
     /// Status of the Invite.
@@ -25,13 +25,13 @@ public struct OrganizationInvite: Codable, Hashable, Sendable {
     /// For Invites, this is always `"invite"`.
     public var type: String
 
-    public init(id: String, acceptedAt: Date? = nil, email: String, expiresAt: Date, invitedAt: Date, rbacGroupIds: [String], role: OrganizationRole, status: Status, type: String = "invite") {
+    public init(id: String, acceptedAt: Date? = nil, email: String, expiresAt: Date, invitedAt: Date, rbacGroupIDs: [String], role: OrganizationRole, status: Status, type: String = "invite") {
         self.id = id
         self.acceptedAt = acceptedAt
         self.email = email
         self.expiresAt = expiresAt
         self.invitedAt = invitedAt
-        self.rbacGroupIds = rbacGroupIds
+        self.rbacGroupIDs = rbacGroupIDs
         self.role = role
         self.status = status
         self.type = type
@@ -43,7 +43,7 @@ public struct OrganizationInvite: Codable, Hashable, Sendable {
         case email
         case expiresAt = "expires_at"
         case invitedAt = "invited_at"
-        case rbacGroupIds = "rbac_group_ids"
+        case rbacGroupIDs = "rbac_group_ids"
         case role
         case status
         case type

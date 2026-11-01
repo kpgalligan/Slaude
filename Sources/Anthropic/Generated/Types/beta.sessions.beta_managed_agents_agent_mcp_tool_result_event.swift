@@ -7,7 +7,7 @@ public struct BetaManagedAgentsAgentMCPToolResultEvent: Codable, Hashable, Senda
     /// Unique identifier for this event.
     public var id: String
     /// The id of the `agent.mcp_tool_use` event this result corresponds to.
-    public var mcpToolUseId: String
+    public var mcpToolUseID: String
     /// Timestamp when this event was processed.
     public var processedAt: Date
     public var type: String
@@ -16,9 +16,9 @@ public struct BetaManagedAgentsAgentMCPToolResultEvent: Codable, Hashable, Senda
     /// Whether the tool execution resulted in an error.
     public var isError: Bool?
 
-    public init(id: String, mcpToolUseId: String, processedAt: Date, type: String = "agent.mcp_tool_result", content: [BetaManagedAgentsAgentMCPToolResultEvent.Content]? = nil, isError: Bool? = nil) {
+    public init(id: String, mcpToolUseID: String, processedAt: Date, type: String = "agent.mcp_tool_result", content: [BetaManagedAgentsAgentMCPToolResultEvent.Content]? = nil, isError: Bool? = nil) {
         self.id = id
-        self.mcpToolUseId = mcpToolUseId
+        self.mcpToolUseID = mcpToolUseID
         self.processedAt = processedAt
         self.type = type
         self.content = content
@@ -27,7 +27,7 @@ public struct BetaManagedAgentsAgentMCPToolResultEvent: Codable, Hashable, Senda
 
     enum CodingKeys: String, CodingKey {
         case id
-        case mcpToolUseId = "mcp_tool_use_id"
+        case mcpToolUseID = "mcp_tool_use_id"
         case processedAt = "processed_at"
         case type
         case content

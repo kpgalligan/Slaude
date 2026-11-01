@@ -23,16 +23,16 @@ public struct AgentListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, includeArchived: Bool? = nil, limit: Int? = nil, page: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, includeArchived: Bool? = nil, limit: Int? = nil, page: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.createdAtGte = createdAtGte
         self.createdAtLte = createdAtLte
         self.includeArchived = includeArchived
         self.limit = limit
         self.page = page
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -42,7 +42,7 @@ public struct AgentListParams: Codable, Hashable, Sendable {
         case limit
         case page
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGte: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

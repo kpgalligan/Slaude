@@ -4,17 +4,17 @@ import Foundation
 
 public struct BetaPluginAPIActor: Codable, Hashable, Sendable {
     /// The key's ID.
-    public var apiKeyId: String
+    public var apiKeyID: String
     /// An Admin API key, in the same form the Compliance API activity feed uses for it.
     public var type: String
 
-    public init(apiKeyId: String, type: String = "api_actor") {
-        self.apiKeyId = apiKeyId
+    public init(apiKeyID: String, type: String = "api_actor") {
+        self.apiKeyID = apiKeyID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case apiKeyId = "api_key_id"
+        case apiKeyID = "api_key_id"
         case type
     }
 }

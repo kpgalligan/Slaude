@@ -6,16 +6,16 @@ import Foundation
 public struct BetaClaudeTagSlackWorkspaceBundleTargetCreateParam: Codable, Hashable, Sendable {
     /// The identifier of the Slack workspace to attach the Bundle to, starting with
     /// `slws_`.
-    public var slackWorkspaceId: String
+    public var slackWorkspaceID: String
     public var type: String
 
-    public init(slackWorkspaceId: String, type: String = "slack_workspace") {
-        self.slackWorkspaceId = slackWorkspaceId
+    public init(slackWorkspaceID: String, type: String = "slack_workspace") {
+        self.slackWorkspaceID = slackWorkspaceID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case slackWorkspaceId = "slack_workspace_id"
+        case slackWorkspaceID = "slack_workspace_id"
         case type
     }
 }

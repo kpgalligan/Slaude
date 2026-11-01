@@ -5,21 +5,21 @@ import Foundation
 public struct BetaWebhookVaultDeletedEventData: Codable, Hashable, Sendable {
     /// ID of the vault that triggered the event.
     public var id: String
-    public var organizationId: String
+    public var organizationID: String
     public var type: String
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(id: String, organizationId: String, type: String = "vault.deleted", workspaceId: String) {
+    public init(id: String, organizationID: String, type: String = "vault.deleted", workspaceID: String) {
         self.id = id
-        self.organizationId = organizationId
+        self.organizationID = organizationID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case organizationId = "organization_id"
+        case organizationID = "organization_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

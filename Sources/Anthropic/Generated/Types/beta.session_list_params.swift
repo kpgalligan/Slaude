@@ -4,7 +4,7 @@ import Foundation
 
 public struct SessionListParams: Codable, Hashable, Sendable {
     /// Filter sessions created with this agent ID.
-    public var agentId: String?
+    public var agentID: String?
     /// Filter by agent version. Only applies when `agent_id` is also set.
     public var agentVersion: Int?
     /// Return sessions created after this time (exclusive).
@@ -16,14 +16,14 @@ public struct SessionListParams: Codable, Hashable, Sendable {
     /// Return sessions created at or before this time (inclusive).
     public var createdAtLte: CreatedAtLte?
     /// Filter sessions created by this deployment ID.
-    public var deploymentId: String?
+    public var deploymentID: String?
     /// When true, includes archived sessions. Default: false (exclude archived).
     public var includeArchived: Bool?
     /// Maximum number of results to return.
     public var limit: Int?
     /// Filter sessions whose resources contain a `memory_store` with this memory store
     /// ID.
-    public var memoryStoreId: String?
+    public var memoryStoreID: String?
     /// Sort direction for results, ordered by `created_at`.
     ///
     /// Defaults to `desc` (newest first).
@@ -44,42 +44,42 @@ public struct SessionListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(agentId: String? = nil, agentVersion: Int? = nil, createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, deploymentId: String? = nil, includeArchived: Bool? = nil, limit: Int? = nil, memoryStoreId: String? = nil, order: Order? = nil, page: String? = nil, statuses: [Statuses]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.agentId = agentId
+    public init(agentID: String? = nil, agentVersion: Int? = nil, createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, deploymentID: String? = nil, includeArchived: Bool? = nil, limit: Int? = nil, memoryStoreID: String? = nil, order: Order? = nil, page: String? = nil, statuses: [Statuses]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.agentID = agentID
         self.agentVersion = agentVersion
         self.createdAtGt = createdAtGt
         self.createdAtGte = createdAtGte
         self.createdAtLt = createdAtLt
         self.createdAtLte = createdAtLte
-        self.deploymentId = deploymentId
+        self.deploymentID = deploymentID
         self.includeArchived = includeArchived
         self.limit = limit
-        self.memoryStoreId = memoryStoreId
+        self.memoryStoreID = memoryStoreID
         self.order = order
         self.page = page
         self.statuses = statuses
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case agentId = "agent_id"
+        case agentID = "agent_id"
         case agentVersion = "agent_version"
         case createdAtGt = "created_at_gt"
         case createdAtGte = "created_at_gte"
         case createdAtLt = "created_at_lt"
         case createdAtLte = "created_at_lte"
-        case deploymentId = "deployment_id"
+        case deploymentID = "deployment_id"
         case includeArchived = "include_archived"
         case limit
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case order
         case page
         case statuses
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGt: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

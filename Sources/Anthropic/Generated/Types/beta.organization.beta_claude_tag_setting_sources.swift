@@ -9,7 +9,7 @@ public struct BetaClaudeTagSettingSources: Codable, Hashable, Sendable {
     /// The settings level `enabled` comes from.
     public var enabled: BetaClaudeTagSettingSource?
     /// The settings level `environment_id` comes from.
-    public var environmentId: BetaClaudeTagSettingSource?
+    public var environmentID: BetaClaudeTagSettingSource?
     /// The settings level `guest_policy` comes from.
     public var guestPolicy: BetaClaudeTagSettingSource?
     /// Every settings level that contributes text to `instructions`, broadest first, in
@@ -18,9 +18,9 @@ public struct BetaClaudeTagSettingSources: Codable, Hashable, Sendable {
     /// The settings level `model` comes from.
     public var model: BetaClaudeTagSettingSource?
 
-    public init(enabled: BetaClaudeTagSettingSource? = nil, environmentId: BetaClaudeTagSettingSource? = nil, guestPolicy: BetaClaudeTagSettingSource? = nil, instructions: [BetaClaudeTagSettingSource], model: BetaClaudeTagSettingSource? = nil) {
+    public init(enabled: BetaClaudeTagSettingSource? = nil, environmentID: BetaClaudeTagSettingSource? = nil, guestPolicy: BetaClaudeTagSettingSource? = nil, instructions: [BetaClaudeTagSettingSource], model: BetaClaudeTagSettingSource? = nil) {
         self.enabled = enabled
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.guestPolicy = guestPolicy
         self.instructions = instructions
         self.model = model
@@ -28,7 +28,7 @@ public struct BetaClaudeTagSettingSources: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case enabled
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case guestPolicy = "guest_policy"
         case instructions
         case model

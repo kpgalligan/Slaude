@@ -13,27 +13,27 @@ public struct BetaManagedAgentsSessionThreadCreatedEvent: Codable, Hashable, Sen
     /// Timestamp when the thread was created.
     public var processedAt: Date
     /// Public `sthr_` ID of the newly created thread.
-    public var sessionThreadId: String
+    public var sessionThreadID: String
     public var type: String
     /// Identifier of the workflow run that created the thread, or `null` for any other
     /// thread.
-    public var workflowRunId: String?
+    public var workflowRunID: String?
 
-    public init(id: String, agentName: String, processedAt: Date, sessionThreadId: String, type: String = "session.thread_created", workflowRunId: String? = nil) {
+    public init(id: String, agentName: String, processedAt: Date, sessionThreadID: String, type: String = "session.thread_created", workflowRunID: String? = nil) {
         self.id = id
         self.agentName = agentName
         self.processedAt = processedAt
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
         self.type = type
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case agentName = "agent_name"
         case processedAt = "processed_at"
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
         case type
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }

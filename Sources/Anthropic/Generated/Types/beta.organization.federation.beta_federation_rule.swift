@@ -21,7 +21,7 @@ public struct BetaFederationRule: Codable, Hashable, Sendable {
     /// If set, this rule is archived and rejects token exchange.
     public var archivedAt: Date?
     /// Tagged ID (`user_`/`svac_`) of the actor that archived this rule.
-    public var archivedByActorId: String?
+    public var archivedByActorID: String?
     /// CEL expressions extracting named values from claims.
     ///
     /// Not yet supported; always null.
@@ -29,11 +29,11 @@ public struct BetaFederationRule: Codable, Hashable, Sendable {
     /// When this rule was created.
     public var createdAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that created this rule.
-    public var createdByActorId: String?
+    public var createdByActorID: String?
     /// Optional free-text description.
     public var description: String?
     /// Tagged ID of the issuer whose tokens this rule accepts.
-    public var issuerId: String
+    public var issuerID: String
     /// Issuer's display name at read time.
     public var issuerName: String?
     /// Conditions the verified JWT must satisfy for this rule to apply.
@@ -58,30 +58,30 @@ public struct BetaFederationRule: Codable, Hashable, Sendable {
     /// When this rule was last updated.
     public var updatedAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that last updated this rule.
-    public var updatedByActorId: String?
+    public var updatedByActorID: String?
     /// Legacy single-workspace binding.
     ///
     /// Prefer `workspace_ids` and the
     /// `/federation_rules/{federation_rule_id}/workspaces` sub-resource for managing
     /// workspace enablement.
-    public var workspaceId: String?
+    public var workspaceID: String?
     /// Tagged IDs of the workspaces this rule is enabled for.
     ///
     /// May be empty for older rules that only carry the legacy `workspace_id` binding.
     /// Ignored at exchange time when `applies_to_all_workspaces` is true (the list may
     /// still be non-empty).
-    public var workspaceIds: [String]
+    public var workspaceIDs: [String]
 
-    public init(id: String, appliesToAllWorkspaces: Bool, archivedAt: Date? = nil, archivedByActorId: String? = nil, attributes: [String: String]? = nil, createdAt: Date, createdByActorId: String? = nil, description: String? = nil, issuerId: String, issuerName: String? = nil, match: BetaFederationRuleMatch, name: String, oauthScope: String, target: BetaServiceAccountTarget, tokenLifetimeSeconds: Int, type: String = "federation_rule", updatedAt: Date, updatedByActorId: String? = nil, workspaceId: String? = nil, workspaceIds: [String]) {
+    public init(id: String, appliesToAllWorkspaces: Bool, archivedAt: Date? = nil, archivedByActorID: String? = nil, attributes: [String: String]? = nil, createdAt: Date, createdByActorID: String? = nil, description: String? = nil, issuerID: String, issuerName: String? = nil, match: BetaFederationRuleMatch, name: String, oauthScope: String, target: BetaServiceAccountTarget, tokenLifetimeSeconds: Int, type: String = "federation_rule", updatedAt: Date, updatedByActorID: String? = nil, workspaceID: String? = nil, workspaceIDs: [String]) {
         self.id = id
         self.appliesToAllWorkspaces = appliesToAllWorkspaces
         self.archivedAt = archivedAt
-        self.archivedByActorId = archivedByActorId
+        self.archivedByActorID = archivedByActorID
         self.attributes = attributes
         self.createdAt = createdAt
-        self.createdByActorId = createdByActorId
+        self.createdByActorID = createdByActorID
         self.description = description
-        self.issuerId = issuerId
+        self.issuerID = issuerID
         self.issuerName = issuerName
         self.match = match
         self.name = name
@@ -90,21 +90,21 @@ public struct BetaFederationRule: Codable, Hashable, Sendable {
         self.tokenLifetimeSeconds = tokenLifetimeSeconds
         self.type = type
         self.updatedAt = updatedAt
-        self.updatedByActorId = updatedByActorId
-        self.workspaceId = workspaceId
-        self.workspaceIds = workspaceIds
+        self.updatedByActorID = updatedByActorID
+        self.workspaceID = workspaceID
+        self.workspaceIDs = workspaceIDs
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case appliesToAllWorkspaces = "applies_to_all_workspaces"
         case archivedAt = "archived_at"
-        case archivedByActorId = "archived_by_actor_id"
+        case archivedByActorID = "archived_by_actor_id"
         case attributes
         case createdAt = "created_at"
-        case createdByActorId = "created_by_actor_id"
+        case createdByActorID = "created_by_actor_id"
         case description
-        case issuerId = "issuer_id"
+        case issuerID = "issuer_id"
         case issuerName = "issuer_name"
         case match
         case name
@@ -113,8 +113,8 @@ public struct BetaFederationRule: Codable, Hashable, Sendable {
         case tokenLifetimeSeconds = "token_lifetime_seconds"
         case type
         case updatedAt = "updated_at"
-        case updatedByActorId = "updated_by_actor_id"
-        case workspaceId = "workspace_id"
-        case workspaceIds = "workspace_ids"
+        case updatedByActorID = "updated_by_actor_id"
+        case workspaceID = "workspace_id"
+        case workspaceIDs = "workspace_ids"
     }
 }

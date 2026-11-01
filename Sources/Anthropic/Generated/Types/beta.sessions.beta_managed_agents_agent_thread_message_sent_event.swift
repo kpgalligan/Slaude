@@ -11,18 +11,18 @@ public struct BetaManagedAgentsAgentThreadMessageSentEvent: Codable, Hashable, S
     /// Timestamp when the message was sent.
     public var processedAt: Date
     /// Public `sthr_` ID of the thread the message was sent to.
-    public var toSessionThreadId: String
+    public var toSessionThreadID: String
     public var type: String
     /// Name of the callable agent this message was sent to.
     ///
     /// Absent when sent to the primary agent.
     public var toAgentName: String?
 
-    public init(id: String, content: [BetaManagedAgentsAgentThreadMessageSentEvent.Content], processedAt: Date, toSessionThreadId: String, type: String = "agent.thread_message_sent", toAgentName: String? = nil) {
+    public init(id: String, content: [BetaManagedAgentsAgentThreadMessageSentEvent.Content], processedAt: Date, toSessionThreadID: String, type: String = "agent.thread_message_sent", toAgentName: String? = nil) {
         self.id = id
         self.content = content
         self.processedAt = processedAt
-        self.toSessionThreadId = toSessionThreadId
+        self.toSessionThreadID = toSessionThreadID
         self.type = type
         self.toAgentName = toAgentName
     }
@@ -31,7 +31,7 @@ public struct BetaManagedAgentsAgentThreadMessageSentEvent: Codable, Hashable, S
         case id
         case content
         case processedAt = "processed_at"
-        case toSessionThreadId = "to_session_thread_id"
+        case toSessionThreadID = "to_session_thread_id"
         case type
         case toAgentName = "to_agent_name"
     }

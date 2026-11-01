@@ -9,15 +9,15 @@ public struct BrowserZoomInput: Codable, Hashable, Sendable {
     /// [x0, y0, x1, y1] in viewport pixels.
     public var region: [Int]
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(region: [Int], tabId: String? = nil) {
+    public init(region: [Int], tabID: String? = nil) {
         self.region = region
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case region
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

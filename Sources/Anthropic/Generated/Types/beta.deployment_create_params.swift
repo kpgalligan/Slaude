@@ -11,7 +11,7 @@ public struct DeploymentCreateParams: Codable, Hashable, Sendable {
     public var agent: DeploymentCreateParams.Agent
     /// ID of the `environment` defining the container configuration for sessions
     /// created from this deployment.
-    public var environmentId: String
+    public var environmentID: String
     /// Events to send to each session immediately after creation.
     ///
     /// At least 1, maximum 50.
@@ -41,7 +41,7 @@ public struct DeploymentCreateParams: Codable, Hashable, Sendable {
     public var schedule: BetaManagedAgentsScheduleParams??
     /// Vault IDs for stored credentials the agent can use during sessions created from
     /// this deployment. Maximum 50.
-    public var vaultIds: [String]?
+    public var vaultIDs: [String]?
     /// This endpoint is in beta: requests must send `managed-agents-2026-04-01` in this
     /// header.
     public var betas: [AnthropicBetaParam]?
@@ -52,11 +52,11 @@ public struct DeploymentCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(agent: DeploymentCreateParams.Agent, environmentId: String, initialEvents: [BetaManagedAgentsDeploymentInitialEventParams], name: String, budget: BetaManagedAgentsBudgetLimitParam?? = nil, description: String?? = nil, metadata: [String: String]? = nil, resources: [DeploymentCreateParams.Resource]? = nil, schedule: BetaManagedAgentsScheduleParams?? = nil, vaultIds: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(agent: DeploymentCreateParams.Agent, environmentID: String, initialEvents: [BetaManagedAgentsDeploymentInitialEventParams], name: String, budget: BetaManagedAgentsBudgetLimitParam?? = nil, description: String?? = nil, metadata: [String: String]? = nil, resources: [DeploymentCreateParams.Resource]? = nil, schedule: BetaManagedAgentsScheduleParams?? = nil, vaultIDs: [String]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.agent = agent
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.initialEvents = initialEvents
         self.name = name
         self.budget = budget
@@ -64,14 +64,14 @@ public struct DeploymentCreateParams: Codable, Hashable, Sendable {
         self.metadata = metadata
         self.resources = resources
         self.schedule = schedule
-        self.vaultIds = vaultIds
+        self.vaultIDs = vaultIDs
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case agent
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case initialEvents = "initial_events"
         case name
         case budget
@@ -79,9 +79,9 @@ public struct DeploymentCreateParams: Codable, Hashable, Sendable {
         case metadata
         case resources
         case schedule
-        case vaultIds = "vault_ids"
+        case vaultIDs = "vault_ids"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }
 

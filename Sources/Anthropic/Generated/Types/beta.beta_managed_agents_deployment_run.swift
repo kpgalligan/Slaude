@@ -15,26 +15,26 @@ public struct BetaManagedAgentsDeploymentRun: Codable, Hashable, Sendable {
     /// Time this run record was persisted.
     public var createdAt: Date
     /// ID of the deployment that produced this run.
-    public var deploymentId: String
+    public var deploymentID: String
     /// Populated on creation failure.
     ///
     /// Null on success. Exactly one of `session_id` or `error` is non-null.
-    public var error: BetaManagedAgentsDeploymentRun.Error??
+    public var error: BetaManagedAgentsDeploymentRun.Error?
     /// Populated on success.
     ///
     /// Null on creation failure. Exactly one of `session_id` or `error` is non-null.
-    public var sessionId: String?
+    public var sessionID: String?
     /// What triggered this run and trigger-specific metadata.
     public var triggerContext: BetaManagedAgentsTriggerContext
     public var type: String
 
-    public init(id: String, agent: BetaManagedAgentsAgentReference, createdAt: Date, deploymentId: String, error: BetaManagedAgentsDeploymentRun.Error?? = nil, sessionId: String? = nil, triggerContext: BetaManagedAgentsTriggerContext, type: String = "deployment_run") {
+    public init(id: String, agent: BetaManagedAgentsAgentReference, createdAt: Date, deploymentID: String, error: BetaManagedAgentsDeploymentRun.Error? = nil, sessionID: String? = nil, triggerContext: BetaManagedAgentsTriggerContext, type: String = "deployment_run") {
         self.id = id
         self.agent = agent
         self.createdAt = createdAt
-        self.deploymentId = deploymentId
+        self.deploymentID = deploymentID
         self.error = error
-        self.sessionId = sessionId
+        self.sessionID = sessionID
         self.triggerContext = triggerContext
         self.type = type
     }
@@ -43,9 +43,9 @@ public struct BetaManagedAgentsDeploymentRun: Codable, Hashable, Sendable {
         case id
         case agent
         case createdAt = "created_at"
-        case deploymentId = "deployment_id"
+        case deploymentID = "deployment_id"
         case error
-        case sessionId = "session_id"
+        case sessionID = "session_id"
         case triggerContext = "trigger_context"
         case type
     }

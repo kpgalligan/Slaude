@@ -6,11 +6,11 @@ public struct UserListParams: Codable, Hashable, Sendable {
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately after this object.
-    public var afterId: String?
+    public var afterID: String?
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately before this object.
-    public var beforeId: String?
+    public var beforeID: String?
     /// Filter by user email.
     public var email: String?
     /// Number of items to return per page.
@@ -27,17 +27,17 @@ public struct UserListParams: Codable, Hashable, Sendable {
     /// `membership_admin`, and `managed`.
     public var roles: [String]?
 
-    public init(afterId: String? = nil, beforeId: String? = nil, email: String? = nil, limit: Int? = nil, roles: [String]? = nil) {
-        self.afterId = afterId
-        self.beforeId = beforeId
+    public init(afterID: String? = nil, beforeID: String? = nil, email: String? = nil, limit: Int? = nil, roles: [String]? = nil) {
+        self.afterID = afterID
+        self.beforeID = beforeID
         self.email = email
         self.limit = limit
         self.roles = roles
     }
 
     enum CodingKeys: String, CodingKey {
-        case afterId = "after_id"
-        case beforeId = "before_id"
+        case afterID = "after_id"
+        case beforeID = "before_id"
         case email
         case limit
         case roles

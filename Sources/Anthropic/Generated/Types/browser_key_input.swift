@@ -13,17 +13,17 @@ public struct BrowserKeyInput: Codable, Hashable, Sendable {
     /// Number of times to repeat. Default 1.
     public var `repeat`: Int?
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(text: String, `repeat`: Int? = nil, tabId: String? = nil) {
+    public init(text: String, `repeat`: Int? = nil, tabID: String? = nil) {
         self.text = text
         self.repeat = `repeat`
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case text
         case `repeat`
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

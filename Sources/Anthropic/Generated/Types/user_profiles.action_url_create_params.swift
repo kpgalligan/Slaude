@@ -12,15 +12,15 @@ public struct ActionURLCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(action: UserProfileEnrollEndUserActionParam, workspaceId: String? = nil) {
+    public init(action: UserProfileEnrollEndUserActionParam, workspaceID: String? = nil) {
         self.action = action
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case action
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

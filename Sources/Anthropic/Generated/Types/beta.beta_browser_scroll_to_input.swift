@@ -9,15 +9,15 @@ public struct BetaBrowserScrollToInput: Codable, Hashable, Sendable {
     /// stale after navigation or a major re-render.
     public var target: BetaBrowserRefTarget
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BetaBrowserRefTarget, tabId: String? = nil) {
+    public init(target: BetaBrowserRefTarget, tabID: String? = nil) {
         self.target = target
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

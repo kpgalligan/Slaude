@@ -20,11 +20,11 @@ public struct BetaManagedAgentsCredential: Codable, Hashable, Sendable {
     /// A timestamp in RFC 3339 format
     public var updatedAt: Date
     /// Identifier of the vault this credential belongs to.
-    public var vaultId: String
+    public var vaultID: String
     /// Human-readable name for the credential.
     public var displayName: String?
 
-    public init(id: String, archivedAt: Date? = nil, auth: BetaManagedAgentsCredential.Auth, createdAt: Date, metadata: [String: String], type: String = "vault_credential", updatedAt: Date, vaultId: String, displayName: String? = nil) {
+    public init(id: String, archivedAt: Date? = nil, auth: BetaManagedAgentsCredential.Auth, createdAt: Date, metadata: [String: String], type: String = "vault_credential", updatedAt: Date, vaultID: String, displayName: String? = nil) {
         self.id = id
         self.archivedAt = archivedAt
         self.auth = auth
@@ -32,7 +32,7 @@ public struct BetaManagedAgentsCredential: Codable, Hashable, Sendable {
         self.metadata = metadata
         self.type = type
         self.updatedAt = updatedAt
-        self.vaultId = vaultId
+        self.vaultID = vaultID
         self.displayName = displayName
     }
 
@@ -44,7 +44,7 @@ public struct BetaManagedAgentsCredential: Codable, Hashable, Sendable {
         case metadata
         case type
         case updatedAt = "updated_at"
-        case vaultId = "vault_id"
+        case vaultID = "vault_id"
         case displayName = "display_name"
     }
 }

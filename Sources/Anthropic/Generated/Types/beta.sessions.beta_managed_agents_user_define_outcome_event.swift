@@ -16,7 +16,7 @@ public struct BetaManagedAgentsUserDefineOutcomeEvent: Codable, Hashable, Sendab
     ///
     /// Referenced by `span.outcome_evaluation_*` events and the session's
     /// `outcome_evaluations` list.
-    public var outcomeId: String
+    public var outcomeID: String
     /// Timestamp when the outcome was accepted.
     public var processedAt: Date
     /// How to grade the outcome.
@@ -26,11 +26,11 @@ public struct BetaManagedAgentsUserDefineOutcomeEvent: Codable, Hashable, Sendab
     public var rubric: BetaManagedAgentsUserDefineOutcomeEvent.Rubric
     public var type: String
 
-    public init(id: String, description: String, maxIterations: Int? = nil, outcomeId: String, processedAt: Date, rubric: BetaManagedAgentsUserDefineOutcomeEvent.Rubric, type: String = "user.define_outcome") {
+    public init(id: String, description: String, maxIterations: Int? = nil, outcomeID: String, processedAt: Date, rubric: BetaManagedAgentsUserDefineOutcomeEvent.Rubric, type: String = "user.define_outcome") {
         self.id = id
         self.description = description
         self.maxIterations = maxIterations
-        self.outcomeId = outcomeId
+        self.outcomeID = outcomeID
         self.processedAt = processedAt
         self.rubric = rubric
         self.type = type
@@ -40,7 +40,7 @@ public struct BetaManagedAgentsUserDefineOutcomeEvent: Codable, Hashable, Sendab
         case id
         case description
         case maxIterations = "max_iterations"
-        case outcomeId = "outcome_id"
+        case outcomeID = "outcome_id"
         case processedAt = "processed_at"
         case rubric
         case type

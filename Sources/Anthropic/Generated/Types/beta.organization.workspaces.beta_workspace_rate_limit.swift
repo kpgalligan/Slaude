@@ -17,28 +17,28 @@ public struct BetaWorkspaceRateLimit: Codable, Hashable, Sendable {
     /// workspace has access to, so it can differ between workspaces.
     public var models: [String]?
     /// The `id` of the organization's RateLimit entry this entry applies to.
-    public var rateLimitId: String
+    public var rateLimitID: String
     /// Object type. Always `workspace_rate_limit` for workspace rate-limit entries.
     public var type: String
     /// ID of the Workspace this entry applies to.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(group: BetaWorkspaceRateLimit.Group, limits: [BetaWorkspaceRateLimitValue], models: [String]? = nil, rateLimitId: String, type: String = "workspace_rate_limit", workspaceId: String) {
+    public init(group: BetaWorkspaceRateLimit.Group, limits: [BetaWorkspaceRateLimitValue], models: [String]? = nil, rateLimitID: String, type: String = "workspace_rate_limit", workspaceID: String) {
         self.group = group
         self.limits = limits
         self.models = models
-        self.rateLimitId = rateLimitId
+        self.rateLimitID = rateLimitID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case group
         case limits
         case models
-        case rateLimitId = "rate_limit_id"
+        case rateLimitID = "rate_limit_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }
 

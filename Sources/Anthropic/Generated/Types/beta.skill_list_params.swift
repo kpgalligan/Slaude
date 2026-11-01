@@ -28,14 +28,14 @@ public struct BetaSkillListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(limit: Int? = nil, page: String?? = nil, source: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(limit: Int? = nil, page: String?? = nil, source: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.limit = limit
         self.page = page
         self.source = source
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -43,6 +43,6 @@ public struct BetaSkillListParams: Codable, Hashable, Sendable {
         case page
         case source
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

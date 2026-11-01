@@ -4,18 +4,18 @@ import Foundation
 
 public struct BetaErrorResponse: Codable, Hashable, Sendable {
     public var error: BetaError
-    public var requestId: String?
+    public var requestID: String?
     public var type: String
 
-    public init(error: BetaError, requestId: String? = nil, type: String = "error") {
+    public init(error: BetaError, requestID: String? = nil, type: String = "error") {
         self.error = error
-        self.requestId = requestId
+        self.requestID = requestID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case error
-        case requestId = "request_id"
+        case requestID = "request_id"
         case type
     }
 }

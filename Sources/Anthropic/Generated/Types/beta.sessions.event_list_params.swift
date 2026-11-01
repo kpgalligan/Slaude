@@ -41,9 +41,9 @@ public struct EventListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, limit: Int? = nil, order: Order? = nil, page: String? = nil, types: [BetaManagedAgentsSessionEventType]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, limit: Int? = nil, order: Order? = nil, page: String? = nil, types: [BetaManagedAgentsSessionEventType]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.createdAtGt = createdAtGt
         self.createdAtGte = createdAtGte
         self.createdAtLt = createdAtLt
@@ -53,7 +53,7 @@ public struct EventListParams: Codable, Hashable, Sendable {
         self.page = page
         self.types = types
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -66,7 +66,7 @@ public struct EventListParams: Codable, Hashable, Sendable {
         case page
         case types
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGt: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

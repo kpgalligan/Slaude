@@ -11,7 +11,7 @@ public struct BetaManagedAgentsUserCustomToolResultEvent: Codable, Hashable, Sen
     /// It is also listed in the last `session.status_idle`
     /// [event's](https://platform.claude.com/docs/en/api/beta/sessions/events/list#beta_managed_agents_session_requires_action.event_ids)
     /// `stop_reason.event_ids` field.
-    public var customToolUseId: String
+    public var customToolUseID: String
     public var type: String
     /// The result content returned by the tool.
     public var content: [BetaManagedAgentsUserCustomToolResultEvent.Content]?
@@ -22,26 +22,26 @@ public struct BetaManagedAgentsUserCustomToolResultEvent: Codable, Hashable, Sen
     /// Set by the server to the subagent thread this result was routed to.
     ///
     /// Omitted when it was routed to the primary thread.
-    public var sessionThreadId: String?
+    public var sessionThreadID: String?
 
-    public init(id: String, customToolUseId: String, type: String = "user.custom_tool_result", content: [BetaManagedAgentsUserCustomToolResultEvent.Content]? = nil, isError: Bool? = nil, processedAt: Date? = nil, sessionThreadId: String? = nil) {
+    public init(id: String, customToolUseID: String, type: String = "user.custom_tool_result", content: [BetaManagedAgentsUserCustomToolResultEvent.Content]? = nil, isError: Bool? = nil, processedAt: Date? = nil, sessionThreadID: String? = nil) {
         self.id = id
-        self.customToolUseId = customToolUseId
+        self.customToolUseID = customToolUseID
         self.type = type
         self.content = content
         self.isError = isError
         self.processedAt = processedAt
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case customToolUseId = "custom_tool_use_id"
+        case customToolUseID = "custom_tool_use_id"
         case type
         case content
         case isError = "is_error"
         case processedAt = "processed_at"
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
     }
 }
 

@@ -13,23 +13,23 @@ public struct BetaBrowserFileUploadInput: Codable, Hashable, Sendable {
     public var target: BetaBrowserRefTarget
     /// References to files the harness has staged, for deployments where the browser
     /// executor cannot read the caller's filesystem.
-    public var documentIds: [String]?
+    public var documentIDs: [String]?
     /// File paths on the browser executor's filesystem.
     public var paths: [String]?
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BetaBrowserRefTarget, documentIds: [String]? = nil, paths: [String]? = nil, tabId: String? = nil) {
+    public init(target: BetaBrowserRefTarget, documentIDs: [String]? = nil, paths: [String]? = nil, tabID: String? = nil) {
         self.target = target
-        self.documentIds = documentIds
+        self.documentIDs = documentIDs
         self.paths = paths
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
-        case documentIds = "document_ids"
+        case documentIDs = "document_ids"
         case paths
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

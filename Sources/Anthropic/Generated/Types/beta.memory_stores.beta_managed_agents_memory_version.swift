@@ -20,9 +20,9 @@ public struct BetaManagedAgentsMemoryVersion: Codable, Hashable, Sendable {
     /// [List Memory Versions](https://platform.claude.com/docs/en/api/beta/memory_stores/memory_versions/list)
     /// to get the memory's retained versions, including its `deleted` version while the
     /// lineage is retained.
-    public var memoryId: String
+    public var memoryID: String
     /// ID of the memory store this version belongs to (a `memstore_...` value).
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     /// The kind of mutation this version records: `created`, `modified`, or `deleted`.
     public var operation: BetaManagedAgentsMemoryVersionOperation
     public var type: String
@@ -71,11 +71,11 @@ public struct BetaManagedAgentsMemoryVersion: Codable, Hashable, Sendable {
     /// (agents do not have a redact capability).
     public var redactedBy: BetaManagedAgentsActor?
 
-    public init(id: String, createdAt: Date, memoryId: String, memoryStoreId: String, operation: BetaManagedAgentsMemoryVersionOperation, type: String = "memory_version", content: String? = nil, contentSha256: String? = nil, contentSizeBytes: Int? = nil, createdBy: BetaManagedAgentsActor? = nil, path: String? = nil, redactedAt: Date? = nil, redactedBy: BetaManagedAgentsActor? = nil) {
+    public init(id: String, createdAt: Date, memoryID: String, memoryStoreID: String, operation: BetaManagedAgentsMemoryVersionOperation, type: String = "memory_version", content: String? = nil, contentSha256: String? = nil, contentSizeBytes: Int? = nil, createdBy: BetaManagedAgentsActor? = nil, path: String? = nil, redactedAt: Date? = nil, redactedBy: BetaManagedAgentsActor? = nil) {
         self.id = id
         self.createdAt = createdAt
-        self.memoryId = memoryId
-        self.memoryStoreId = memoryStoreId
+        self.memoryID = memoryID
+        self.memoryStoreID = memoryStoreID
         self.operation = operation
         self.type = type
         self.content = content
@@ -90,8 +90,8 @@ public struct BetaManagedAgentsMemoryVersion: Codable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
-        case memoryId = "memory_id"
-        case memoryStoreId = "memory_store_id"
+        case memoryID = "memory_id"
+        case memoryStoreID = "memory_store_id"
         case operation
         case type
         case content

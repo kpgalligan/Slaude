@@ -9,15 +9,15 @@ public struct BetaBrowserJavascriptExecInput: Codable, Hashable, Sendable {
     /// JavaScript to execute in the page context.
     public var text: String
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(text: String, tabId: String? = nil) {
+    public init(text: String, tabID: String? = nil) {
         self.text = text
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case text
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

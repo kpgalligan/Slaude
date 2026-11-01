@@ -7,15 +7,15 @@ public struct BetaBrowserHoverInput: Codable, Hashable, Sendable {
     /// Where to act: either a viewport coordinate or an element reference.
     public var target: BetaBrowserClickTarget
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BetaBrowserClickTarget, tabId: String? = nil) {
+    public init(target: BetaBrowserClickTarget, tabID: String? = nil) {
         self.target = target
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

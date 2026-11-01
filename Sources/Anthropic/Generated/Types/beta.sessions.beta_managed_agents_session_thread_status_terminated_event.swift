@@ -13,14 +13,14 @@ public struct BetaManagedAgentsSessionThreadStatusTerminatedEvent: Codable, Hash
     /// Timestamp of the status transition.
     public var processedAt: Date
     /// Public sthr\__ ID of the thread that terminated.
-    public var sessionThreadId: String
+    public var sessionThreadID: String
     public var type: String
 
-    public init(id: String, agentName: String, processedAt: Date, sessionThreadId: String, type: String = "session.thread_status_terminated") {
+    public init(id: String, agentName: String, processedAt: Date, sessionThreadID: String, type: String = "session.thread_status_terminated") {
         self.id = id
         self.agentName = agentName
         self.processedAt = processedAt
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
         self.type = type
     }
 
@@ -28,7 +28,7 @@ public struct BetaManagedAgentsSessionThreadStatusTerminatedEvent: Codable, Hash
         case id
         case agentName = "agent_name"
         case processedAt = "processed_at"
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
         case type
     }
 }

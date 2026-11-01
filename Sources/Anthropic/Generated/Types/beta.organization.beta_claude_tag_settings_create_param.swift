@@ -13,7 +13,7 @@ public struct BetaClaudeTagSettingsCreateParam: Codable, Hashable, Sendable {
     public var enabled: Bool??
     /// The environment Claude's sessions run in: the identifier of an active
     /// environment of the organization, starting with `env_`. Null clears it.
-    public var environmentId: String??
+    public var environmentID: String??
     /// What Claude does in a channel while a Slack guest is in it. Null clears it.
     public var guestPolicy: BetaClaudeTagGuestPolicyParam??
     /// Instructions for Claude, up to 8,192 characters after leading and trailing white
@@ -23,9 +23,9 @@ public struct BetaClaudeTagSettingsCreateParam: Codable, Hashable, Sendable {
     /// that the organization is entitled to for Claude Tag. Null clears it.
     public var model: String??
 
-    public init(enabled: Bool?? = nil, environmentId: String?? = nil, guestPolicy: BetaClaudeTagGuestPolicyParam?? = nil, instructions: String?? = nil, model: String?? = nil) {
+    public init(enabled: Bool?? = nil, environmentID: String?? = nil, guestPolicy: BetaClaudeTagGuestPolicyParam?? = nil, instructions: String?? = nil, model: String?? = nil) {
         self.enabled = enabled
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.guestPolicy = guestPolicy
         self.instructions = instructions
         self.model = model
@@ -33,7 +33,7 @@ public struct BetaClaudeTagSettingsCreateParam: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case enabled
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case guestPolicy = "guest_policy"
         case instructions
         case model

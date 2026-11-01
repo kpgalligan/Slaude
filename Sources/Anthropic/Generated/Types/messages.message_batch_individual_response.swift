@@ -10,7 +10,7 @@ public struct MessageBatchIndividualResponse: Codable, Hashable, Sendable {
     /// order.
     ///
     /// Must be unique for each request within the Message Batch.
-    public var customId: String
+    public var customID: String
     /// Processing result for this request.
     ///
     /// Contains a Message output if processing was successful, an error response if
@@ -18,13 +18,13 @@ public struct MessageBatchIndividualResponse: Codable, Hashable, Sendable {
     /// cancellation or expiration.
     public var result: MessageBatchResult
 
-    public init(customId: String, result: MessageBatchResult) {
-        self.customId = customId
+    public init(customID: String, result: MessageBatchResult) {
+        self.customID = customID
         self.result = result
     }
 
     enum CodingKeys: String, CodingKey {
-        case customId = "custom_id"
+        case customID = "custom_id"
         case result
     }
 }

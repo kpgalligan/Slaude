@@ -14,7 +14,7 @@ public struct PluginMarketplaceListParams: Codable, Hashable, Sendable {
     /// 400; an organization that is not a child of the key's parent, or where the
     /// Plugins API is not available, returns a 404. Any other key may pass only its own
     /// organization's ID here; another organization returns a 404.
-    public var organizationId: String??
+    public var organizationID: String??
     /// `organization` for the organization's plugin marketplaces, `user` for members'
     /// personal plugin marketplaces.
     public var ownerType: OwnerType??
@@ -28,9 +28,9 @@ public struct PluginMarketplaceListParams: Codable, Hashable, Sendable {
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(limit: Int? = nil, organizationId: String?? = nil, ownerType: OwnerType?? = nil, page: String?? = nil, source: Source?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(limit: Int? = nil, organizationID: String?? = nil, ownerType: OwnerType?? = nil, page: String?? = nil, source: Source?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.limit = limit
-        self.organizationId = organizationId
+        self.organizationID = organizationID
         self.ownerType = ownerType
         self.page = page
         self.source = source
@@ -39,7 +39,7 @@ public struct PluginMarketplaceListParams: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case limit
-        case organizationId = "organization_id"
+        case organizationID = "organization_id"
         case ownerType = "owner_type"
         case page
         case source

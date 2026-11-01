@@ -5,16 +5,16 @@ import Foundation
 /// Rubric referenced by a file uploaded via the Files API.
 public struct BetaManagedAgentsFileRubricParams: Codable, Hashable, Sendable {
     /// ID of the rubric file.
-    public var fileId: String
+    public var fileID: String
     public var type: String
 
-    public init(fileId: String, type: String = "file") {
-        self.fileId = fileId
+    public init(fileID: String, type: String = "file") {
+        self.fileID = fileID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case fileId = "file_id"
+        case fileID = "file_id"
         case type
     }
 }

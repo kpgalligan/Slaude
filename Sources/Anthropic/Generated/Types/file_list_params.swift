@@ -25,19 +25,19 @@ public struct FileListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(ids: [String]?? = nil, limit: Int? = nil, page: String?? = nil, workspaceId: String? = nil) {
+    public init(ids: [String]?? = nil, limit: Int? = nil, page: String?? = nil, workspaceID: String? = nil) {
         self.ids = ids
         self.limit = limit
         self.page = page
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case ids
         case limit
         case page
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

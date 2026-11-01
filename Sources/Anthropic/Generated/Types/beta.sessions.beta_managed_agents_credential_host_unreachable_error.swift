@@ -5,29 +5,29 @@ import Foundation
 /// An `environment_variable` credential's `auth.networking.allowed_hosts` includes a host the environment's network policy does not permit.
 public struct BetaManagedAgentsCredentialHostUnreachableError: Codable, Hashable, Sendable {
     /// ID of the affected credential.
-    public var credentialId: String
+    public var credentialID: String
     /// Human-readable error description.
     public var message: String
     /// What the client should do next.
     public var retryStatus: BetaManagedAgentsCredentialHostUnreachableError.RetryStatus
     public var type: String
     /// ID of the vault containing the affected credential.
-    public var vaultId: String
+    public var vaultID: String
 
-    public init(credentialId: String, message: String, retryStatus: BetaManagedAgentsCredentialHostUnreachableError.RetryStatus, type: String = "credential_host_unreachable_error", vaultId: String) {
-        self.credentialId = credentialId
+    public init(credentialID: String, message: String, retryStatus: BetaManagedAgentsCredentialHostUnreachableError.RetryStatus, type: String = "credential_host_unreachable_error", vaultID: String) {
+        self.credentialID = credentialID
         self.message = message
         self.retryStatus = retryStatus
         self.type = type
-        self.vaultId = vaultId
+        self.vaultID = vaultID
     }
 
     enum CodingKeys: String, CodingKey {
-        case credentialId = "credential_id"
+        case credentialID = "credential_id"
         case message
         case retryStatus = "retry_status"
         case type
-        case vaultId = "vault_id"
+        case vaultID = "vault_id"
     }
 }
 

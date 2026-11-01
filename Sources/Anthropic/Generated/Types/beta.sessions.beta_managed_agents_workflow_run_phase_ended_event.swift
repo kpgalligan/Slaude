@@ -9,33 +9,33 @@ public struct BetaManagedAgentsWorkflowRunPhaseEndedEvent: Codable, Hashable, Se
     /// Unique identifier for this event.
     public var id: String
     /// Identifier of the `workflow_run.phase_started` event that opened the phase.
-    public var phaseStartedId: String
+    public var phaseStartedID: String
     /// Timestamp when this event was processed.
     public var processedAt: Date
     public var type: String
     /// Identifier of the run.
     ///
     /// The same value is on all of the run's `workflow_run.*` events.
-    public var workflowRunId: String
+    public var workflowRunID: String
     /// Identifier of the phase, as in `phases` on the run's `workflow_run.created`
     /// event.
-    public var workflowRunPhaseId: String
+    public var workflowRunPhaseID: String
 
-    public init(id: String, phaseStartedId: String, processedAt: Date, type: String = "workflow_run.phase_ended", workflowRunId: String, workflowRunPhaseId: String) {
+    public init(id: String, phaseStartedID: String, processedAt: Date, type: String = "workflow_run.phase_ended", workflowRunID: String, workflowRunPhaseID: String) {
         self.id = id
-        self.phaseStartedId = phaseStartedId
+        self.phaseStartedID = phaseStartedID
         self.processedAt = processedAt
         self.type = type
-        self.workflowRunId = workflowRunId
-        self.workflowRunPhaseId = workflowRunPhaseId
+        self.workflowRunID = workflowRunID
+        self.workflowRunPhaseID = workflowRunPhaseID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case phaseStartedId = "phase_started_id"
+        case phaseStartedID = "phase_started_id"
         case processedAt = "processed_at"
         case type
-        case workflowRunId = "workflow_run_id"
-        case workflowRunPhaseId = "workflow_run_phase_id"
+        case workflowRunID = "workflow_run_id"
+        case workflowRunPhaseID = "workflow_run_phase_id"
     }
 }

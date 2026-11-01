@@ -12,18 +12,18 @@ public struct BetaPlugin: Codable, Hashable, Sendable {
     /// RFC 3339.
     public var createdAt: Date
     /// Who created the Plugin; null when no creator is recorded.
-    public var createdBy: BetaPlugin.CreatedBy??
+    public var createdBy: BetaPlugin.CreatedBy?
     /// The served version's description.
     public var description: String?
     /// The served version's display name.
     public var displayName: String?
     /// The newest version.
-    public var latestVersionId: String
+    public var latestVersionID: String
     /// The served version's manifest `version`, normalized for display, or `null` (the
     /// Plugin Version's `manifest_version` says how and when).
     public var manifestVersion: String?
     /// The ID of the plugin marketplace the Plugin lives in.
-    public var marketplaceId: String
+    public var marketplaceID: String
     /// Lowercase identifier, unique within its plugin marketplace.
     ///
     /// Fixed for an organization-owned Plugin's lifetime; a member-owned Plugin's
@@ -59,7 +59,7 @@ public struct BetaPlugin: Codable, Hashable, Sendable {
     /// the same files stored today would be `privileged` or `null`.
     public var reach: Reach?
     /// The version claude.ai serves to members.
-    public var servedVersionId: String
+    public var servedVersionID: String
     /// True once the served version has been pinned, through Update Plugin or in
     /// claude.ai. While false, a new version normally becomes the served version when
     /// it is stored. While the newest version is not the served version, as when a
@@ -77,7 +77,7 @@ public struct BetaPlugin: Codable, Hashable, Sendable {
     /// installation settings or shares does not move it.
     public var updatedAt: Date
 
-    public init(id: String, components: [BetaPluginComponent]? = nil, contentScan: BetaPluginContentScan? = nil, createdAt: Date, createdBy: BetaPlugin.CreatedBy?? = nil, description: String? = nil, displayName: String? = nil, latestVersionId: String, manifestVersion: String? = nil, marketplaceId: String, name: String, organizationInstallationPreference: OrganizationInstallationPreference? = nil, organizationInstallationPreferenceInherited: Bool? = nil, owner: BetaPlugin.Owner, reach: Reach? = nil, servedVersionId: String, servedVersionPinned: Bool, type: String = "plugin", updatedAt: Date) {
+    public init(id: String, components: [BetaPluginComponent]? = nil, contentScan: BetaPluginContentScan? = nil, createdAt: Date, createdBy: BetaPlugin.CreatedBy? = nil, description: String? = nil, displayName: String? = nil, latestVersionID: String, manifestVersion: String? = nil, marketplaceID: String, name: String, organizationInstallationPreference: OrganizationInstallationPreference? = nil, organizationInstallationPreferenceInherited: Bool? = nil, owner: BetaPlugin.Owner, reach: Reach? = nil, servedVersionID: String, servedVersionPinned: Bool, type: String = "plugin", updatedAt: Date) {
         self.id = id
         self.components = components
         self.contentScan = contentScan
@@ -85,15 +85,15 @@ public struct BetaPlugin: Codable, Hashable, Sendable {
         self.createdBy = createdBy
         self.description = description
         self.displayName = displayName
-        self.latestVersionId = latestVersionId
+        self.latestVersionID = latestVersionID
         self.manifestVersion = manifestVersion
-        self.marketplaceId = marketplaceId
+        self.marketplaceID = marketplaceID
         self.name = name
         self.organizationInstallationPreference = organizationInstallationPreference
         self.organizationInstallationPreferenceInherited = organizationInstallationPreferenceInherited
         self.owner = owner
         self.reach = reach
-        self.servedVersionId = servedVersionId
+        self.servedVersionID = servedVersionID
         self.servedVersionPinned = servedVersionPinned
         self.type = type
         self.updatedAt = updatedAt
@@ -107,15 +107,15 @@ public struct BetaPlugin: Codable, Hashable, Sendable {
         case createdBy = "created_by"
         case description
         case displayName = "display_name"
-        case latestVersionId = "latest_version_id"
+        case latestVersionID = "latest_version_id"
         case manifestVersion = "manifest_version"
-        case marketplaceId = "marketplace_id"
+        case marketplaceID = "marketplace_id"
         case name
         case organizationInstallationPreference = "organization_installation_preference"
         case organizationInstallationPreferenceInherited = "organization_installation_preference_inherited"
         case owner
         case reach
-        case servedVersionId = "served_version_id"
+        case servedVersionID = "served_version_id"
         case servedVersionPinned = "served_version_pinned"
         case type
         case updatedAt = "updated_at"

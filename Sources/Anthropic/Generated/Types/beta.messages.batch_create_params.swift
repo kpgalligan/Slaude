@@ -14,7 +14,7 @@ public struct BetaMessagesBatchCreateParams: Codable, Hashable, Sendable {
     /// Use when acting on behalf of a party other than your organization. Applies to
     /// every request in the batch; an individual request whose `user_profile_id` body
     /// field conflicts with this header is errored.
-    public var userProfileId: String?
+    public var userProfileID: String?
     /// Optional header to select the Workspace for this request.
     ///
     /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -22,20 +22,20 @@ public struct BetaMessagesBatchCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(requests: [BetaMessagesBatchCreateParams.Request], betas: [AnthropicBetaParam]? = nil, userProfileId: String? = nil, workspaceId: String? = nil) {
+    public init(requests: [BetaMessagesBatchCreateParams.Request], betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil) {
         self.requests = requests
         self.betas = betas
-        self.userProfileId = userProfileId
-        self.workspaceId = workspaceId
+        self.userProfileID = userProfileID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case requests
         case betas
-        case userProfileId = "user_profile_id"
-        case workspaceId = "workspace_id"
+        case userProfileID = "user_profile_id"
+        case workspaceID = "workspace_id"
     }
 }
 
@@ -48,7 +48,7 @@ extension BetaMessagesBatchCreateParams {
         /// order.
         ///
         /// Must be unique for each request within the Message Batch.
-        public var customId: String
+        public var customID: String
         /// Messages API creation parameters for the individual request.
         ///
         /// See the
@@ -56,13 +56,13 @@ extension BetaMessagesBatchCreateParams {
         /// full documentation on available parameters.
         public var params: BetaMessageCreateParamsBase.MessageCreateParamsNonStreaming
 
-        public init(customId: String, params: BetaMessageCreateParamsBase.MessageCreateParamsNonStreaming) {
-            self.customId = customId
+        public init(customID: String, params: BetaMessageCreateParamsBase.MessageCreateParamsNonStreaming) {
+            self.customID = customID
             self.params = params
         }
 
         enum CodingKeys: String, CodingKey {
-            case customId = "custom_id"
+            case customID = "custom_id"
             case params
         }
     }

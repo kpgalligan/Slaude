@@ -6,21 +6,21 @@ public struct BetaWebhookUserProfileEnforcementActionResolvedEventData: Codable,
     /// ID of the user profile the enforcement action is on.
     public var id: String
     /// ID (`enac_...`) of the enforcement action that was opened or resolved.
-    public var enforcementActionId: String
-    public var organizationId: String
+    public var enforcementActionID: String
+    public var organizationID: String
     public var type: String
 
-    public init(id: String, enforcementActionId: String, organizationId: String, type: String = "user_profile.enforcement_action_resolved") {
+    public init(id: String, enforcementActionID: String, organizationID: String, type: String = "user_profile.enforcement_action_resolved") {
         self.id = id
-        self.enforcementActionId = enforcementActionId
-        self.organizationId = organizationId
+        self.enforcementActionID = enforcementActionID
+        self.organizationID = organizationID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case id
-        case enforcementActionId = "enforcement_action_id"
-        case organizationId = "organization_id"
+        case enforcementActionID = "enforcement_action_id"
+        case organizationID = "organization_id"
         case type
     }
 }

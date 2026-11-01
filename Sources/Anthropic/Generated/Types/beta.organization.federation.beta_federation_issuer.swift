@@ -12,7 +12,7 @@ public struct BetaFederationIssuer: Codable, Hashable, Sendable {
     /// If set, all rules referencing this issuer reject token exchange.
     public var archivedAt: Date?
     /// Tagged ID (`user_`/`svac_`) of the actor that archived this issuer.
-    public var archivedByActorId: String?
+    public var archivedByActorID: String?
     /// Whether the jwt-bearer exchange enforces JTI single-use (replay protection) for
     /// tokens from this issuer. Applies only to assertions carrying a `jti` claim;
     /// tokens without one are accepted without single-use enforcement.
@@ -20,9 +20,9 @@ public struct BetaFederationIssuer: Codable, Hashable, Sendable {
     /// When this issuer was created.
     public var createdAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that created this issuer.
-    public var createdByActorId: String?
+    public var createdByActorID: String?
     /// The `iss` claim value. Incoming JWTs must match exactly.
-    public var issuerUrl: String
+    public var issuerURL: String
     /// How signing keys are obtained for signature verification.
     public var jwks: BetaFederationIssuer.JWKS
     /// If set, Anthropic's JWKS poller has paused polling for this issuer after
@@ -47,16 +47,16 @@ public struct BetaFederationIssuer: Codable, Hashable, Sendable {
     /// When this issuer was last updated.
     public var updatedAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that last updated this issuer.
-    public var updatedByActorId: String?
+    public var updatedByActorID: String?
 
-    public init(id: String, archivedAt: Date? = nil, archivedByActorId: String? = nil, checkJti: Bool, createdAt: Date, createdByActorId: String? = nil, issuerUrl: String, jwks: BetaFederationIssuer.JWKS, jwksPollingDisabledAt: Date? = nil, maxJwtLifetimeSeconds: Int, name: String, pollStatus: BetaFederationIssuerPollStatus? = nil, type: String = "federation_issuer", updatedAt: Date, updatedByActorId: String? = nil) {
+    public init(id: String, archivedAt: Date? = nil, archivedByActorID: String? = nil, checkJti: Bool, createdAt: Date, createdByActorID: String? = nil, issuerURL: String, jwks: BetaFederationIssuer.JWKS, jwksPollingDisabledAt: Date? = nil, maxJwtLifetimeSeconds: Int, name: String, pollStatus: BetaFederationIssuerPollStatus? = nil, type: String = "federation_issuer", updatedAt: Date, updatedByActorID: String? = nil) {
         self.id = id
         self.archivedAt = archivedAt
-        self.archivedByActorId = archivedByActorId
+        self.archivedByActorID = archivedByActorID
         self.checkJti = checkJti
         self.createdAt = createdAt
-        self.createdByActorId = createdByActorId
-        self.issuerUrl = issuerUrl
+        self.createdByActorID = createdByActorID
+        self.issuerURL = issuerURL
         self.jwks = jwks
         self.jwksPollingDisabledAt = jwksPollingDisabledAt
         self.maxJwtLifetimeSeconds = maxJwtLifetimeSeconds
@@ -64,17 +64,17 @@ public struct BetaFederationIssuer: Codable, Hashable, Sendable {
         self.pollStatus = pollStatus
         self.type = type
         self.updatedAt = updatedAt
-        self.updatedByActorId = updatedByActorId
+        self.updatedByActorID = updatedByActorID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case archivedAt = "archived_at"
-        case archivedByActorId = "archived_by_actor_id"
+        case archivedByActorID = "archived_by_actor_id"
         case checkJti = "check_jti"
         case createdAt = "created_at"
-        case createdByActorId = "created_by_actor_id"
-        case issuerUrl = "issuer_url"
+        case createdByActorID = "created_by_actor_id"
+        case issuerURL = "issuer_url"
         case jwks
         case jwksPollingDisabledAt = "jwks_polling_disabled_at"
         case maxJwtLifetimeSeconds = "max_jwt_lifetime_seconds"
@@ -82,7 +82,7 @@ public struct BetaFederationIssuer: Codable, Hashable, Sendable {
         case pollStatus = "poll_status"
         case type
         case updatedAt = "updated_at"
-        case updatedByActorId = "updated_by_actor_id"
+        case updatedByActorID = "updated_by_actor_id"
     }
 }
 

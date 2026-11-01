@@ -4,17 +4,17 @@ import Foundation
 
 public struct OrganizationWorkspacesServiceAccountUpdateParams: Codable, Hashable, Sendable {
     /// ID of the workspace.
-    public var workspaceId: String
+    public var workspaceID: String
     /// New role for the service account in this workspace.
     public var workspaceRole: NoBillingWorkspaceRole
 
-    public init(workspaceId: String, workspaceRole: NoBillingWorkspaceRole) {
-        self.workspaceId = workspaceId
+    public init(workspaceID: String, workspaceRole: NoBillingWorkspaceRole) {
+        self.workspaceID = workspaceID
         self.workspaceRole = workspaceRole
     }
 
     enum CodingKeys: String, CodingKey {
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case workspaceRole = "workspace_role"
     }
 }

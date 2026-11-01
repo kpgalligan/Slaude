@@ -9,17 +9,17 @@ public struct BetaPluginUserActor: Codable, Hashable, Sendable {
     /// A member of the organization.
     public var type: String
     /// The member's User ID.
-    public var userId: String
+    public var userID: String
 
-    public init(emailAddress: String? = nil, type: String = "user_actor", userId: String) {
+    public init(emailAddress: String? = nil, type: String = "user_actor", userID: String) {
         self.emailAddress = emailAddress
         self.type = type
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
         case emailAddress = "email_address"
         case type
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

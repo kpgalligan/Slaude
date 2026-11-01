@@ -16,7 +16,7 @@ public struct BetaPluginInstallationSetting: Codable, Hashable, Sendable {
     /// API does not yet name is returned as stored.
     public var installationPreference: InstallationPreference
     /// The Plugin's ID.
-    public var pluginId: String
+    public var pluginID: String
     /// Whose setting this is: `organization` (the Plugin's own organization-wide
     /// setting) or `rbac_group` (one RBAC Group's own setting); `organization_member`
     /// does not occur here.
@@ -26,10 +26,10 @@ public struct BetaPluginInstallationSetting: Codable, Hashable, Sendable {
     /// When its setting last changed.
     public var updatedAt: Date
 
-    public init(createdAt: Date, installationPreference: InstallationPreference, pluginId: String, target: BetaPluginInstallationSetting.Target, type: String = "plugin_installation_setting", updatedAt: Date) {
+    public init(createdAt: Date, installationPreference: InstallationPreference, pluginID: String, target: BetaPluginInstallationSetting.Target, type: String = "plugin_installation_setting", updatedAt: Date) {
         self.createdAt = createdAt
         self.installationPreference = installationPreference
-        self.pluginId = pluginId
+        self.pluginID = pluginID
         self.target = target
         self.type = type
         self.updatedAt = updatedAt
@@ -38,7 +38,7 @@ public struct BetaPluginInstallationSetting: Codable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case createdAt = "created_at"
         case installationPreference = "installation_preference"
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case target
         case type
         case updatedAt = "updated_at"

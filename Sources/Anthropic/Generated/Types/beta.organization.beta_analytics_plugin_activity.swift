@@ -36,7 +36,7 @@ public struct BetaAnalyticsPluginActivity: Codable, Hashable, Sendable {
     ///
     /// `serena@claude-plugins-official`). Null for third-party Claude Code plugins
     /// (redacted at the source) and Cowork slash commands that carry only a hashed id.
-    public var pluginId: String?
+    public var pluginID: String?
     /// Product that produced this row's activity: one of `chat`, `claude_code`,
     /// `cowork`, `office_agent`, or `chat_cowork_unified` (Chat and Cowork unified).
     /// These are the canonical Cost & Usage product names; an `office_agent` row's
@@ -50,7 +50,7 @@ public struct BetaAnalyticsPluginActivity: Codable, Hashable, Sendable {
     public var product: String?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -58,9 +58,9 @@ public struct BetaAnalyticsPluginActivity: Codable, Hashable, Sendable {
     /// Tagged user identifier (e.g.
     ///
     /// `user_...`). Present only when the request grouped by `user_id`.
-    public var userId: String?
+    public var userID: String?
 
-    public init(claudeCodeMetrics: BetaAnalyticsPluginClaudeCodeMetrics, coworkMetrics: BetaAnalyticsPluginCoworkMetrics, distinctUserCount: Int, installCount: Int? = nil, invocationCount: Int, pluginName: String, chatCoworkUnifiedMetrics: BetaAnalyticsPluginActivity.ChatCoworkUnifiedMetrics? = nil, pluginId: String? = nil, product: String? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, userId: String? = nil) {
+    public init(claudeCodeMetrics: BetaAnalyticsPluginClaudeCodeMetrics, coworkMetrics: BetaAnalyticsPluginCoworkMetrics, distinctUserCount: Int, installCount: Int? = nil, invocationCount: Int, pluginName: String, chatCoworkUnifiedMetrics: BetaAnalyticsPluginActivity.ChatCoworkUnifiedMetrics? = nil, pluginID: String? = nil, product: String? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, userID: String? = nil) {
         self.claudeCodeMetrics = claudeCodeMetrics
         self.coworkMetrics = coworkMetrics
         self.distinctUserCount = distinctUserCount
@@ -68,11 +68,11 @@ public struct BetaAnalyticsPluginActivity: Codable, Hashable, Sendable {
         self.invocationCount = invocationCount
         self.pluginName = pluginName
         self.chatCoworkUnifiedMetrics = chatCoworkUnifiedMetrics
-        self.pluginId = pluginId
+        self.pluginID = pluginID
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -83,11 +83,11 @@ public struct BetaAnalyticsPluginActivity: Codable, Hashable, Sendable {
         case invocationCount = "invocation_count"
         case pluginName = "plugin_name"
         case chatCoworkUnifiedMetrics = "chat_cowork_unified_metrics"
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }
 

@@ -4,16 +4,16 @@ import Foundation
 
 /// A scoped Admin API key acting on behalf of the organization.
 public struct BetaSpendLimitScopedAPIKeyActor: Codable, Hashable, Sendable {
-    public var scopedApiKeyId: String
+    public var scopedAPIKeyID: String
     public var type: String
 
-    public init(scopedApiKeyId: String, type: String = "scoped_api_key_actor") {
-        self.scopedApiKeyId = scopedApiKeyId
+    public init(scopedAPIKeyID: String, type: String = "scoped_api_key_actor") {
+        self.scopedAPIKeyID = scopedAPIKeyID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case scopedApiKeyId = "scoped_api_key_id"
+        case scopedAPIKeyID = "scoped_api_key_id"
         case type
     }
 }

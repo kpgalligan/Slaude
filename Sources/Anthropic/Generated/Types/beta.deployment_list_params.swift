@@ -4,7 +4,7 @@ import Foundation
 
 public struct DeploymentListParams: Codable, Hashable, Sendable {
     /// Filter by agent ID.
-    public var agentId: String?
+    public var agentID: String?
     /// Return deployments created at or after this time (inclusive).
     public var createdAtGte: CreatedAtGte?
     /// Return deployments created at or before this time (inclusive).
@@ -30,10 +30,10 @@ public struct DeploymentListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(agentId: String? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, includeArchived: Bool? = nil, limit: Int? = nil, page: String? = nil, status: BetaManagedAgentsDeploymentStatus? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.agentId = agentId
+    public init(agentID: String? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLte: CreatedAtLte? = nil, includeArchived: Bool? = nil, limit: Int? = nil, page: String? = nil, status: BetaManagedAgentsDeploymentStatus? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.agentID = agentID
         self.createdAtGte = createdAtGte
         self.createdAtLte = createdAtLte
         self.includeArchived = includeArchived
@@ -41,11 +41,11 @@ public struct DeploymentListParams: Codable, Hashable, Sendable {
         self.page = page
         self.status = status
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case agentId = "agent_id"
+        case agentID = "agent_id"
         case createdAtGte = "created_at_gte"
         case createdAtLte = "created_at_lte"
         case includeArchived = "include_archived"
@@ -53,7 +53,7 @@ public struct DeploymentListParams: Codable, Hashable, Sendable {
         case page
         case status
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGte: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

@@ -18,16 +18,16 @@ public struct BetaTunnelCertificate: Codable, Hashable, Sendable {
     /// Lowercase hex SHA-256 fingerprint of the certificate's DER encoding.
     public var fingerprint: String
     /// ID of the tunnel the certificate is registered against.
-    public var tunnelId: String
+    public var tunnelID: String
     public var type: String
 
-    public init(id: String, archivedAt: Date? = nil, createdAt: Date, expiresAt: Date? = nil, fingerprint: String, tunnelId: String, type: String = "tunnel_certificate") {
+    public init(id: String, archivedAt: Date? = nil, createdAt: Date, expiresAt: Date? = nil, fingerprint: String, tunnelID: String, type: String = "tunnel_certificate") {
         self.id = id
         self.archivedAt = archivedAt
         self.createdAt = createdAt
         self.expiresAt = expiresAt
         self.fingerprint = fingerprint
-        self.tunnelId = tunnelId
+        self.tunnelID = tunnelID
         self.type = type
     }
 
@@ -37,7 +37,7 @@ public struct BetaTunnelCertificate: Codable, Hashable, Sendable {
         case createdAt = "created_at"
         case expiresAt = "expires_at"
         case fingerprint
-        case tunnelId = "tunnel_id"
+        case tunnelID = "tunnel_id"
         case type
     }
 }

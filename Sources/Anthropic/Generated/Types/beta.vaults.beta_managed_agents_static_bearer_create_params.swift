@@ -8,18 +8,18 @@ public struct BetaManagedAgentsStaticBearerCreateParams: Codable, Hashable, Send
     /// personal access token.
     public var token: String
     /// URL of the MCP server this credential authenticates against.
-    public var mcpServerUrl: String
+    public var mcpServerURL: String
     public var type: String
 
-    public init(token: String, mcpServerUrl: String, type: String = "static_bearer") {
+    public init(token: String, mcpServerURL: String, type: String = "static_bearer") {
         self.token = token
-        self.mcpServerUrl = mcpServerUrl
+        self.mcpServerURL = mcpServerURL
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case token
-        case mcpServerUrl = "mcp_server_url"
+        case mcpServerURL = "mcp_server_url"
         case type
     }
 }

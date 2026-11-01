@@ -4,16 +4,16 @@ import Foundation
 
 public struct BetaAnalyticsFederatedActorAzureProvider: Codable, Hashable, Sendable {
     /// The Azure subscription the organization is bound to.
-    public var subscriptionId: String
+    public var subscriptionID: String
     public var type: String
 
-    public init(subscriptionId: String, type: String = "azure") {
-        self.subscriptionId = subscriptionId
+    public init(subscriptionID: String, type: String = "azure") {
+        self.subscriptionID = subscriptionID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case subscriptionId = "subscription_id"
+        case subscriptionID = "subscription_id"
         case type
     }
 }

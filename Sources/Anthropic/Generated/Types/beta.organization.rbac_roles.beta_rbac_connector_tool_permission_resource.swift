@@ -4,7 +4,7 @@ import Foundation
 
 public struct BetaRBACConnectorToolPermissionResource: Codable, Hashable, Sendable {
     /// ID of the connector the permission applies to.
-    public var connectorId: String
+    public var connectorID: String
     /// Published name of the connector tool the permission applies to.
     ///
     /// When the published name contains characters outside `[a-zA-Z0-9_-]` (or collides
@@ -15,14 +15,14 @@ public struct BetaRBACConnectorToolPermissionResource: Codable, Hashable, Sendab
     /// Kind of resource the permission applies to.
     public var type: String
 
-    public init(connectorId: String, toolName: String, type: String = "connector_tool") {
-        self.connectorId = connectorId
+    public init(connectorID: String, toolName: String, type: String = "connector_tool") {
+        self.connectorID = connectorID
         self.toolName = toolName
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case connectorId = "connector_id"
+        case connectorID = "connector_id"
         case toolName = "tool_name"
         case type
     }

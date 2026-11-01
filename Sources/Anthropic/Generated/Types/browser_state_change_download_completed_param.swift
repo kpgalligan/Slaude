@@ -9,7 +9,7 @@ import Foundation
 public struct BrowserStateChangeDownloadCompletedParam: Codable, Hashable, Sendable {
     /// The caller-assigned identifier for this download, stable across the state
     /// changes reporting it.
-    public var downloadId: String
+    public var downloadID: String
     public var type: String
     /// The final post-redirect URL the download was served from.
     public var url: String
@@ -21,8 +21,8 @@ public struct BrowserStateChangeDownloadCompletedParam: Codable, Hashable, Senda
     /// The completed download's size.
     public var sizeBytes: Int??
 
-    public init(downloadId: String, type: String = "download_completed", url: String, path: String?? = nil, sizeBytes: Int?? = nil) {
-        self.downloadId = downloadId
+    public init(downloadID: String, type: String = "download_completed", url: String, path: String?? = nil, sizeBytes: Int?? = nil) {
+        self.downloadID = downloadID
         self.type = type
         self.url = url
         self.path = path
@@ -30,7 +30,7 @@ public struct BrowserStateChangeDownloadCompletedParam: Codable, Hashable, Senda
     }
 
     enum CodingKeys: String, CodingKey {
-        case downloadId = "download_id"
+        case downloadID = "download_id"
         case type
         case url
         case path

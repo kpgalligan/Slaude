@@ -15,14 +15,14 @@ public struct BetaManagedAgentsWorkflowRunErrorEvent: Codable, Hashable, Sendabl
     public var type: String
     /// Identifier of the run that met the error, or `null` when the error kept a run
     /// from being created.
-    public var workflowRunId: String?
+    public var workflowRunID: String?
 
-    public init(id: String, error: BetaManagedAgentsWorkflowRunError, processedAt: Date, type: String = "workflow_run.error", workflowRunId: String? = nil) {
+    public init(id: String, error: BetaManagedAgentsWorkflowRunError, processedAt: Date, type: String = "workflow_run.error", workflowRunID: String? = nil) {
         self.id = id
         self.error = error
         self.processedAt = processedAt
         self.type = type
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -30,6 +30,6 @@ public struct BetaManagedAgentsWorkflowRunErrorEvent: Codable, Hashable, Sendabl
         case error
         case processedAt = "processed_at"
         case type
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }

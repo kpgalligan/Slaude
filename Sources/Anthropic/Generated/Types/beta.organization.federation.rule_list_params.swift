@@ -6,7 +6,7 @@ public struct BetaOrganizationFederationRuleListParams: Codable, Hashable, Senda
     /// Include archived resources. Defaults to false.
     public var includeArchived: Bool?
     /// Filter to rules referencing this federation issuer.
-    public var issuerId: String??
+    public var issuerID: String??
     /// Number of results per page.
     public var limit: Int?
     /// Opaque cursor from a previous response's `next_page`.
@@ -14,9 +14,9 @@ public struct BetaOrganizationFederationRuleListParams: Codable, Hashable, Senda
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
 
-    public init(includeArchived: Bool? = nil, issuerId: String?? = nil, limit: Int? = nil, page: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(includeArchived: Bool? = nil, issuerID: String?? = nil, limit: Int? = nil, page: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.includeArchived = includeArchived
-        self.issuerId = issuerId
+        self.issuerID = issuerID
         self.limit = limit
         self.page = page
         self.betas = betas
@@ -24,7 +24,7 @@ public struct BetaOrganizationFederationRuleListParams: Codable, Hashable, Senda
 
     enum CodingKeys: String, CodingKey {
         case includeArchived = "include_archived"
-        case issuerId = "issuer_id"
+        case issuerID = "issuer_id"
         case limit
         case page
         case betas

@@ -5,16 +5,16 @@ import Foundation
 /// A workload authenticated as a service account, for example via Workload Identity Federation.
 public struct BetaManagedAgentsServiceAccountActor: Codable, Hashable, Sendable {
     /// ID of the service account (a `svac_...` value).
-    public var serviceAccountId: String
+    public var serviceAccountID: String
     public var type: String
 
-    public init(serviceAccountId: String, type: String = "service_account_actor") {
-        self.serviceAccountId = serviceAccountId
+    public init(serviceAccountID: String, type: String = "service_account_actor") {
+        self.serviceAccountID = serviceAccountID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case serviceAccountId = "service_account_id"
+        case serviceAccountID = "service_account_id"
         case type
     }
 }

@@ -44,7 +44,7 @@ public struct BetaAnalyticsArtifactActivity: Codable, Hashable, Sendable {
     public var product: String?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -52,18 +52,18 @@ public struct BetaAnalyticsArtifactActivity: Codable, Hashable, Sendable {
     /// Tagged user identifier (e.g.
     ///
     /// `user_...`). Present only when the request grouped by `user_id`.
-    public var userId: String?
+    public var userID: String?
 
-    public init(artifactType: String, artifactsCreatedCount: Int, distinctUserCount: Int, isShared: Bool, publishedArtifactsCreatedCount: Int, product: String? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, userId: String? = nil) {
+    public init(artifactType: String, artifactsCreatedCount: Int, distinctUserCount: Int, isShared: Bool, publishedArtifactsCreatedCount: Int, product: String? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, userID: String? = nil) {
         self.artifactType = artifactType
         self.artifactsCreatedCount = artifactsCreatedCount
         self.distinctUserCount = distinctUserCount
         self.isShared = isShared
         self.publishedArtifactsCreatedCount = publishedArtifactsCreatedCount
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -73,8 +73,8 @@ public struct BetaAnalyticsArtifactActivity: Codable, Hashable, Sendable {
         case isShared = "is_shared"
         case publishedArtifactsCreatedCount = "published_artifacts_created_count"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

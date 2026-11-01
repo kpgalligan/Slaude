@@ -5,20 +5,20 @@ import Foundation
 public struct WebFetchToolResultBlock: Codable, Hashable, Sendable {
     public var caller: WebFetchToolResultBlock.Caller?
     public var content: WebFetchToolResultBlock.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
 
-    public init(caller: WebFetchToolResultBlock.Caller? = nil, content: WebFetchToolResultBlock.Content, toolUseId: String, type: String = "web_fetch_tool_result") {
+    public init(caller: WebFetchToolResultBlock.Caller? = nil, content: WebFetchToolResultBlock.Content, toolUseID: String, type: String = "web_fetch_tool_result") {
         self.caller = caller
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case caller
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
     }
 }

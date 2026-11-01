@@ -5,7 +5,7 @@ import Foundation
 /// Result of live-probing a credential against its configured MCP server.
 public struct BetaManagedAgentsCredentialValidation: Codable, Hashable, Sendable {
     /// Unique identifier of the credential that was validated.
-    public var credentialId: String
+    public var credentialID: String
     /// Whether the credential has a refresh token configured.
     public var hasRefreshToken: Bool
     /// Details of the MCP probe step that failed, or `null` if the probe succeeded or
@@ -21,27 +21,27 @@ public struct BetaManagedAgentsCredentialValidation: Codable, Hashable, Sendable
     /// When the validation probe was performed.
     public var validatedAt: Date
     /// Identifier of the vault containing the credential.
-    public var vaultId: String
+    public var vaultID: String
 
-    public init(credentialId: String, hasRefreshToken: Bool, mcpProbe: BetaManagedAgentsMCPProbe? = nil, refresh: BetaManagedAgentsRefreshObject? = nil, status: BetaManagedAgentsCredentialValidationStatus, type: String = "vault_credential_validation", validatedAt: Date, vaultId: String) {
-        self.credentialId = credentialId
+    public init(credentialID: String, hasRefreshToken: Bool, mcpProbe: BetaManagedAgentsMCPProbe? = nil, refresh: BetaManagedAgentsRefreshObject? = nil, status: BetaManagedAgentsCredentialValidationStatus, type: String = "vault_credential_validation", validatedAt: Date, vaultID: String) {
+        self.credentialID = credentialID
         self.hasRefreshToken = hasRefreshToken
         self.mcpProbe = mcpProbe
         self.refresh = refresh
         self.status = status
         self.type = type
         self.validatedAt = validatedAt
-        self.vaultId = vaultId
+        self.vaultID = vaultID
     }
 
     enum CodingKeys: String, CodingKey {
-        case credentialId = "credential_id"
+        case credentialID = "credential_id"
         case hasRefreshToken = "has_refresh_token"
         case mcpProbe = "mcp_probe"
         case refresh
         case status
         case type
         case validatedAt = "validated_at"
-        case vaultId = "vault_id"
+        case vaultID = "vault_id"
     }
 }

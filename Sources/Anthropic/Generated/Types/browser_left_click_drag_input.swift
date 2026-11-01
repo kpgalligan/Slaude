@@ -11,17 +11,17 @@ public struct BrowserLeftClickDragInput: Codable, Hashable, Sendable {
     /// full-viewport screenshot).
     public var target: BrowserCoordinateTarget
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(from: BrowserCoordinateTarget? = nil, target: BrowserCoordinateTarget, tabId: String? = nil) {
+    public init(from: BrowserCoordinateTarget? = nil, target: BrowserCoordinateTarget, tabID: String? = nil) {
         self.from = from
         self.target = target
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case from
         case target
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

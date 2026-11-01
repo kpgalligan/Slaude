@@ -12,11 +12,11 @@ public struct BetaServiceAccount: Codable, Hashable, Sendable {
     /// If set, this service account is archived.
     public var archivedAt: Date?
     /// Tagged ID (`user_`/`svac_`) of the actor that archived this service account.
-    public var archivedByActorId: String?
+    public var archivedByActorID: String?
     /// When this service account was created.
     public var createdAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that created this service account.
-    public var createdByActorId: String?
+    public var createdByActorID: String?
     /// Optional free-text description.
     public var description: String?
     /// Admin-chosen slug identifier.
@@ -32,34 +32,34 @@ public struct BetaServiceAccount: Codable, Hashable, Sendable {
     /// When this service account was last updated.
     public var updatedAt: Date
     /// Tagged ID (`user_`/`svac_`) of the actor that last updated this service account.
-    public var updatedByActorId: String?
+    public var updatedByActorID: String?
 
-    public init(id: String, archivedAt: Date? = nil, archivedByActorId: String? = nil, createdAt: Date, createdByActorId: String? = nil, description: String? = nil, name: String, organizationRole: OrganizationRole, type: String = "service_account", updatedAt: Date, updatedByActorId: String? = nil) {
+    public init(id: String, archivedAt: Date? = nil, archivedByActorID: String? = nil, createdAt: Date, createdByActorID: String? = nil, description: String? = nil, name: String, organizationRole: OrganizationRole, type: String = "service_account", updatedAt: Date, updatedByActorID: String? = nil) {
         self.id = id
         self.archivedAt = archivedAt
-        self.archivedByActorId = archivedByActorId
+        self.archivedByActorID = archivedByActorID
         self.createdAt = createdAt
-        self.createdByActorId = createdByActorId
+        self.createdByActorID = createdByActorID
         self.description = description
         self.name = name
         self.organizationRole = organizationRole
         self.type = type
         self.updatedAt = updatedAt
-        self.updatedByActorId = updatedByActorId
+        self.updatedByActorID = updatedByActorID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case archivedAt = "archived_at"
-        case archivedByActorId = "archived_by_actor_id"
+        case archivedByActorID = "archived_by_actor_id"
         case createdAt = "created_at"
-        case createdByActorId = "created_by_actor_id"
+        case createdByActorID = "created_by_actor_id"
         case description
         case name
         case organizationRole = "organization_role"
         case type
         case updatedAt = "updated_at"
-        case updatedByActorId = "updated_by_actor_id"
+        case updatedByActorID = "updated_by_actor_id"
     }
 
     public enum OrganizationRole: OpenEnum, CaseIterable {

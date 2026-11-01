@@ -4,7 +4,7 @@ import Foundation
 
 public struct CredentialUpdateParams: Codable, Hashable, Sendable {
     /// Identifier of the vault containing the credential.
-    public var vaultId: String
+    public var vaultID: String
     /// New authentication settings for the credential.
     ///
     /// The `type` must match the credential's current type, which can't be changed.
@@ -26,24 +26,24 @@ public struct CredentialUpdateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(vaultId: String, auth: CredentialUpdateParams.Auth? = nil, displayName: String?? = nil, metadata: [String: String?]?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.vaultId = vaultId
+    public init(vaultID: String, auth: CredentialUpdateParams.Auth? = nil, displayName: String?? = nil, metadata: [String: String?]?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.vaultID = vaultID
         self.auth = auth
         self.displayName = displayName
         self.metadata = metadata
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case vaultId = "vault_id"
+        case vaultID = "vault_id"
         case auth
         case displayName = "display_name"
         case metadata
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }
 

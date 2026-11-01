@@ -3,16 +3,16 @@
 import Foundation
 
 public struct BetaServerToolCaller20260120: Codable, Hashable, Sendable {
-    public var toolId: String
+    public var toolID: String
     public var type: String
 
-    public init(toolId: String, type: String = "code_execution_20260120") {
-        self.toolId = toolId
+    public init(toolID: String, type: String = "code_execution_20260120") {
+        self.toolID = toolID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case toolId = "tool_id"
+        case toolID = "tool_id"
         case type
     }
 }

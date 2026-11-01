@@ -14,7 +14,7 @@ public struct TelemetryDestinationUpdateParams: Codable, Hashable, Sendable {
     /// `traces.endpoint_url`, such a change must also set `traces.endpoint_url` to a
     /// URL with the new hostname and port, or to `null`. A change of the path alone
     /// keeps the headers.
-    public var endpointUrl: String?
+    public var endpointURL: String?
     /// Headers to set or remove.
     ///
     /// The API merges them into the destination's headers by name.
@@ -52,9 +52,9 @@ public struct TelemetryDestinationUpdateParams: Codable, Hashable, Sendable {
     /// in this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(displayName: String?? = nil, endpointUrl: String? = nil, headers: [String: String?]?? = nil, state: BetaTelemetryDestinationStateParams? = nil, traces: BetaTelemetryDestinationTracesParams?? = nil, workspaces: BetaTelemetryDestinationWorkspacesParams? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(displayName: String?? = nil, endpointURL: String? = nil, headers: [String: String?]?? = nil, state: BetaTelemetryDestinationStateParams? = nil, traces: BetaTelemetryDestinationTracesParams?? = nil, workspaces: BetaTelemetryDestinationWorkspacesParams? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.displayName = displayName
-        self.endpointUrl = endpointUrl
+        self.endpointURL = endpointURL
         self.headers = headers
         self.state = state
         self.traces = traces
@@ -64,7 +64,7 @@ public struct TelemetryDestinationUpdateParams: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
-        case endpointUrl = "endpoint_url"
+        case endpointURL = "endpoint_url"
         case headers
         case state
         case traces

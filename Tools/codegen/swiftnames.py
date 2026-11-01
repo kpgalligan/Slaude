@@ -38,8 +38,12 @@ def escape_ident(name: str) -> str:
     return f"`{name}`" if name in SWIFT_KEYWORDS else name
 
 
+ACRONYMS = {"id": "ID", "ids": "IDs", "url": "URL", "urls": "URLs", "uri": "URI", "api": "API", "mcp": "MCP"}
+
+
 def camel(name: str) -> str:
-    """snake_case -> lowerCamelCase, keeping digit runs readable (`foo_2_0` -> `foo2_0`)."""
+    """snake_case -> lowerCamelCase, keeping digit runs readable (`foo_2_0` -> `foo2_0`) and
+    spelling common initialisms the Swift way (`message_id` -> `messageID`)."""
     name = name.rstrip("_") or name
     lead = ""
     while name.startswith("_"):
@@ -52,6 +56,8 @@ def camel(name: str) -> str:
     for p in parts[1:]:
         if out and out[-1].isdigit() and p[0].isdigit():
             out += "_" + p
+        elif p.lower() in ACRONYMS and p == p.lower():
+            out += ACRONYMS[p.lower()]
         else:
             out += p[:1].upper() + p[1:]
     return lead + out

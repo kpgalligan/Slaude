@@ -7,7 +7,7 @@ public struct BetaManagedAgentsMemoryStoreResource: Codable, Hashable, Sendable 
     /// The memory store ID (memstore\__...).
     ///
     /// Must belong to the caller's organization and workspace.
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     public var type: String
     /// Access mode for the mounted store.
     ///
@@ -32,8 +32,8 @@ public struct BetaManagedAgentsMemoryStoreResource: Codable, Hashable, Sendable 
     /// Later edits to the store's name do not propagate to this resource.
     public var name: String?
 
-    public init(memoryStoreId: String, type: String = "memory_store", access: Access? = nil, description: String? = nil, instructions: String? = nil, mountPath: String? = nil, name: String? = nil) {
-        self.memoryStoreId = memoryStoreId
+    public init(memoryStoreID: String, type: String = "memory_store", access: Access? = nil, description: String? = nil, instructions: String? = nil, mountPath: String? = nil, name: String? = nil) {
+        self.memoryStoreID = memoryStoreID
         self.type = type
         self.access = access
         self.description = description
@@ -43,7 +43,7 @@ public struct BetaManagedAgentsMemoryStoreResource: Codable, Hashable, Sendable 
     }
 
     enum CodingKeys: String, CodingKey {
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case type
         case access
         case description

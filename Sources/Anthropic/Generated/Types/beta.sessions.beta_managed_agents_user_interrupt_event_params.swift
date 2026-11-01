@@ -8,15 +8,15 @@ public struct BetaManagedAgentsUserInterruptEventParams: Codable, Hashable, Send
     /// If absent, interrupts every non-archived thread in a multiagent session (or the
     /// primary alone in a single-agent session). If present, interrupts only the named
     /// thread.
-    public var sessionThreadId: String??
+    public var sessionThreadID: String??
 
-    public init(type: String = "user.interrupt", sessionThreadId: String?? = nil) {
+    public init(type: String = "user.interrupt", sessionThreadID: String?? = nil) {
         self.type = type
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
     }
 }

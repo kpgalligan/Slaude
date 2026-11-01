@@ -20,17 +20,17 @@ public struct SkillCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(files: [FileUpload], displayName: String?? = nil, workspaceId: String? = nil) {
+    public init(files: [FileUpload], displayName: String?? = nil, workspaceID: String? = nil) {
         self.files = files
         self.displayName = displayName
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case files
         case displayName = "display_name"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

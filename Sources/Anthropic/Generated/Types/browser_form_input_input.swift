@@ -14,17 +14,17 @@ public struct BrowserFormInputInput: Codable, Hashable, Sendable {
     /// The value to set.
     public var value: BrowserFormInputValue
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BrowserRefTarget, value: BrowserFormInputValue, tabId: String? = nil) {
+    public init(target: BrowserRefTarget, value: BrowserFormInputValue, tabID: String? = nil) {
         self.target = target
         self.value = value
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
         case value
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

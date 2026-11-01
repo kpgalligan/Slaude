@@ -17,19 +17,19 @@ public struct BetaBrowserReadPageInput: Codable, Hashable, Sendable {
     /// Element reference to read a subtree from. Omit to read from the page root.
     public var ref: String?
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(depth: Int? = nil, filter: BetaBrowserReadPageFilter? = nil, ref: String? = nil, tabId: String? = nil) {
+    public init(depth: Int? = nil, filter: BetaBrowserReadPageFilter? = nil, ref: String? = nil, tabID: String? = nil) {
         self.depth = depth
         self.filter = filter
         self.ref = ref
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case depth
         case filter
         case ref
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

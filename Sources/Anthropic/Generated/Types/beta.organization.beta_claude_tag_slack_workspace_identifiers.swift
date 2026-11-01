@@ -7,13 +7,13 @@ import Foundation
 /// It is Slack's own, not an identifier of this API.
 public struct BetaClaudeTagSlackWorkspaceIdentifiers: Codable, Hashable, Sendable {
     /// Slack's identifier for the workspace, starting with `T`, such as `T0123ABCD`.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(workspaceId: String) {
-        self.workspaceId = workspaceId
+    public init(workspaceID: String) {
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

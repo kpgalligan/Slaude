@@ -11,7 +11,7 @@ public struct BetaAnalyticsProjectActivity: Codable, Hashable, Sendable {
     /// Number of messages sent in the project on the requested day
     public var messageCount: Int
     /// Tagged project identifier (e.g. `claude_proj_...`)
-    public var projectId: String
+    public var projectID: String
     /// Name of the project
     public var projectName: String
     /// Project creation timestamp in RFC 3339 format.
@@ -40,7 +40,7 @@ public struct BetaAnalyticsProjectActivity: Codable, Hashable, Sendable {
     public var product: String?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -48,33 +48,33 @@ public struct BetaAnalyticsProjectActivity: Codable, Hashable, Sendable {
     /// Tagged user identifier (e.g.
     ///
     /// `user_...`). Present only when the request grouped by `user_id`.
-    public var userId: String?
+    public var userID: String?
 
-    public init(distinctUserCount: Int, messageCount: Int, projectId: String, projectName: String, createdAt: Date? = nil, createdBy: BetaAnalyticsUser? = nil, distinctConversationCount: Int? = nil, product: String? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, userId: String? = nil) {
+    public init(distinctUserCount: Int, messageCount: Int, projectID: String, projectName: String, createdAt: Date? = nil, createdBy: BetaAnalyticsUser? = nil, distinctConversationCount: Int? = nil, product: String? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, userID: String? = nil) {
         self.distinctUserCount = distinctUserCount
         self.messageCount = messageCount
-        self.projectId = projectId
+        self.projectID = projectID
         self.projectName = projectName
         self.createdAt = createdAt
         self.createdBy = createdBy
         self.distinctConversationCount = distinctConversationCount
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
         case distinctUserCount = "distinct_user_count"
         case messageCount = "message_count"
-        case projectId = "project_id"
+        case projectID = "project_id"
         case projectName = "project_name"
         case createdAt = "created_at"
         case createdBy = "created_by"
         case distinctConversationCount = "distinct_conversation_count"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

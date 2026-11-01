@@ -4,17 +4,17 @@ import Foundation
 
 public struct BetaOrganizationWorkspacesMemberUpdateParams: Codable, Hashable, Sendable {
     /// ID of the Workspace.
-    public var workspaceId: String
+    public var workspaceID: String
     /// New workspace role for the User.
     public var workspaceRole: BetaWorkspaceRole
 
-    public init(workspaceId: String, workspaceRole: BetaWorkspaceRole) {
-        self.workspaceId = workspaceId
+    public init(workspaceID: String, workspaceRole: BetaWorkspaceRole) {
+        self.workspaceID = workspaceID
         self.workspaceRole = workspaceRole
     }
 
     enum CodingKeys: String, CodingKey {
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case workspaceRole = "workspace_role"
     }
 }

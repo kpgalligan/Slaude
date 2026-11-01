@@ -13,7 +13,7 @@ public struct BetaManagedAgentsSessionThreadStatusIdleEvent: Codable, Hashable, 
     /// Timestamp of the status transition.
     public var processedAt: Date
     /// Public sthr\__ ID of the thread that went idle.
-    public var sessionThreadId: String
+    public var sessionThreadID: String
     /// Structured information about why the thread stopped.
     ///
     /// `null` when there is nothing more to report.
@@ -21,11 +21,11 @@ public struct BetaManagedAgentsSessionThreadStatusIdleEvent: Codable, Hashable, 
     public var stopReason: BetaManagedAgentsSessionThreadStatusIdleEvent.StopReason
     public var type: String
 
-    public init(id: String, agentName: String, processedAt: Date, sessionThreadId: String, stopDetails: BetaManagedAgentsSessionRefusalStopDetails? = nil, stopReason: BetaManagedAgentsSessionThreadStatusIdleEvent.StopReason, type: String = "session.thread_status_idle") {
+    public init(id: String, agentName: String, processedAt: Date, sessionThreadID: String, stopDetails: BetaManagedAgentsSessionRefusalStopDetails? = nil, stopReason: BetaManagedAgentsSessionThreadStatusIdleEvent.StopReason, type: String = "session.thread_status_idle") {
         self.id = id
         self.agentName = agentName
         self.processedAt = processedAt
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
         self.stopDetails = stopDetails
         self.stopReason = stopReason
         self.type = type
@@ -35,7 +35,7 @@ public struct BetaManagedAgentsSessionThreadStatusIdleEvent: Codable, Hashable, 
         case id
         case agentName = "agent_name"
         case processedAt = "processed_at"
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
         case stopDetails = "stop_details"
         case stopReason = "stop_reason"
         case type

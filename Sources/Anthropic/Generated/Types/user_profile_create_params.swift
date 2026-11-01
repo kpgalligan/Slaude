@@ -34,14 +34,14 @@ public struct UserProfileCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(accessType: UserProfileAccessType? = nil, externalUserDetails: UserProfileExternalUserDetailsParams? = nil, metadata: [String: String]? = nil, name: String?? = nil, workspaceId: String? = nil) {
+    public init(accessType: UserProfileAccessType? = nil, externalUserDetails: UserProfileExternalUserDetailsParams? = nil, metadata: [String: String]? = nil, name: String?? = nil, workspaceID: String? = nil) {
         self.accessType = accessType
         self.externalUserDetails = externalUserDetails
         self.metadata = metadata
         self.name = name
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -49,6 +49,6 @@ public struct UserProfileCreateParams: Codable, Hashable, Sendable {
         case externalUserDetails = "external_user_details"
         case metadata
         case name
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

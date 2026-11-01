@@ -14,7 +14,7 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// user or service account (use `api_key_ids[]` for every request a key
     /// authenticated). Federated identities have no tagged ID; select them with
     /// `actor_types[]`. Use `group_by[]=actor` to break out per-identity values.
-    public var actorIds: [String]??
+    public var actorIDs: [String]??
     /// Filter to usage attributed to specific kinds of identity.
     ///
     /// Use `group_by[]=actor_type` to break out per-kind values.
@@ -23,13 +23,13 @@ public struct CostListParams: Codable, Hashable, Sendable {
     ///
     /// Use `group_by[]=agent_id` to break out per-agent values. Claude Developer
     /// Platform organizations only.
-    public var agentIds: [String]??
+    public var agentIDs: [String]??
     /// Filter to usage authenticated by specific API keys, by tagged API key ID
     /// (`apikey_...`), whichever identity the usage is attributed to. Include an empty
     /// entry (`api_key_ids[]=`) to also match usage that no API key authenticated. Use
     /// `group_by[]=api_key_id` to break out per-key values; usage without a key has a
     /// null `api_key_id`. Claude Developer Platform organizations only.
-    public var apiKeyIds: [String]??
+    public var apiKeyIDs: [String]??
     /// Filter to Claude Tag (Claude in Slack) usage in specific spend categories.
     ///
     /// Usage with no category never matches. `dm` usage is reported under the user's
@@ -41,7 +41,7 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// by Slack user ID (for example `U0123ABCDEF`), not claude.ai user ID. Usage that
     /// is not Claude Tag, and Claude Tag usage not attributed to a single user, never
     /// matches. Use `group_by[]=claude_tag_user_id` to break out per-user values.
-    public var claudeTagUserIds: [String]??
+    public var claudeTagUserIDs: [String]??
     /// Filter to specific context-window pricing tiers.
     ///
     /// Use `group_by[]=context_window` to break out per-tier values.
@@ -49,7 +49,7 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// Filter to usage incurred by Claude Managed Agents sessions that specific
     /// deployments started. Use `group_by[]=deployment_id` to break out per-deployment
     /// values. Claude Developer Platform organizations only.
-    public var deploymentIds: [String]??
+    public var deploymentIDs: [String]??
     /// End of range, exclusive.
     ///
     /// Required when `time_bucket_width` is set. Without `time_bucket_width`, defaults
@@ -59,7 +59,7 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// Filter to usage incurred by Claude Managed Agents sessions that ran in specific
     /// environments. Use `group_by[]=environment_id` to break out per-environment
     /// values. Claude Developer Platform organizations only.
-    public var environmentIds: [String]??
+    public var environmentIDs: [String]??
     /// If true, omit rows whose `actor` is a `user_actor` with `deleted: true`.
     ///
     /// Requires `group_by[]=actor`. Rows for other actor types, and rows whose `actor`
@@ -111,7 +111,7 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// Accepts tagged RBAC group IDs (`rbac_group_...`) or bare group UUIDs. A row
     /// matches when the user belonged to any of the listed groups on the (UTC) day the
     /// usage occurred; usage with no group attribution never matches.
-    public var rbacGroupIds: [String]??
+    public var rbacGroupIDs: [String]??
     /// Filter to specific service tiers.
     ///
     /// Use `group_by[]=service_tier` to break out per-tier values. Claude Developer
@@ -121,11 +121,11 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// Filter to usage incurred by specific Claude Managed Agents sessions, by tagged
     /// session ID (`sesn_...`). Use `group_by[]=session_id` to break out per-session
     /// values. Claude Developer Platform organizations only.
-    public var sessionIds: [String]??
+    public var sessionIDs: [String]??
     /// Filter to usage originating from specific Slack channels.
     ///
     /// Use `group_by[]=slack_channel_id` to break out per-channel values.
-    public var slackChannelIds: [String]??
+    public var slackChannelIDs: [String]??
     /// Filter to fast or standard inference mode.
     ///
     /// Use `group_by[]=speed` to break out per-mode values.
@@ -142,29 +142,29 @@ public struct CostListParams: Codable, Hashable, Sendable {
     /// Filter to usage attributed to specific user profiles, by tagged user profile ID
     /// (`uprof_...`). Use `group_by[]=user_profile_id` to break out per-profile values.
     /// Claude Developer Platform organizations only.
-    public var userProfileIds: [String]??
+    public var userProfileIDs: [String]??
     /// Filter to usage in specific workspaces, by tagged workspace ID (`wrkspc_...`).
     ///
     /// Use `group_by[]=workspace_id` to break out per-workspace values. Claude
     /// Developer Platform organizations only; matches nothing for a Claude Enterprise
     /// organization.
-    public var workspaceIds: [String]??
+    public var workspaceIDs: [String]??
     /// This endpoint is in beta: requests must send `analytics-usage-cost-2026-08-24`
     /// in this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(startingAt: StartingAt, actorIds: [String]?? = nil, actorTypes: [BetaAnalyticsActorType]?? = nil, agentIds: [String]?? = nil, apiKeyIds: [String]?? = nil, claudeTagCategories: [BetaAnalyticsClaudeTagCategory]?? = nil, claudeTagUserIds: [String]?? = nil, contextWindows: [BetaAnalyticsContextWindow]?? = nil, deploymentIds: [String]?? = nil, endingAt: EndingAt?? = nil, environmentIds: [String]?? = nil, excludeDeletedUsers: Bool? = nil, groupBy: [BetaAnalyticsCostGroupBy]?? = nil, inferenceGeos: [BetaAnalyticsInferenceGeoFilter]?? = nil, limit: Int? = nil, models: [String]?? = nil, order: BetaAnalyticsUsageCostSortOrder? = nil, orderBy: BetaAnalyticsCostOrderBy? = nil, page: String?? = nil, products: [BetaAnalyticsUsageCostProductFilter]?? = nil, rbacGroupIds: [String]?? = nil, serviceTiers: [BetaAnalyticsServiceTier]?? = nil, sessionIds: [String]?? = nil, slackChannelIds: [String]?? = nil, speeds: [BetaAnalyticsSpeed]?? = nil, timeBucketWidth: BetaAnalyticsTimeBucketWidth?? = nil, userProfileIds: [String]?? = nil, workspaceIds: [String]?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(startingAt: StartingAt, actorIDs: [String]?? = nil, actorTypes: [BetaAnalyticsActorType]?? = nil, agentIDs: [String]?? = nil, apiKeyIDs: [String]?? = nil, claudeTagCategories: [BetaAnalyticsClaudeTagCategory]?? = nil, claudeTagUserIDs: [String]?? = nil, contextWindows: [BetaAnalyticsContextWindow]?? = nil, deploymentIDs: [String]?? = nil, endingAt: EndingAt?? = nil, environmentIDs: [String]?? = nil, excludeDeletedUsers: Bool? = nil, groupBy: [BetaAnalyticsCostGroupBy]?? = nil, inferenceGeos: [BetaAnalyticsInferenceGeoFilter]?? = nil, limit: Int? = nil, models: [String]?? = nil, order: BetaAnalyticsUsageCostSortOrder? = nil, orderBy: BetaAnalyticsCostOrderBy? = nil, page: String?? = nil, products: [BetaAnalyticsUsageCostProductFilter]?? = nil, rbacGroupIDs: [String]?? = nil, serviceTiers: [BetaAnalyticsServiceTier]?? = nil, sessionIDs: [String]?? = nil, slackChannelIDs: [String]?? = nil, speeds: [BetaAnalyticsSpeed]?? = nil, timeBucketWidth: BetaAnalyticsTimeBucketWidth?? = nil, userProfileIDs: [String]?? = nil, workspaceIDs: [String]?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.startingAt = startingAt
-        self.actorIds = actorIds
+        self.actorIDs = actorIDs
         self.actorTypes = actorTypes
-        self.agentIds = agentIds
-        self.apiKeyIds = apiKeyIds
+        self.agentIDs = agentIDs
+        self.apiKeyIDs = apiKeyIDs
         self.claudeTagCategories = claudeTagCategories
-        self.claudeTagUserIds = claudeTagUserIds
+        self.claudeTagUserIDs = claudeTagUserIDs
         self.contextWindows = contextWindows
-        self.deploymentIds = deploymentIds
+        self.deploymentIDs = deploymentIDs
         self.endingAt = endingAt
-        self.environmentIds = environmentIds
+        self.environmentIDs = environmentIDs
         self.excludeDeletedUsers = excludeDeletedUsers
         self.groupBy = groupBy
         self.inferenceGeos = inferenceGeos
@@ -174,29 +174,29 @@ public struct CostListParams: Codable, Hashable, Sendable {
         self.orderBy = orderBy
         self.page = page
         self.products = products
-        self.rbacGroupIds = rbacGroupIds
+        self.rbacGroupIDs = rbacGroupIDs
         self.serviceTiers = serviceTiers
-        self.sessionIds = sessionIds
-        self.slackChannelIds = slackChannelIds
+        self.sessionIDs = sessionIDs
+        self.slackChannelIDs = slackChannelIDs
         self.speeds = speeds
         self.timeBucketWidth = timeBucketWidth
-        self.userProfileIds = userProfileIds
-        self.workspaceIds = workspaceIds
+        self.userProfileIDs = userProfileIDs
+        self.workspaceIDs = workspaceIDs
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
         case startingAt = "starting_at"
-        case actorIds = "actor_ids"
+        case actorIDs = "actor_ids"
         case actorTypes = "actor_types"
-        case agentIds = "agent_ids"
-        case apiKeyIds = "api_key_ids"
+        case agentIDs = "agent_ids"
+        case apiKeyIDs = "api_key_ids"
         case claudeTagCategories = "claude_tag_categories"
-        case claudeTagUserIds = "claude_tag_user_ids"
+        case claudeTagUserIDs = "claude_tag_user_ids"
         case contextWindows = "context_windows"
-        case deploymentIds = "deployment_ids"
+        case deploymentIDs = "deployment_ids"
         case endingAt = "ending_at"
-        case environmentIds = "environment_ids"
+        case environmentIDs = "environment_ids"
         case excludeDeletedUsers = "exclude_deleted_users"
         case groupBy = "group_by"
         case inferenceGeos = "inference_geos"
@@ -206,14 +206,14 @@ public struct CostListParams: Codable, Hashable, Sendable {
         case orderBy = "order_by"
         case page
         case products
-        case rbacGroupIds = "rbac_group_ids"
+        case rbacGroupIDs = "rbac_group_ids"
         case serviceTiers = "service_tiers"
-        case sessionIds = "session_ids"
-        case slackChannelIds = "slack_channel_ids"
+        case sessionIDs = "session_ids"
+        case slackChannelIDs = "slack_channel_ids"
         case speeds
         case timeBucketWidth = "time_bucket_width"
-        case userProfileIds = "user_profile_ids"
-        case workspaceIds = "workspace_ids"
+        case userProfileIDs = "user_profile_ids"
+        case workspaceIDs = "workspace_ids"
         case betas
     }
 

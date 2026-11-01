@@ -5,20 +5,20 @@ import Foundation
 public struct WebSearchToolResultBlock: Codable, Hashable, Sendable {
     public var caller: WebSearchToolResultBlock.Caller?
     public var content: WebSearchToolResultBlockContent
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
 
-    public init(caller: WebSearchToolResultBlock.Caller? = nil, content: WebSearchToolResultBlockContent, toolUseId: String, type: String = "web_search_tool_result") {
+    public init(caller: WebSearchToolResultBlock.Caller? = nil, content: WebSearchToolResultBlockContent, toolUseID: String, type: String = "web_search_tool_result") {
         self.caller = caller
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case caller
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
     }
 }

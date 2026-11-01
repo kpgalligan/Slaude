@@ -20,7 +20,7 @@ public struct BetaWorkspace: Codable, Hashable, Sendable {
     /// there is no separate validation value: the key is validated against this
     /// Workspace's own value when it is attached, so if your key policy uses the
     /// compartment condition, add this value to it before attaching the key.
-    public var compartmentId: String
+    public var compartmentID: String
     /// RFC 3339 datetime string indicating when the Workspace was created.
     public var createdAt: Date
     /// Data residency configuration.
@@ -38,7 +38,7 @@ public struct BetaWorkspace: Codable, Hashable, Sendable {
     /// attached to a Workspace it cannot be detached or replaced. To rotate key
     /// material, rotate the underlying key on your cloud KMS; the `external_key_id`
     /// stays the same.
-    public var externalKeyId: String?
+    public var externalKeyID: String?
     /// Name of the Workspace.
     public var name: String
     /// User-defined tags as string key-value pairs.
@@ -50,14 +50,14 @@ public struct BetaWorkspace: Codable, Hashable, Sendable {
     /// For Workspaces, this is always `"workspace"`.
     public var type: String
 
-    public init(id: String, archivedAt: Date? = nil, compartmentId: String, createdAt: Date, dataResidency: BetaDataResidency, displayColor: String, externalKeyId: String? = nil, name: String, tags: [String: String], type: String = "workspace") {
+    public init(id: String, archivedAt: Date? = nil, compartmentID: String, createdAt: Date, dataResidency: BetaDataResidency, displayColor: String, externalKeyID: String? = nil, name: String, tags: [String: String], type: String = "workspace") {
         self.id = id
         self.archivedAt = archivedAt
-        self.compartmentId = compartmentId
+        self.compartmentID = compartmentID
         self.createdAt = createdAt
         self.dataResidency = dataResidency
         self.displayColor = displayColor
-        self.externalKeyId = externalKeyId
+        self.externalKeyID = externalKeyID
         self.name = name
         self.tags = tags
         self.type = type
@@ -66,11 +66,11 @@ public struct BetaWorkspace: Codable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case archivedAt = "archived_at"
-        case compartmentId = "compartment_id"
+        case compartmentID = "compartment_id"
         case createdAt = "created_at"
         case dataResidency = "data_residency"
         case displayColor = "display_color"
-        case externalKeyId = "external_key_id"
+        case externalKeyID = "external_key_id"
         case name
         case tags
         case type

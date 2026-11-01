@@ -11,9 +11,9 @@ public struct BetaManagedAgentsGitHubRepositoryResource: Codable, Hashable, Send
     /// A timestamp in RFC 3339 format
     public var updatedAt: Date
     public var url: String
-    public var checkout: BetaManagedAgentsGitHubRepositoryResource.Checkout??
+    public var checkout: BetaManagedAgentsGitHubRepositoryResource.Checkout?
 
-    public init(id: String, createdAt: Date, mountPath: String, type: String = "github_repository", updatedAt: Date, url: String, checkout: BetaManagedAgentsGitHubRepositoryResource.Checkout?? = nil) {
+    public init(id: String, createdAt: Date, mountPath: String, type: String = "github_repository", updatedAt: Date, url: String, checkout: BetaManagedAgentsGitHubRepositoryResource.Checkout? = nil) {
         self.id = id
         self.createdAt = createdAt
         self.mountPath = mountPath

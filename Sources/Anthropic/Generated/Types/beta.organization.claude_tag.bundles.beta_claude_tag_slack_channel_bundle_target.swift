@@ -16,20 +16,20 @@ public struct BetaClaudeTagSlackChannelBundleTarget: Codable, Hashable, Sendable
     public var createdAt: Date
     /// The identifier of the Slack channel the Bundle is attached to, starting with
     /// `slch_`. It is the channel object's `id`, not Slack's `channel_id`.
-    public var slackChannelId: String
+    public var slackChannelID: String
     public var type: String
 
-    public init(id: String, createdAt: Date, slackChannelId: String, type: String = "slack_channel") {
+    public init(id: String, createdAt: Date, slackChannelID: String, type: String = "slack_channel") {
         self.id = id
         self.createdAt = createdAt
-        self.slackChannelId = slackChannelId
+        self.slackChannelID = slackChannelID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
-        case slackChannelId = "slack_channel_id"
+        case slackChannelID = "slack_channel_id"
         case type
     }
 }

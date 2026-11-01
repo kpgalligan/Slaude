@@ -4,13 +4,13 @@ import Foundation
 
 public struct OrganizationFederationRulesWorkspaceAddParams: Codable, Hashable, Sendable {
     /// Tagged ID of the workspace to enable this rule for.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(workspaceId: String) {
-        self.workspaceId = workspaceId
+    public init(workspaceID: String) {
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

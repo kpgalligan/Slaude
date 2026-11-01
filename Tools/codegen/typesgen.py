@@ -88,6 +88,7 @@ IR = Union[Prim, Ref, ListT, DictT, LiteralT, UnionT, NullableT]
 
 STR = Prim("str")
 NONE = Prim("none")
+OMIT = Prim("omit")
 OBJECT = Prim("object")
 
 PRIM_NAMES = {
@@ -95,6 +96,9 @@ PRIM_NAMES = {
     "Any": "object", "datetime": "datetime", "date": "date", "datetime.datetime": "datetime",
     "datetime.date": "date", "FileTypes": "file", "Base64FileInput": "b64file", "FileContent": "file",
 }
+
+# Hand-written helper types in `lib/` whose wire shape is a generated params type.
+LIB_TYPE_PARAMS = {"BetaToolLike": "BetaToolUnionParam", "ToolLike": "ToolUnionParam"}
 
 LIST_HEADS = {"List", "list", "Iterable", "SequenceNotStr", "Sequence", "Tuple", "tuple", "Set", "set"}
 DICT_HEADS = {"Dict", "dict", "Mapping"}
@@ -135,9 +139,11 @@ class TypeConverter:
             target = self.ms.resolve_expr(module, node)
             if isinstance(target, (ClassDecl, AliasDecl)) and not target.module.startswith("anthropic.types"):
                 if target.name in ("Omit", "NotGiven"):
-                    return NONE
+                    return OMIT
                 if target.name in PRIM_NAMES:
                     return Prim(PRIM_NAMES[target.name])
+                if target.name in LIB_TYPE_PARAMS:
+                    return Ref(self.ms.resolve("anthropic.types.beta" if target.name.startswith("Beta") else "anthropic.types", LIB_TYPE_PARAMS[target.name]))
                 raise ConvertError(f"unsupported runtime type {target.module}.{target.name}")
             if isinstance(target, (ClassDecl, AliasDecl)):
                 if isinstance(target, ClassDecl) and target.generic:
@@ -217,7 +223,7 @@ class TypeConverter:
             else:
                 flat.append(m)
         nullable = any(m == NONE for m in flat)
-        rest = [m for m in flat if m != NONE]
+        rest = [m for m in flat if m != NONE and m != OMIT]
         # Merge literals; Union[Literal[...], str] is an open enum.
         lits = [m for m in rest if isinstance(m, LiteralT) and all(isinstance(v, str) for v in m.values)]
         if lits:
@@ -556,7 +562,8 @@ class SwiftEmitter:
             return "union"
         return "value"
 
-    def render_union(self, name: str, ir: UnionT, doc: Optional[str], indent: str, scope: Scope) -> str:
+    def union_cases(self, ir: UnionT, scope: Optional[Scope]) -> tuple[Optional[str], list]:
+        """The discriminator key (if any) and `(case, swift type, member IR, discriminator value)` per variant."""
         members = list(ir.members)
         disc = ir.discriminator
         auto_disc = None
@@ -573,8 +580,19 @@ class SwiftEmitter:
             while cname in used:
                 cname += "_"
             used.add(cname)
-            stype = self.swift_type(m, scope, cname)
+            if scope is None:
+                try:
+                    stype = self.swift_type(m, None, cname)
+                except ConvertError:
+                    stype = None
+            else:
+                stype = self.swift_type(m, scope, cname)
             cases.append((escape_ident(cname), stype, m, dv))
+        return key, cases
+
+    def render_union(self, name: str, ir: UnionT, doc: Optional[str], indent: str, scope: Scope) -> str:
+        members = list(ir.members)
+        key, cases = self.union_cases(ir, scope)
         i = indent
         out = doc_comment(doc, i)
         has_string = any(m == STR for m in members)
@@ -633,6 +651,7 @@ class SwiftEmitter:
         for n in nested_named:
             scope.names.add(n)
         props: list[tuple[Field, str, str, Optional[str]]] = []  # field, swift name, swift type, default
+        base_types: dict[str, str] = {}
         used_names: set[str] = set()
         for f in fields:
             pname = property_name(f.py_name)
@@ -640,6 +659,9 @@ class SwiftEmitter:
                 pname = escape_ident(bare(pname) + "_")
             used_names.add(bare(pname))
             base = self.swift_type(f.ir, scope, f.py_name)
+            if base.endswith("?"):  # a nullable type alias
+                base = base[:-1]
+                f.nullable = True
             default = self.constant_default(f.ir) if f.required and not f.nullable else None
             if decl.is_typeddict:
                 if f.required and not f.nullable:
@@ -656,6 +678,7 @@ class SwiftEmitter:
                 else:
                     t = base + "?"
             props.append((f, pname, t, default))
+            base_types[f.py_name] = base
         i = indent
         out = doc_comment(decl.doc, i)
         out += f"{i}public struct {name}: Codable, Hashable, Sendable {{\n"
@@ -697,6 +720,7 @@ class SwiftEmitter:
             out += "\n" + indent_src(nsrc, i + "    ")
         out += f"{i}}}\n"
         decl._props = props  # type: ignore[attr-defined]
+        decl._base_types = base_types  # type: ignore[attr-defined]
         decl._nested_names = {n for n, _ in scope.nested}  # type: ignore[attr-defined]
         return out
 

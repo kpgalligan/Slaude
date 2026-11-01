@@ -15,7 +15,7 @@ public struct BetaManagedAgentsDeployment: Codable, Hashable, Sendable {
     /// Description of what the deployment does.
     public var description: String?
     /// ID of the `environment` where sessions run.
-    public var environmentId: String
+    public var environmentID: String
     /// Events sent to each session immediately after creation.
     public var initialEvents: [BetaManagedAgentsDeploymentInitialEvent]
     /// Arbitrary key-value metadata. Maximum 16 pairs.
@@ -44,19 +44,19 @@ public struct BetaManagedAgentsDeployment: Codable, Hashable, Sendable {
     public var updatedAt: Date
     /// Vault IDs supplying stored credentials for sessions created from this
     /// deployment.
-    public var vaultIds: [String]
+    public var vaultIDs: [String]
     /// Spend ceiling stamped onto each session created from this deployment.
     ///
     /// Absent when no budget is set.
     public var budget: BetaManagedAgentsBudgetLimit?
 
-    public init(id: String, agent: BetaManagedAgentsAgentReference, archivedAt: Date? = nil, createdAt: Date, description: String? = nil, environmentId: String, initialEvents: [BetaManagedAgentsDeploymentInitialEvent], metadata: [String: String], name: String, pausedReason: BetaManagedAgentsDeploymentPausedReason? = nil, resources: [BetaManagedAgentsSessionResourceConfig], schedule: BetaManagedAgentsSchedule? = nil, status: BetaManagedAgentsDeploymentStatus, type: String = "deployment", updatedAt: Date, vaultIds: [String], budget: BetaManagedAgentsBudgetLimit? = nil) {
+    public init(id: String, agent: BetaManagedAgentsAgentReference, archivedAt: Date? = nil, createdAt: Date, description: String? = nil, environmentID: String, initialEvents: [BetaManagedAgentsDeploymentInitialEvent], metadata: [String: String], name: String, pausedReason: BetaManagedAgentsDeploymentPausedReason? = nil, resources: [BetaManagedAgentsSessionResourceConfig], schedule: BetaManagedAgentsSchedule? = nil, status: BetaManagedAgentsDeploymentStatus, type: String = "deployment", updatedAt: Date, vaultIDs: [String], budget: BetaManagedAgentsBudgetLimit? = nil) {
         self.id = id
         self.agent = agent
         self.archivedAt = archivedAt
         self.createdAt = createdAt
         self.description = description
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.initialEvents = initialEvents
         self.metadata = metadata
         self.name = name
@@ -66,7 +66,7 @@ public struct BetaManagedAgentsDeployment: Codable, Hashable, Sendable {
         self.status = status
         self.type = type
         self.updatedAt = updatedAt
-        self.vaultIds = vaultIds
+        self.vaultIDs = vaultIDs
         self.budget = budget
     }
 
@@ -76,7 +76,7 @@ public struct BetaManagedAgentsDeployment: Codable, Hashable, Sendable {
         case archivedAt = "archived_at"
         case createdAt = "created_at"
         case description
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case initialEvents = "initial_events"
         case metadata
         case name
@@ -86,7 +86,7 @@ public struct BetaManagedAgentsDeployment: Codable, Hashable, Sendable {
         case status
         case type
         case updatedAt = "updated_at"
-        case vaultIds = "vault_ids"
+        case vaultIDs = "vault_ids"
         case budget
     }
 }

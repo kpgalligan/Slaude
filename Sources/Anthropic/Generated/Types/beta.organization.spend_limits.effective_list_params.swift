@@ -17,20 +17,20 @@ public struct EffectiveListParams: Codable, Hashable, Sendable {
     /// Restrict the report to these members, by tagged user ID (`user_...`).
     ///
     /// At most 100 entries.
-    public var userIds: [String]??
+    public var userIDs: [String]??
 
-    public init(limit: Int? = nil, page: String?? = nil, period: [Period]?? = nil, userIds: [String]?? = nil) {
+    public init(limit: Int? = nil, page: String?? = nil, period: [Period]?? = nil, userIDs: [String]?? = nil) {
         self.limit = limit
         self.page = page
         self.period = period
-        self.userIds = userIds
+        self.userIDs = userIDs
     }
 
     enum CodingKeys: String, CodingKey {
         case limit
         case page
         case period
-        case userIds = "user_ids"
+        case userIDs = "user_ids"
     }
 
     public enum Period: OpenEnum, CaseIterable {

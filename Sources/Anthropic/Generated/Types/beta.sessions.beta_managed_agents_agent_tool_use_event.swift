@@ -28,9 +28,9 @@ public struct BetaManagedAgentsAgentToolUseEvent: Codable, Hashable, Sendable {
     /// events. Informational only: the server routes the matching
     /// `user.tool_confirmation` or `user.tool_result` by `tool_use_id`, so clients do
     /// not send it back.
-    public var sessionThreadId: String?
+    public var sessionThreadID: String?
 
-    public init(id: String, input: [String: JSONValue], name: String, processedAt: Date, type: String = "agent.tool_use", evaluatedPermission: BetaManagedAgentsAgentEvaluatedPermission? = nil, evaluation: BetaManagedAgentsAgentToolEvaluation? = nil, sessionThreadId: String? = nil) {
+    public init(id: String, input: [String: JSONValue], name: String, processedAt: Date, type: String = "agent.tool_use", evaluatedPermission: BetaManagedAgentsAgentEvaluatedPermission? = nil, evaluation: BetaManagedAgentsAgentToolEvaluation? = nil, sessionThreadID: String? = nil) {
         self.id = id
         self.input = input
         self.name = name
@@ -38,7 +38,7 @@ public struct BetaManagedAgentsAgentToolUseEvent: Codable, Hashable, Sendable {
         self.type = type
         self.evaluatedPermission = evaluatedPermission
         self.evaluation = evaluation
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -49,6 +49,6 @@ public struct BetaManagedAgentsAgentToolUseEvent: Codable, Hashable, Sendable {
         case type
         case evaluatedPermission = "evaluated_permission"
         case evaluation
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
     }
 }

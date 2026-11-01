@@ -15,16 +15,16 @@ public struct SpendLimitListParams: Codable, Hashable, Sendable {
     /// Return only the limits whose `scope.workspace_id` is this workspace
     /// (`wrkspc_...`). Claude Console organizations only; other organizations get a 400
     /// error.
-    public var workspaceId: String??
+    public var workspaceID: String??
     /// This endpoint is in beta: requests must send `spend-limit-reads-2026-09-26` in
     /// this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(limit: Int? = nil, page: String?? = nil, scopeType: [ScopeType]?? = nil, workspaceId: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(limit: Int? = nil, page: String?? = nil, scopeType: [ScopeType]?? = nil, workspaceID: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.limit = limit
         self.page = page
         self.scopeType = scopeType
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
         self.betas = betas
     }
 
@@ -32,7 +32,7 @@ public struct SpendLimitListParams: Codable, Hashable, Sendable {
         case limit
         case page
         case scopeType = "scope_type"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case betas
     }
 

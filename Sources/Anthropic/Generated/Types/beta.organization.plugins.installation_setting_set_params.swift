@@ -4,7 +4,7 @@ import Foundation
 
 public struct InstallationSettingSetParams: Codable, Hashable, Sendable {
     /// ID of the Plugin (prefixed `plugin_`).
-    public var pluginId: String
+    public var pluginID: String
     /// The installation setting the target is to hold for this Plugin: one of
     /// `required`, `auto_install`, `available`, `not_available`.
     public var installationPreference: InstallationPreference
@@ -12,14 +12,14 @@ public struct InstallationSettingSetParams: Codable, Hashable, Sendable {
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(pluginId: String, installationPreference: InstallationPreference, betas: [AnthropicBetaParam]? = nil) {
-        self.pluginId = pluginId
+    public init(pluginID: String, installationPreference: InstallationPreference, betas: [AnthropicBetaParam]? = nil) {
+        self.pluginID = pluginID
         self.installationPreference = installationPreference
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case installationPreference = "installation_preference"
         case betas
     }

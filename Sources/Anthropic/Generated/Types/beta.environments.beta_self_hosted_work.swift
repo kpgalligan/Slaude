@@ -18,7 +18,7 @@ public struct BetaSelfHostedWork: Codable, Hashable, Sendable {
     /// The actual work to be performed
     public var data: BetaSessionWorkData
     /// Environment identifier this work belongs to (e.g., `env_...`)
-    public var environmentId: String
+    public var environmentID: String
     /// RFC 3339 timestamp of the most recent heartbeat
     public var latestHeartbeatAt: String?
     /// User-provided metadata key-value pairs associated with this work item
@@ -38,12 +38,12 @@ public struct BetaSelfHostedWork: Codable, Hashable, Sendable {
     /// The type of object (always 'work')
     public var type: String
 
-    public init(id: String, acknowledgedAt: String? = nil, createdAt: String, data: BetaSessionWorkData, environmentId: String, latestHeartbeatAt: String? = nil, metadata: [String: String], secret: String? = nil, startedAt: String? = nil, state: State, stopRequestedAt: String? = nil, stoppedAt: String? = nil, type: String = "work") {
+    public init(id: String, acknowledgedAt: String? = nil, createdAt: String, data: BetaSessionWorkData, environmentID: String, latestHeartbeatAt: String? = nil, metadata: [String: String], secret: String? = nil, startedAt: String? = nil, state: State, stopRequestedAt: String? = nil, stoppedAt: String? = nil, type: String = "work") {
         self.id = id
         self.acknowledgedAt = acknowledgedAt
         self.createdAt = createdAt
         self.data = data
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.latestHeartbeatAt = latestHeartbeatAt
         self.metadata = metadata
         self.secret = secret
@@ -59,7 +59,7 @@ public struct BetaSelfHostedWork: Codable, Hashable, Sendable {
         case acknowledgedAt = "acknowledged_at"
         case createdAt = "created_at"
         case data
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case latestHeartbeatAt = "latest_heartbeat_at"
         case metadata
         case secret

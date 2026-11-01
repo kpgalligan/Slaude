@@ -7,7 +7,7 @@ public struct BetaManagedAgentsMCPOAuthRefreshParams: Codable, Hashable, Sendabl
     /// The OAuth client ID to use when refreshing the access token.
     ///
     /// It can't be changed after the credential is created.
-    public var clientId: String
+    public var clientID: String
     /// The OAuth refresh token that the API uses to get a new access token when the
     /// current one expires.
     public var refreshToken: String
@@ -19,8 +19,8 @@ public struct BetaManagedAgentsMCPOAuthRefreshParams: Codable, Hashable, Sendabl
     /// OAuth scope for the refresh request.
     public var scope: String??
 
-    public init(clientId: String, refreshToken: String, tokenEndpoint: String, tokenEndpointAuth: BetaManagedAgentsMCPOAuthRefreshParams.TokenEndpointAuth, resource: String?? = nil, scope: String?? = nil) {
-        self.clientId = clientId
+    public init(clientID: String, refreshToken: String, tokenEndpoint: String, tokenEndpointAuth: BetaManagedAgentsMCPOAuthRefreshParams.TokenEndpointAuth, resource: String?? = nil, scope: String?? = nil) {
+        self.clientID = clientID
         self.refreshToken = refreshToken
         self.tokenEndpoint = tokenEndpoint
         self.tokenEndpointAuth = tokenEndpointAuth
@@ -29,7 +29,7 @@ public struct BetaManagedAgentsMCPOAuthRefreshParams: Codable, Hashable, Sendabl
     }
 
     enum CodingKeys: String, CodingKey {
-        case clientId = "client_id"
+        case clientID = "client_id"
         case refreshToken = "refresh_token"
         case tokenEndpoint = "token_endpoint"
         case tokenEndpointAuth = "token_endpoint_auth"

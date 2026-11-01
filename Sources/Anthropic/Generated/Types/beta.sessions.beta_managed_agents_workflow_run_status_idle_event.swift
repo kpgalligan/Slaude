@@ -14,19 +14,19 @@ public struct BetaManagedAgentsWorkflowRunStatusIdleEvent: Codable, Hashable, Se
     /// Identifier of the run.
     ///
     /// The same value is on all of the run's `workflow_run.*` events.
-    public var workflowRunId: String
+    public var workflowRunID: String
 
-    public init(id: String, processedAt: Date, type: String = "workflow_run.status_idle", workflowRunId: String) {
+    public init(id: String, processedAt: Date, type: String = "workflow_run.status_idle", workflowRunID: String) {
         self.id = id
         self.processedAt = processedAt
         self.type = type
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
         case id
         case processedAt = "processed_at"
         case type
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }

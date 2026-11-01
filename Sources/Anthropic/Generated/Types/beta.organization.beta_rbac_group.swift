@@ -14,7 +14,7 @@ public struct BetaRBACGroup: Codable, Hashable, Sendable {
     /// Role attachment is managed in the admin settings and is read-only on this API.
     /// `null` means role data was temporarily unavailable — retry to distinguish from
     /// an empty list.
-    public var roleIds: [String]?
+    public var roleIDs: [String]?
     /// How the RBAC Group was created: `"direct"` for groups created directly (for
     /// example, in the organization's admin settings), `"scim"` for groups provisioned
     /// by the identity provider.
@@ -26,11 +26,11 @@ public struct BetaRBACGroup: Codable, Hashable, Sendable {
     /// RFC 3339 timestamp of when the RBAC Group was last updated.
     public var updatedAt: Date
 
-    public init(id: String, createdAt: Date, name: String, roleIds: [String]? = nil, sourceType: SourceType, type: String = "rbac_group", updatedAt: Date) {
+    public init(id: String, createdAt: Date, name: String, roleIDs: [String]? = nil, sourceType: SourceType, type: String = "rbac_group", updatedAt: Date) {
         self.id = id
         self.createdAt = createdAt
         self.name = name
-        self.roleIds = roleIds
+        self.roleIDs = roleIDs
         self.sourceType = sourceType
         self.type = type
         self.updatedAt = updatedAt
@@ -40,7 +40,7 @@ public struct BetaRBACGroup: Codable, Hashable, Sendable {
         case id
         case createdAt = "created_at"
         case name
-        case roleIds = "role_ids"
+        case roleIDs = "role_ids"
         case sourceType = "source_type"
         case type
         case updatedAt = "updated_at"

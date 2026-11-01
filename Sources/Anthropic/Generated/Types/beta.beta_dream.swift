@@ -57,7 +57,7 @@ public struct BetaDream: Codable, Hashable, Sendable {
     /// See the
     /// [Dreams guide](https://platform.claude.com/docs/en/managed-agents/dreams#watch-the-pipeline-run)
     /// for how to watch a running dream.
-    public var sessionId: String?
+    public var sessionID: String?
     /// Where a dream is in its lifecycle.
     ///
     /// `completed`, `failed`, and `canceled` are final: once a dream has one of these
@@ -72,7 +72,7 @@ public struct BetaDream: Codable, Hashable, Sendable {
     /// or `failed`. After a cancel, they can keep changing.
     public var usage: BetaDreamUsage
 
-    public init(id: String, archivedAt: Date? = nil, createdAt: Date, endedAt: Date? = nil, error: BetaDreamError? = nil, inputs: [BetaDreamInput], instructions: String? = nil, model: BetaDreamModelConfig, outputBehavior: BetaOutputBehavior, outputs: [BetaDreamOutput], sessionId: String? = nil, status: BetaDreamStatus, type: String = "dream", usage: BetaDreamUsage) {
+    public init(id: String, archivedAt: Date? = nil, createdAt: Date, endedAt: Date? = nil, error: BetaDreamError? = nil, inputs: [BetaDreamInput], instructions: String? = nil, model: BetaDreamModelConfig, outputBehavior: BetaOutputBehavior, outputs: [BetaDreamOutput], sessionID: String? = nil, status: BetaDreamStatus, type: String = "dream", usage: BetaDreamUsage) {
         self.id = id
         self.archivedAt = archivedAt
         self.createdAt = createdAt
@@ -83,7 +83,7 @@ public struct BetaDream: Codable, Hashable, Sendable {
         self.model = model
         self.outputBehavior = outputBehavior
         self.outputs = outputs
-        self.sessionId = sessionId
+        self.sessionID = sessionID
         self.status = status
         self.type = type
         self.usage = usage
@@ -100,7 +100,7 @@ public struct BetaDream: Codable, Hashable, Sendable {
         case model
         case outputBehavior = "output_behavior"
         case outputs
-        case sessionId = "session_id"
+        case sessionID = "session_id"
         case status
         case type
         case usage

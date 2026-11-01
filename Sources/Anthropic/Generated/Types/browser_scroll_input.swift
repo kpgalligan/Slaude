@@ -11,19 +11,19 @@ public struct BrowserScrollInput: Codable, Hashable, Sendable {
     /// Scroll-wheel notches (1–10). Default 3.
     public var scrollAmount: Int?
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(scrollDirection: BrowserScrollDirection, target: BrowserCoordinateTarget, scrollAmount: Int? = nil, tabId: String? = nil) {
+    public init(scrollDirection: BrowserScrollDirection, target: BrowserCoordinateTarget, scrollAmount: Int? = nil, tabID: String? = nil) {
         self.scrollDirection = scrollDirection
         self.target = target
         self.scrollAmount = scrollAmount
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case scrollDirection = "scroll_direction"
         case target
         case scrollAmount = "scroll_amount"
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

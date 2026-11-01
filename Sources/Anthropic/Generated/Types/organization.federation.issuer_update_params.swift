@@ -14,7 +14,7 @@ public struct IssuerUpdateParams: Codable, Hashable, Sendable {
     /// it repoints the JWKS source. Changing the issuer URL to a well-known shared
     /// platform is rejected while any live rule under this issuer would not constrain
     /// tenant identity.
-    public var issuerUrl: String??
+    public var issuerURL: String??
     /// Replaces the entire JWKS configuration.
     public var jwks: IssuerUpdateParams.JWKS??
     /// Only `false` is accepted, to re-enable polling after the system pauses it.
@@ -30,9 +30,9 @@ public struct IssuerUpdateParams: Codable, Hashable, Sendable {
     /// Unique within the organization; a duplicate name returns 409.
     public var name: String??
 
-    public init(checkJti: Bool?? = nil, issuerUrl: String?? = nil, jwks: IssuerUpdateParams.JWKS?? = nil, jwksPollingDisabled: Bool?? = nil, maxJwtLifetimeSeconds: Int?? = nil, name: String?? = nil) {
+    public init(checkJti: Bool?? = nil, issuerURL: String?? = nil, jwks: IssuerUpdateParams.JWKS?? = nil, jwksPollingDisabled: Bool?? = nil, maxJwtLifetimeSeconds: Int?? = nil, name: String?? = nil) {
         self.checkJti = checkJti
-        self.issuerUrl = issuerUrl
+        self.issuerURL = issuerURL
         self.jwks = jwks
         self.jwksPollingDisabled = jwksPollingDisabled
         self.maxJwtLifetimeSeconds = maxJwtLifetimeSeconds
@@ -41,7 +41,7 @@ public struct IssuerUpdateParams: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case checkJti = "check_jti"
-        case issuerUrl = "issuer_url"
+        case issuerURL = "issuer_url"
         case jwks
         case jwksPollingDisabled = "jwks_polling_disabled"
         case maxJwtLifetimeSeconds = "max_jwt_lifetime_seconds"

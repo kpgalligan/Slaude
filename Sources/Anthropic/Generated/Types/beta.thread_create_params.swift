@@ -7,7 +7,7 @@ import Foundation
 public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// Top-level cache control automatically applies a cache_control marker to the last
     /// cacheable block in the request.
-    public var cacheControl: BetaCacheControlEphemeralParam???
+    public var cacheControl: BetaCacheControlEphemeralParam??
     /// Compaction configuration.
     ///
     /// When set on `POST /v1/messages`, the request is a compaction request: the
@@ -17,20 +17,20 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// `POST /v1/messages/count_tokens` accepts this parameter and ignores it: the
     /// count it returns is for the conversation in `messages` as sent. Cannot be
     /// combined with `context_management`.
-    public var compaction: BetaCompactionConfigParam???
+    public var compaction: BetaCompactionConfigParam??
     /// Container identifier for reuse across requests.
-    public var container: BetaMessageCreateParamsBase.Container???
+    public var container: BetaMessageCreateParamsBase.Container??
     /// Context management configuration.
     ///
     /// This allows you to control how Claude manages context across multiple requests,
     /// such as whether to clear function results or not.
-    public var contextManagement: BetaContextManagementConfigParam???
+    public var contextManagement: BetaContextManagementConfigParam??
     /// Request-level diagnostics.
     ///
     /// Supply `previous_message_id` to have the response include
     /// `diagnostics.cache_miss_reason` explaining any prompt-cache divergence from that
     /// prior request.
-    public var diagnostics: BetaDiagnosticsParam???
+    public var diagnostics: BetaDiagnosticsParam??
     /// The `fallback_credit_token` from a prior refusal's `stop_details`.
     ///
     /// When a preceding request was refused and returned a `fallback_credit_token`,
@@ -50,7 +50,7 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     ///
     /// When the appended-assistant form is used on a model that otherwise disallows
     /// assistant-turn prefill, this token also authorizes that one prefill.
-    public var fallbackCreditToken: BetaMessageCreateParamsBase.FallbackCreditToken???
+    public var fallbackCreditToken: BetaMessageCreateParamsBase.FallbackCreditToken??
     /// Opt-in server-side retry on one or more substitute models when the requested
     /// model declines for policy reasons. Tried in order: if the first entry also
     /// declines, the second is tried, and so on. Some models don't support fallbacks;
@@ -59,24 +59,24 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// The string "default" requests the requested model's server-defined default
     /// fallback configuration. On a model that doesn't support fallbacks, the request
     /// runs on the requested model alone, so a declined request stays declined.
-    public var fallbacks: BetaFallbacksParam???
+    public var fallbacks: BetaFallbacksParam??
     /// Specifies the geographic region for inference processing.
     ///
     /// If not specified, the workspace's `default_inference_geo` is used.
-    public var inferenceGeo: String???
+    public var inferenceGeo: String??
     /// MCP servers to be utilized in this request
-    public var mcpServers: [BetaRequestMCPServerURLDefinitionParam]??
+    public var mcpServers: [BetaRequestMCPServerURLDefinitionParam]?
     /// An object describing metadata about the request.
-    public var metadata: BetaMetadataParam??
+    public var metadata: BetaMetadataParam?
     /// Configuration options for the model's output, such as the output format.
-    public var outputConfig: BetaOutputConfigParam??
+    public var outputConfig: BetaOutputConfigParam?
     /// Determines whether to use priority capacity (if available) or standard capacity
     /// for this request.
     ///
     /// Anthropic offers different levels of service for your API requests. See
     /// [service-tiers](https://platform.claude.com/docs/en/api/service-tiers) for
     /// details.
-    public var serviceTier: ServiceTier??
+    public var serviceTier: ServiceTier?
     /// The inference speed mode for this request.
     ///
     /// `"fast"` enables high output-tokens-per-second inference.
@@ -85,7 +85,7 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// value. See
     /// [fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode) for
     /// which models.
-    public var speed: Speed???
+    public var speed: Speed??
     /// Custom text sequences that will cause the model to stop generating.
     ///
     /// Our models will normally stop when they have naturally completed their turn,
@@ -95,13 +95,13 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// text, you can use the `stop_sequences` parameter. If the model encounters one of
     /// the custom sequences, the response `stop_reason` value will be `"stop_sequence"`
     /// and the response `stop_sequence` value will contain the matched stop sequence.
-    public var stopSequences: [String]??
+    public var stopSequences: [String]?
     /// System prompt.
     ///
     /// A system prompt is a way of providing context and instructions to Claude, such
     /// as specifying a particular goal or role. See our
     /// [guide to system prompts](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#give-claude-a-role).
-    public var system: System??
+    public var system: System?
     /// Configuration for Claude's thinking.
     ///
     /// With `{"type": "adaptive"}`, Claude decides when and how much to think. With
@@ -112,18 +112,18 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// depend on the model. See
     /// [thinking](https://platform.claude.com/docs/en/build-with-claude/thinking#configuring-thinking)
     /// for each model's behavior.
-    public var thinking: BetaThinkingConfigParam??
+    public var thinking: BetaThinkingConfigParam?
     /// How the model should use the provided tools.
     ///
     /// The model can use a specific tool, any available tool, decide by itself, or not
     /// use tools at all.
-    public var toolChoice: BetaToolChoiceParam??
+    public var toolChoice: BetaToolChoiceParam?
     /// Optional header to specify the beta version(s) you want to use.
-    public var betas: [AnthropicBetaParam]??
+    public var betas: [AnthropicBetaParam]?
     /// The user profile ID to attribute this request to.
     ///
     /// Use when acting on behalf of a party other than your organization.
-    public var userProfileId: String??
+    public var userProfileID: String?
     /// Optional header to select the Workspace for this request.
     ///
     /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -131,9 +131,9 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String??
+    public var workspaceID: String?
 
-    public init(cacheControl: BetaCacheControlEphemeralParam??? = nil, compaction: BetaCompactionConfigParam??? = nil, container: BetaMessageCreateParamsBase.Container??? = nil, contextManagement: BetaContextManagementConfigParam??? = nil, diagnostics: BetaDiagnosticsParam??? = nil, fallbackCreditToken: BetaMessageCreateParamsBase.FallbackCreditToken??? = nil, fallbacks: BetaFallbacksParam??? = nil, inferenceGeo: String??? = nil, mcpServers: [BetaRequestMCPServerURLDefinitionParam]?? = nil, metadata: BetaMetadataParam?? = nil, outputConfig: BetaOutputConfigParam?? = nil, serviceTier: ServiceTier?? = nil, speed: Speed??? = nil, stopSequences: [String]?? = nil, system: System?? = nil, thinking: BetaThinkingConfigParam?? = nil, toolChoice: BetaToolChoiceParam?? = nil, betas: [AnthropicBetaParam]?? = nil, userProfileId: String?? = nil, workspaceId: String?? = nil) {
+    public init(cacheControl: BetaCacheControlEphemeralParam?? = nil, compaction: BetaCompactionConfigParam?? = nil, container: BetaMessageCreateParamsBase.Container?? = nil, contextManagement: BetaContextManagementConfigParam?? = nil, diagnostics: BetaDiagnosticsParam?? = nil, fallbackCreditToken: BetaMessageCreateParamsBase.FallbackCreditToken?? = nil, fallbacks: BetaFallbacksParam?? = nil, inferenceGeo: String?? = nil, mcpServers: [BetaRequestMCPServerURLDefinitionParam]? = nil, metadata: BetaMetadataParam? = nil, outputConfig: BetaOutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: BetaThinkingConfigParam? = nil, toolChoice: BetaToolChoiceParam? = nil, betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil) {
         self.cacheControl = cacheControl
         self.compaction = compaction
         self.container = container
@@ -152,8 +152,8 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
         self.thinking = thinking
         self.toolChoice = toolChoice
         self.betas = betas
-        self.userProfileId = userProfileId
-        self.workspaceId = workspaceId
+        self.userProfileID = userProfileID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -175,8 +175,8 @@ public struct ThreadCreateParams: Codable, Hashable, Sendable {
         case thinking
         case toolChoice = "tool_choice"
         case betas
-        case userProfileId = "user_profile_id"
-        case workspaceId = "workspace_id"
+        case userProfileID = "user_profile_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum ServiceTier: OpenEnum, CaseIterable {

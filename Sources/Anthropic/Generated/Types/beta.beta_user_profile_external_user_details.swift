@@ -36,16 +36,16 @@ public struct BetaUserProfileExternalUserDetails: Codable, Hashable, Sendable {
     /// The platform's own reference for the entity.
     ///
     /// `null` until the platform supplies one.
-    public var referenceId: String?
+    public var referenceID: String?
 
-    public init(accountStatus: AccountStatus? = nil, country: String? = nil, emailHash: String? = nil, entityType: EntityType? = nil, nameHash: String? = nil, onboardedAt: Date? = nil, referenceId: String? = nil) {
+    public init(accountStatus: AccountStatus? = nil, country: String? = nil, emailHash: String? = nil, entityType: EntityType? = nil, nameHash: String? = nil, onboardedAt: Date? = nil, referenceID: String? = nil) {
         self.accountStatus = accountStatus
         self.country = country
         self.emailHash = emailHash
         self.entityType = entityType
         self.nameHash = nameHash
         self.onboardedAt = onboardedAt
-        self.referenceId = referenceId
+        self.referenceID = referenceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -55,7 +55,7 @@ public struct BetaUserProfileExternalUserDetails: Codable, Hashable, Sendable {
         case entityType = "entity_type"
         case nameHash = "name_hash"
         case onboardedAt = "onboarded_at"
-        case referenceId = "reference_id"
+        case referenceID = "reference_id"
     }
 
     public enum AccountStatus: OpenEnum, CaseIterable {

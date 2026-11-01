@@ -21,18 +21,18 @@ public struct BetaSkillVersion: Codable, Hashable, Sendable {
     /// Unique identifier for the skill.
     ///
     /// The format and length of IDs may change over time.
-    public var skillId: String
+    public var skillID: String
     /// Object type.
     ///
     /// For Skill Versions, this is always `"skill_version"`.
     public var type: String
 
-    public init(id: String, createdAt: Date, description: String, name: String, skillId: String, type: String = "skill_version") {
+    public init(id: String, createdAt: Date, description: String, name: String, skillID: String, type: String = "skill_version") {
         self.id = id
         self.createdAt = createdAt
         self.description = description
         self.name = name
-        self.skillId = skillId
+        self.skillID = skillID
         self.type = type
     }
 
@@ -41,7 +41,7 @@ public struct BetaSkillVersion: Codable, Hashable, Sendable {
         case createdAt = "created_at"
         case description
         case name
-        case skillId = "skill_id"
+        case skillID = "skill_id"
         case type
     }
 }

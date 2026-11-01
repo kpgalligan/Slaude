@@ -20,15 +20,15 @@ public struct BetaManagedAgentsAgentCustomToolUseEvent: Codable, Hashable, Senda
     /// events. Informational only: the server routes the matching
     /// `user.custom_tool_result` by `custom_tool_use_id`, so clients do not send it
     /// back.
-    public var sessionThreadId: String?
+    public var sessionThreadID: String?
 
-    public init(id: String, input: [String: JSONValue], name: String, processedAt: Date, type: String = "agent.custom_tool_use", sessionThreadId: String? = nil) {
+    public init(id: String, input: [String: JSONValue], name: String, processedAt: Date, type: String = "agent.custom_tool_use", sessionThreadID: String? = nil) {
         self.id = id
         self.input = input
         self.name = name
         self.processedAt = processedAt
         self.type = type
-        self.sessionThreadId = sessionThreadId
+        self.sessionThreadID = sessionThreadID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -37,6 +37,6 @@ public struct BetaManagedAgentsAgentCustomToolUseEvent: Codable, Hashable, Senda
         case name
         case processedAt = "processed_at"
         case type
-        case sessionThreadId = "session_thread_id"
+        case sessionThreadID = "session_thread_id"
     }
 }

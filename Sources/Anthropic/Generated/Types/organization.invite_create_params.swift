@@ -17,18 +17,18 @@ public struct InviteCreateParams: Codable, Hashable, Sendable {
     ///
     /// A non-empty array is accepted only for a Claude Enterprise organization with
     /// RBAC groups, and requires the key to carry the `write:rbac_groups` scope.
-    public var rbacGroupIds: [String]?
+    public var rbacGroupIDs: [String]?
 
-    public init(email: String, role: Role, rbacGroupIds: [String]? = nil) {
+    public init(email: String, role: Role, rbacGroupIDs: [String]? = nil) {
         self.email = email
         self.role = role
-        self.rbacGroupIds = rbacGroupIds
+        self.rbacGroupIDs = rbacGroupIDs
     }
 
     enum CodingKeys: String, CodingKey {
         case email
         case role
-        case rbacGroupIds = "rbac_group_ids"
+        case rbacGroupIDs = "rbac_group_ids"
     }
 
     public enum Role: OpenEnum, CaseIterable {

@@ -6,20 +6,20 @@ import Foundation
 /// the Plugin and the target in place of an ID.
 public struct BetaDeletedPluginInstallationSetting: Codable, Hashable, Sendable {
     /// The Plugin's ID.
-    public var pluginId: String
+    public var pluginID: String
     /// Whose setting was removed.
     public var target: BetaDeletedPluginInstallationSetting.Target
     /// Always `plugin_installation_setting_deleted`.
     public var type: String
 
-    public init(pluginId: String, target: BetaDeletedPluginInstallationSetting.Target, type: String = "plugin_installation_setting_deleted") {
-        self.pluginId = pluginId
+    public init(pluginID: String, target: BetaDeletedPluginInstallationSetting.Target, type: String = "plugin_installation_setting_deleted") {
+        self.pluginID = pluginID
         self.target = target
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case target
         case type
     }

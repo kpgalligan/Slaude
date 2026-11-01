@@ -4,15 +4,15 @@ import Foundation
 
 public struct BetaWebFetchToolResultBlockParam: Codable, Hashable, Sendable {
     public var content: BetaWebFetchToolResultBlockParam.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Create a cache control breakpoint at this content block.
     public var cacheControl: BetaCacheControlEphemeralParam??
     public var caller: BetaWebFetchToolResultBlockParam.Caller?
 
-    public init(content: BetaWebFetchToolResultBlockParam.Content, toolUseId: String, type: String = "web_fetch_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil, caller: BetaWebFetchToolResultBlockParam.Caller? = nil) {
+    public init(content: BetaWebFetchToolResultBlockParam.Content, toolUseID: String, type: String = "web_fetch_tool_result", cacheControl: BetaCacheControlEphemeralParam?? = nil, caller: BetaWebFetchToolResultBlockParam.Caller? = nil) {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.cacheControl = cacheControl
         self.caller = caller
@@ -20,7 +20,7 @@ public struct BetaWebFetchToolResultBlockParam: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case cacheControl = "cache_control"
         case caller

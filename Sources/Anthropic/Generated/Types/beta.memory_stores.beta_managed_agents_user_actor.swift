@@ -6,15 +6,15 @@ import Foundation
 public struct BetaManagedAgentsUserActor: Codable, Hashable, Sendable {
     public var type: String
     /// ID of the user (a `user_...` value).
-    public var userId: String
+    public var userID: String
 
-    public init(type: String = "user_actor", userId: String) {
+    public init(type: String = "user_actor", userID: String) {
         self.type = type
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

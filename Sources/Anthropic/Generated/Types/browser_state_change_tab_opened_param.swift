@@ -11,16 +11,16 @@ import Foundation
 /// in the next result's `tabs` inventory.
 public struct BrowserStateChangeTabOpenedParam: Codable, Hashable, Sendable {
     /// The `tab_id` of the opened tab, present in `tabs`.
-    public var tabId: String
+    public var tabID: String
     public var type: String
 
-    public init(tabId: String, type: String = "tab_opened") {
-        self.tabId = tabId
+    public init(tabID: String, type: String = "tab_opened") {
+        self.tabID = tabID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case tabId = "tab_id"
+        case tabID = "tab_id"
         case type
     }
 }

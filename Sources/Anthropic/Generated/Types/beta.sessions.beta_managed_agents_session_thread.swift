@@ -17,9 +17,9 @@ public struct BetaManagedAgentsSessionThread: Codable, Hashable, Sendable {
     /// When the thread was created.
     public var createdAt: Date
     /// Parent thread that spawned this thread. Null for the primary thread.
-    public var parentThreadId: String?
+    public var parentThreadID: String?
     /// The session this thread belongs to.
-    public var sessionId: String
+    public var sessionID: String
     /// Timing statistics for this thread.
     ///
     /// Null until the thread's first status transition.
@@ -35,21 +35,21 @@ public struct BetaManagedAgentsSessionThread: Codable, Hashable, Sendable {
     public var usage: BetaManagedAgentsSessionThreadUsage?
     /// Identifier of the workflow run that created the thread, or `null` for any other
     /// thread.
-    public var workflowRunId: String?
+    public var workflowRunID: String?
 
-    public init(id: String, agent: BetaManagedAgentsSessionThread.Agent, archivedAt: Date? = nil, createdAt: Date, parentThreadId: String? = nil, sessionId: String, stats: BetaManagedAgentsSessionThreadStats? = nil, status: BetaManagedAgentsSessionThreadStatus, type: String = "session_thread", updatedAt: Date, usage: BetaManagedAgentsSessionThreadUsage? = nil, workflowRunId: String? = nil) {
+    public init(id: String, agent: BetaManagedAgentsSessionThread.Agent, archivedAt: Date? = nil, createdAt: Date, parentThreadID: String? = nil, sessionID: String, stats: BetaManagedAgentsSessionThreadStats? = nil, status: BetaManagedAgentsSessionThreadStatus, type: String = "session_thread", updatedAt: Date, usage: BetaManagedAgentsSessionThreadUsage? = nil, workflowRunID: String? = nil) {
         self.id = id
         self.agent = agent
         self.archivedAt = archivedAt
         self.createdAt = createdAt
-        self.parentThreadId = parentThreadId
-        self.sessionId = sessionId
+        self.parentThreadID = parentThreadID
+        self.sessionID = sessionID
         self.stats = stats
         self.status = status
         self.type = type
         self.updatedAt = updatedAt
         self.usage = usage
-        self.workflowRunId = workflowRunId
+        self.workflowRunID = workflowRunID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -57,14 +57,14 @@ public struct BetaManagedAgentsSessionThread: Codable, Hashable, Sendable {
         case agent
         case archivedAt = "archived_at"
         case createdAt = "created_at"
-        case parentThreadId = "parent_thread_id"
-        case sessionId = "session_id"
+        case parentThreadID = "parent_thread_id"
+        case sessionID = "session_id"
         case stats
         case status
         case type
         case updatedAt = "updated_at"
         case usage
-        case workflowRunId = "workflow_run_id"
+        case workflowRunID = "workflow_run_id"
     }
 }
 

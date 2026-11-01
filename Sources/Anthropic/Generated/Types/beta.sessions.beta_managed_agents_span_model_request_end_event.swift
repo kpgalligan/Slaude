@@ -9,17 +9,17 @@ public struct BetaManagedAgentsSpanModelRequestEndEvent: Codable, Hashable, Send
     /// Whether the model request resulted in an error.
     public var isError: Bool?
     /// The id of the corresponding `span.model_request_start` event.
-    public var modelRequestStartId: String
+    public var modelRequestStartID: String
     /// Token usage for this model request.
     public var modelUsage: BetaManagedAgentsSpanModelUsage
     /// Timestamp when the model request completed.
     public var processedAt: Date
     public var type: String
 
-    public init(id: String, isError: Bool? = nil, modelRequestStartId: String, modelUsage: BetaManagedAgentsSpanModelUsage, processedAt: Date, type: String = "span.model_request_end") {
+    public init(id: String, isError: Bool? = nil, modelRequestStartID: String, modelUsage: BetaManagedAgentsSpanModelUsage, processedAt: Date, type: String = "span.model_request_end") {
         self.id = id
         self.isError = isError
-        self.modelRequestStartId = modelRequestStartId
+        self.modelRequestStartID = modelRequestStartID
         self.modelUsage = modelUsage
         self.processedAt = processedAt
         self.type = type
@@ -28,7 +28,7 @@ public struct BetaManagedAgentsSpanModelRequestEndEvent: Codable, Hashable, Send
     enum CodingKeys: String, CodingKey {
         case id
         case isError = "is_error"
-        case modelRequestStartId = "model_request_start_id"
+        case modelRequestStartID = "model_request_start_id"
         case modelUsage = "model_usage"
         case processedAt = "processed_at"
         case type

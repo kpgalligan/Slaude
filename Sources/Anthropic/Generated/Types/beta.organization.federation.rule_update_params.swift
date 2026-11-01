@@ -39,11 +39,11 @@ public struct BetaOrganizationFederationRuleUpdateParams: Codable, Hashable, Sen
     ///
     /// Rejected with 400 if the rule is enabled for more than one workspace; use the
     /// `/federation_rules/{federation_rule_id}/workspaces` sub-resource instead.
-    public var workspaceId: String??
+    public var workspaceID: String??
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
 
-    public init(appliesToAllWorkspaces: Bool?? = nil, attributes: [String: String]?? = nil, description: String?? = nil, match: BetaFederationRuleMatchParam?? = nil, name: String?? = nil, oauthScope: String?? = nil, target: BetaServiceAccountTargetParam?? = nil, tokenLifetimeSeconds: Int?? = nil, workspaceId: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(appliesToAllWorkspaces: Bool?? = nil, attributes: [String: String]?? = nil, description: String?? = nil, match: BetaFederationRuleMatchParam?? = nil, name: String?? = nil, oauthScope: String?? = nil, target: BetaServiceAccountTargetParam?? = nil, tokenLifetimeSeconds: Int?? = nil, workspaceID: String?? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.appliesToAllWorkspaces = appliesToAllWorkspaces
         self.attributes = attributes
         self.description = description
@@ -52,7 +52,7 @@ public struct BetaOrganizationFederationRuleUpdateParams: Codable, Hashable, Sen
         self.oauthScope = oauthScope
         self.target = target
         self.tokenLifetimeSeconds = tokenLifetimeSeconds
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
         self.betas = betas
     }
 
@@ -65,7 +65,7 @@ public struct BetaOrganizationFederationRuleUpdateParams: Codable, Hashable, Sen
         case oauthScope = "oauth_scope"
         case target
         case tokenLifetimeSeconds = "token_lifetime_seconds"
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
         case betas
     }
 }

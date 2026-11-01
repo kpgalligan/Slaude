@@ -4,16 +4,16 @@ import Foundation
 
 public struct BetaAnalyticsServiceAccountActor: Codable, Hashable, Sendable {
     /// Tagged service account ID.
-    public var serviceAccountId: String
+    public var serviceAccountID: String
     public var type: String
 
-    public init(serviceAccountId: String, type: String = "service_account_actor") {
-        self.serviceAccountId = serviceAccountId
+    public init(serviceAccountID: String, type: String = "service_account_actor") {
+        self.serviceAccountID = serviceAccountID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case serviceAccountId = "service_account_id"
+        case serviceAccountID = "service_account_id"
         case type
     }
 }

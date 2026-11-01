@@ -4,21 +4,21 @@ import Foundation
 
 public struct BashCodeExecutionToolResultBlockParam: Codable, Hashable, Sendable {
     public var content: BashCodeExecutionToolResultBlockParam.Content
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// Create a cache control breakpoint at this content block.
     public var cacheControl: CacheControlEphemeralParam??
 
-    public init(content: BashCodeExecutionToolResultBlockParam.Content, toolUseId: String, type: String = "bash_code_execution_tool_result", cacheControl: CacheControlEphemeralParam?? = nil) {
+    public init(content: BashCodeExecutionToolResultBlockParam.Content, toolUseID: String, type: String = "bash_code_execution_tool_result", cacheControl: CacheControlEphemeralParam?? = nil) {
         self.content = content
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.cacheControl = cacheControl
     }
 
     enum CodingKeys: String, CodingKey {
         case content
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case cacheControl = "cache_control"
     }

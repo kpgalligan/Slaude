@@ -5,20 +5,20 @@ import Foundation
 /// A skill that was loaded in a container (response model).
 public struct BetaContainerSkill: Codable, Hashable, Sendable {
     /// Skill ID
-    public var skillId: String
+    public var skillID: String
     /// Type of skill - either 'anthropic' (built-in) or 'custom' (user-defined)
     public var type: TypeValue
     /// The resolved version: a skill version ID for custom skills.
     public var version: String
 
-    public init(skillId: String, type: TypeValue, version: String) {
-        self.skillId = skillId
+    public init(skillID: String, type: TypeValue, version: String) {
+        self.skillID = skillID
         self.type = type
         self.version = version
     }
 
     enum CodingKeys: String, CodingKey {
-        case skillId = "skill_id"
+        case skillID = "skill_id"
         case type
         case version
     }

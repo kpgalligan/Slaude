@@ -4,7 +4,7 @@ import Foundation
 
 public struct BetaOrganizationFederationIssuerCreateParams: Codable, Hashable, Sendable {
     /// The `iss` claim value to match against.
-    public var issuerUrl: String
+    public var issuerURL: String
     /// Slug identifier (lowercase, digits, hyphens).
     ///
     /// Unique within the organization; a duplicate name returns 409.
@@ -22,8 +22,8 @@ public struct BetaOrganizationFederationIssuerCreateParams: Codable, Hashable, S
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
 
-    public init(issuerUrl: String, name: String, checkJti: Bool?? = nil, jwks: BetaOrganizationFederationIssuerCreateParams.JWKS? = nil, maxJwtLifetimeSeconds: Int?? = nil, betas: [AnthropicBetaParam]? = nil) {
-        self.issuerUrl = issuerUrl
+    public init(issuerURL: String, name: String, checkJti: Bool?? = nil, jwks: BetaOrganizationFederationIssuerCreateParams.JWKS? = nil, maxJwtLifetimeSeconds: Int?? = nil, betas: [AnthropicBetaParam]? = nil) {
+        self.issuerURL = issuerURL
         self.name = name
         self.checkJti = checkJti
         self.jwks = jwks
@@ -32,7 +32,7 @@ public struct BetaOrganizationFederationIssuerCreateParams: Codable, Hashable, S
     }
 
     enum CodingKeys: String, CodingKey {
-        case issuerUrl = "issuer_url"
+        case issuerURL = "issuer_url"
         case name
         case checkJti = "check_jti"
         case jwks

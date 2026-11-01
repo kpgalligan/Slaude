@@ -4,7 +4,7 @@ import Foundation
 
 public struct BetaRBACConnectorScopePermissionResource: Codable, Hashable, Sendable {
     /// ID of the connector the permission applies to.
-    public var connectorId: String
+    public var connectorID: String
     /// OAuth scope the permission names — the role may receive this scope when tokens
     /// are minted for the connector.
     ///
@@ -16,14 +16,14 @@ public struct BetaRBACConnectorScopePermissionResource: Codable, Hashable, Senda
     /// Kind of resource the permission applies to.
     public var type: String
 
-    public init(connectorId: String, scope: String, type: String = "connector_scope") {
-        self.connectorId = connectorId
+    public init(connectorID: String, scope: String, type: String = "connector_scope") {
+        self.connectorID = connectorID
         self.scope = scope
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case connectorId = "connector_id"
+        case connectorID = "connector_id"
         case scope
         case type
     }

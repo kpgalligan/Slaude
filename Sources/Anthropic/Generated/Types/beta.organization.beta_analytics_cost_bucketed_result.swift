@@ -21,7 +21,7 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
     /// `monitoring`, and `proactive` usage Claude initiated), so per-user rows can sum
     /// to less than the Claude Tag total. Cannot be combined with
     /// `group_by[]=rbac_group_id` or the `rbac_group_ids[]` filter.
-    public var claudeTagUserId: String?
+    public var claudeTagUserID: String?
     /// Context-window pricing tier of the usage or cost.
     ///
     /// Null unless `context_window` is in `group_by[]`; it can also be null on grouped
@@ -66,7 +66,7 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
     /// and their sum can exceed the org total. A null value is the single unassigned
     /// row: users in no group on that (UTC) day. For the true org total, run the same
     /// query without `group_by[]`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Number of API requests in this row's scope.
     ///
     /// Null when `group_by` includes `cost_type` or `token_type` (the count has no
@@ -78,7 +78,7 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
     ///
     /// Populated only when `slack_channel_id` is in `group_by[]`; null for usage
     /// outside Slack (and for rows recorded before channel attribution was enabled).
-    public var slackChannelId: String?
+    public var slackChannelID: String?
     /// Inference speed mode of the usage or cost: `fast` or `standard`.
     ///
     /// Null unless `speed` is in `group_by[]`.
@@ -86,10 +86,10 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
     /// Token type when `group_by[]=token_type` and `cost_type=tokens`; null otherwise.
     public var tokenType: BetaAnalyticsTokenType?
 
-    public init(amount: String, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserId: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, costType: BetaAnalyticsCostType? = nil, currency: String, inferenceGeo: InferenceGeo? = nil, listAmount: String, model: String? = nil, product: String? = nil, rbacGroupId: String? = nil, requests: Int? = nil, slackChannelId: String? = nil, speed: Speed? = nil, tokenType: BetaAnalyticsTokenType? = nil) {
+    public init(amount: String, claudeTagCategory: BetaAnalyticsClaudeTagCategory? = nil, claudeTagUserID: String? = nil, contextWindow: BetaAnalyticsContextWindow? = nil, costType: BetaAnalyticsCostType? = nil, currency: String, inferenceGeo: InferenceGeo? = nil, listAmount: String, model: String? = nil, product: String? = nil, rbacGroupID: String? = nil, requests: Int? = nil, slackChannelID: String? = nil, speed: Speed? = nil, tokenType: BetaAnalyticsTokenType? = nil) {
         self.amount = amount
         self.claudeTagCategory = claudeTagCategory
-        self.claudeTagUserId = claudeTagUserId
+        self.claudeTagUserID = claudeTagUserID
         self.contextWindow = contextWindow
         self.costType = costType
         self.currency = currency
@@ -97,9 +97,9 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
         self.listAmount = listAmount
         self.model = model
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.requests = requests
-        self.slackChannelId = slackChannelId
+        self.slackChannelID = slackChannelID
         self.speed = speed
         self.tokenType = tokenType
     }
@@ -107,7 +107,7 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case amount
         case claudeTagCategory = "claude_tag_category"
-        case claudeTagUserId = "claude_tag_user_id"
+        case claudeTagUserID = "claude_tag_user_id"
         case contextWindow = "context_window"
         case costType = "cost_type"
         case currency
@@ -115,9 +115,9 @@ public struct BetaAnalyticsCostBucketedResult: Codable, Hashable, Sendable {
         case listAmount = "list_amount"
         case model
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case requests
-        case slackChannelId = "slack_channel_id"
+        case slackChannelID = "slack_channel_id"
         case speed
         case tokenType = "token_type"
     }

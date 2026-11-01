@@ -4,7 +4,7 @@ import Foundation
 
 public struct MemoryDeleteParams: Codable, Hashable, Sendable {
     /// The ID of the memory store that holds the memory (`memstore_...`).
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     /// Delete the memory only if its current `content_sha256` equals this value, given
     /// as 64 lowercase hexadecimal characters. Omit it to delete unconditionally.
     ///
@@ -21,19 +21,19 @@ public struct MemoryDeleteParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(memoryStoreId: String, expectedContentSha256: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.memoryStoreId = memoryStoreId
+    public init(memoryStoreID: String, expectedContentSha256: String? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.memoryStoreID = memoryStoreID
         self.expectedContentSha256 = expectedContentSha256
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case expectedContentSha256 = "expected_content_sha256"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

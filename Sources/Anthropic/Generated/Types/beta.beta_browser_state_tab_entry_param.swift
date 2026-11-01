@@ -12,7 +12,7 @@ import Foundation
 /// exactly one entry is marked.
 public struct BetaBrowserStateTabEntryParam: Codable, Hashable, Sendable {
     /// The caller-assigned identifier for this tab, unique within the inventory.
-    public var tabId: String
+    public var tabID: String
     /// The title of the page the tab is showing. May be empty.
     public var title: String
     /// The URL of the page the tab is showing. May be empty.
@@ -22,15 +22,15 @@ public struct BetaBrowserStateTabEntryParam: Codable, Hashable, Sendable {
     /// Whenever `tabs` is non-empty, exactly one entry is marked `active: true`.
     public var active: Bool?
 
-    public init(tabId: String, title: String, url: String, active: Bool? = nil) {
-        self.tabId = tabId
+    public init(tabID: String, title: String, url: String, active: Bool? = nil) {
+        self.tabID = tabID
         self.title = title
         self.url = url
         self.active = active
     }
 
     enum CodingKeys: String, CodingKey {
-        case tabId = "tab_id"
+        case tabID = "tab_id"
         case title
         case url
         case active

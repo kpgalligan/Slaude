@@ -8,13 +8,13 @@ public struct BetaMetadataParam: Codable, Hashable, Sendable {
     /// This should be a uuid, hash value, or other opaque identifier. Anthropic may use
     /// this id to help detect abuse. Do not include any identifying information such as
     /// name, email address, or phone number.
-    public var userId: String??
+    public var userID: String??
 
-    public init(userId: String?? = nil) {
-        self.userId = userId
+    public init(userID: String?? = nil) {
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

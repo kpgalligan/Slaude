@@ -239,7 +239,7 @@ public struct MessageCreateParamsBase: Codable, Hashable, Sendable {
     /// The user profile ID to attribute this request to.
     ///
     /// Use when acting on behalf of a party other than your organization.
-    public var userProfileId: String?
+    public var userProfileID: String?
     /// Optional header to select the Workspace for this request.
     ///
     /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -247,9 +247,9 @@ public struct MessageCreateParamsBase: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileId: String? = nil, workspaceId: String? = nil) {
+    public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil) {
         self.maxTokens = maxTokens
         self.messages = messages
         self.model = model
@@ -266,8 +266,8 @@ public struct MessageCreateParamsBase: Codable, Hashable, Sendable {
         self.thinking = thinking
         self.toolChoice = toolChoice
         self.tools = tools
-        self.userProfileId = userProfileId
-        self.workspaceId = workspaceId
+        self.userProfileID = userProfileID
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -287,8 +287,8 @@ public struct MessageCreateParamsBase: Codable, Hashable, Sendable {
         case thinking
         case toolChoice = "tool_choice"
         case tools
-        case userProfileId = "user_profile_id"
-        case workspaceId = "workspace_id"
+        case userProfileID = "user_profile_id"
+        case workspaceID = "workspace_id"
     }
 
     public enum ServiceTier: OpenEnum, CaseIterable {
@@ -621,7 +621,7 @@ extension MessageCreateParamsBase {
         /// The user profile ID to attribute this request to.
         ///
         /// Use when acting on behalf of a party other than your organization.
-        public var userProfileId: String?
+        public var userProfileID: String?
         /// Optional header to select the Workspace for this request.
         ///
         /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -629,7 +629,7 @@ extension MessageCreateParamsBase {
         /// Only needed for credentials that can act on more than one Workspace. A
         /// credential that belongs to a specific Workspace may omit it; if sent, it must
         /// match that Workspace.
-        public var workspaceId: String?
+        public var workspaceID: String?
         /// Whether to incrementally stream the response using server-sent events.
         ///
         /// When `true`, SDKs return a raw event stream.
@@ -641,7 +641,7 @@ extension MessageCreateParamsBase {
         /// for an example in each language.
         public var stream: Bool?
 
-        public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileId: String? = nil, workspaceId: String? = nil, stream: Bool? = nil) {
+        public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil, stream: Bool? = nil) {
             self.maxTokens = maxTokens
             self.messages = messages
             self.model = model
@@ -658,8 +658,8 @@ extension MessageCreateParamsBase {
             self.thinking = thinking
             self.toolChoice = toolChoice
             self.tools = tools
-            self.userProfileId = userProfileId
-            self.workspaceId = workspaceId
+            self.userProfileID = userProfileID
+            self.workspaceID = workspaceID
             self.stream = stream
         }
 
@@ -680,8 +680,8 @@ extension MessageCreateParamsBase {
             case thinking
             case toolChoice = "tool_choice"
             case tools
-            case userProfileId = "user_profile_id"
-            case workspaceId = "workspace_id"
+            case userProfileID = "user_profile_id"
+            case workspaceID = "workspace_id"
             case stream
         }
 
@@ -998,7 +998,7 @@ extension MessageCreateParamsBase {
         /// The user profile ID to attribute this request to.
         ///
         /// Use when acting on behalf of a party other than your organization.
-        public var userProfileId: String?
+        public var userProfileID: String?
         /// Optional header to select the Workspace for this request.
         ///
         /// The value is a Workspace ID (for example, `wrkspc_011CZkZaBF1tNoB5wlCeusgy`).
@@ -1006,7 +1006,7 @@ extension MessageCreateParamsBase {
         /// Only needed for credentials that can act on more than one Workspace. A
         /// credential that belongs to a specific Workspace may omit it; if sent, it must
         /// match that Workspace.
-        public var workspaceId: String?
+        public var workspaceID: String?
         /// Whether to incrementally stream the response using server-sent events.
         ///
         /// When `true`, SDKs return a raw event stream.
@@ -1018,7 +1018,7 @@ extension MessageCreateParamsBase {
         /// for an example in each language.
         public var stream: Bool
 
-        public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileId: String? = nil, workspaceId: String? = nil, stream: Bool = true) {
+        public init(maxTokens: Int, messages: [MessageParam], model: ModelParam, cacheControl: CacheControlEphemeralParam?? = nil, container: MessageCreateParamsContainerParam?? = nil, diagnostics: DiagnosticsParam?? = nil, inferenceGeo: String?? = nil, metadata: MetadataParam? = nil, outputConfig: OutputConfigParam? = nil, serviceTier: ServiceTier? = nil, speed: Speed?? = nil, stopSequences: [String]? = nil, system: System? = nil, thinking: ThinkingConfigParam? = nil, toolChoice: ToolChoiceParam? = nil, tools: [ToolUnionParam]? = nil, userProfileID: String? = nil, workspaceID: String? = nil, stream: Bool = true) {
             self.maxTokens = maxTokens
             self.messages = messages
             self.model = model
@@ -1035,8 +1035,8 @@ extension MessageCreateParamsBase {
             self.thinking = thinking
             self.toolChoice = toolChoice
             self.tools = tools
-            self.userProfileId = userProfileId
-            self.workspaceId = workspaceId
+            self.userProfileID = userProfileID
+            self.workspaceID = workspaceID
             self.stream = stream
         }
 
@@ -1057,8 +1057,8 @@ extension MessageCreateParamsBase {
             case thinking
             case toolChoice = "tool_choice"
             case tools
-            case userProfileId = "user_profile_id"
-            case workspaceId = "workspace_id"
+            case userProfileID = "user_profile_id"
+            case workspaceID = "workspace_id"
             case stream
         }
 

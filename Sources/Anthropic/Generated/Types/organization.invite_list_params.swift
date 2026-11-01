@@ -6,11 +6,11 @@ public struct InviteListParams: Codable, Hashable, Sendable {
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately after this object.
-    public var afterId: String?
+    public var afterID: String?
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately before this object.
-    public var beforeId: String?
+    public var beforeID: String?
     /// Filter by the email address the Invite was sent to.
     ///
     /// Matches the same way as the Users list's `email` filter (normalized,
@@ -35,9 +35,9 @@ public struct InviteListParams: Codable, Hashable, Sendable {
     /// `expired` Invites alike.
     public var statuses: [Statuses]?
 
-    public init(afterId: String? = nil, beforeId: String? = nil, email: String? = nil, limit: Int? = nil, roles: [String]? = nil, statuses: [Statuses]? = nil) {
-        self.afterId = afterId
-        self.beforeId = beforeId
+    public init(afterID: String? = nil, beforeID: String? = nil, email: String? = nil, limit: Int? = nil, roles: [String]? = nil, statuses: [Statuses]? = nil) {
+        self.afterID = afterID
+        self.beforeID = beforeID
         self.email = email
         self.limit = limit
         self.roles = roles
@@ -45,8 +45,8 @@ public struct InviteListParams: Codable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case afterId = "after_id"
-        case beforeId = "before_id"
+        case afterID = "after_id"
+        case beforeID = "before_id"
         case email
         case limit
         case roles

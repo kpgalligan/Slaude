@@ -12,23 +12,23 @@ public struct BetaPluginShare: Codable, Hashable, Sendable {
     /// re-granted and carries the time of that change.
     public var grantedAt: Date
     /// The Plugin's ID.
-    public var pluginId: String
+    public var pluginID: String
     /// Who the Plugin is shared with: `organization` (every member), `rbac_group` (one
     /// RBAC Group), or `organization_member` (one member).
     public var target: BetaPluginShare.Target
     /// Always `plugin_share`.
     public var type: String
 
-    public init(grantedAt: Date, pluginId: String, target: BetaPluginShare.Target, type: String = "plugin_share") {
+    public init(grantedAt: Date, pluginID: String, target: BetaPluginShare.Target, type: String = "plugin_share") {
         self.grantedAt = grantedAt
-        self.pluginId = pluginId
+        self.pluginID = pluginID
         self.target = target
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case grantedAt = "granted_at"
-        case pluginId = "plugin_id"
+        case pluginID = "plugin_id"
         case target
         case type
     }

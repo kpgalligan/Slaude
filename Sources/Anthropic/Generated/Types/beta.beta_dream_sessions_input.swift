@@ -12,16 +12,16 @@ public struct BetaDreamSessionsInput: Codable, Hashable, Sendable {
     /// The
     /// [limits table in the Dreams guide](https://platform.claude.com/docs/en/managed-agents/dreams#limits)
     /// lists all the limits on a dream.
-    public var sessionIds: [String]
+    public var sessionIDs: [String]
     public var type: String
 
-    public init(sessionIds: [String], type: String = "sessions") {
-        self.sessionIds = sessionIds
+    public init(sessionIDs: [String], type: String = "sessions") {
+        self.sessionIDs = sessionIDs
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case sessionIds = "session_ids"
+        case sessionIDs = "session_ids"
         case type
     }
 }

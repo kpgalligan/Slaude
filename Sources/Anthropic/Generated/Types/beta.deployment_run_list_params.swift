@@ -15,7 +15,7 @@ public struct DeploymentRunListParams: Codable, Hashable, Sendable {
     ///
     /// Omit to list across all deployments in the workspace. Filtering by a
     /// non-existent `deployment_id` returns 200 with empty data.
-    public var deploymentId: String?
+    public var deploymentID: String?
     /// Filter: true for runs with non-null `error`, false for runs with non-null
     /// `session_id`. Omit for all.
     public var hasError: Bool?
@@ -38,20 +38,20 @@ public struct DeploymentRunListParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, deploymentId: String? = nil, hasError: Bool? = nil, limit: Int? = nil, page: String? = nil, triggerType: BetaManagedAgentsTriggerType? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(createdAtGt: CreatedAtGt? = nil, createdAtGte: CreatedAtGte? = nil, createdAtLt: CreatedAtLt? = nil, createdAtLte: CreatedAtLte? = nil, deploymentID: String? = nil, hasError: Bool? = nil, limit: Int? = nil, page: String? = nil, triggerType: BetaManagedAgentsTriggerType? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.createdAtGt = createdAtGt
         self.createdAtGte = createdAtGte
         self.createdAtLt = createdAtLt
         self.createdAtLte = createdAtLte
-        self.deploymentId = deploymentId
+        self.deploymentID = deploymentID
         self.hasError = hasError
         self.limit = limit
         self.page = page
         self.triggerType = triggerType
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -59,13 +59,13 @@ public struct DeploymentRunListParams: Codable, Hashable, Sendable {
         case createdAtGte = "created_at_gte"
         case createdAtLt = "created_at_lt"
         case createdAtLte = "created_at_lte"
-        case deploymentId = "deployment_id"
+        case deploymentID = "deployment_id"
         case hasError = "has_error"
         case limit
         case page
         case triggerType = "trigger_type"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public indirect enum CreatedAtGt: Codable, Hashable, Sendable, ExpressibleByStringLiteral {

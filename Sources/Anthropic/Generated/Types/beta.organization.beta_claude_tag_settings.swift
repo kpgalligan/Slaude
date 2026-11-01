@@ -11,7 +11,7 @@ public struct BetaClaudeTagSettings: Codable, Hashable, Sendable {
     /// The environment Claude's sessions run in, starting with `env_`, or the
     /// identifier of a self-hosted runner pool, starting with `ccpool_`. The nearest
     /// settings level that sets it decides.
-    public var environmentId: String?
+    public var environmentID: String?
     /// What Claude does in a channel while a Slack guest is in it.
     ///
     /// The nearest settings level that sets it decides.
@@ -27,9 +27,9 @@ public struct BetaClaudeTagSettings: Codable, Hashable, Sendable {
     /// product's default model.
     public var model: String?
 
-    public init(enabled: Bool? = nil, environmentId: String? = nil, guestPolicy: BetaClaudeTagGuestPolicy? = nil, instructions: String? = nil, model: String? = nil) {
+    public init(enabled: Bool? = nil, environmentID: String? = nil, guestPolicy: BetaClaudeTagGuestPolicy? = nil, instructions: String? = nil, model: String? = nil) {
         self.enabled = enabled
-        self.environmentId = environmentId
+        self.environmentID = environmentID
         self.guestPolicy = guestPolicy
         self.instructions = instructions
         self.model = model
@@ -37,7 +37,7 @@ public struct BetaClaudeTagSettings: Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case enabled
-        case environmentId = "environment_id"
+        case environmentID = "environment_id"
         case guestPolicy = "guest_policy"
         case instructions
         case model

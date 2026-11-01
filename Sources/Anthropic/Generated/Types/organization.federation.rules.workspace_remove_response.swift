@@ -4,20 +4,20 @@ import Foundation
 
 public struct OrganizationFederationRulesWorkspaceRemoveResponse: Codable, Hashable, Sendable {
     /// Tagged ID of the federation rule.
-    public var federationRuleId: String
+    public var federationRuleID: String
     public var type: String
     /// Tagged ID of the workspace named in the delete request. Removal is idempotent.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(federationRuleId: String, type: String = "federation_rule_workspace_deleted", workspaceId: String) {
-        self.federationRuleId = federationRuleId
+    public init(federationRuleID: String, type: String = "federation_rule_workspace_deleted", workspaceID: String) {
+        self.federationRuleID = federationRuleID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case federationRuleId = "federation_rule_id"
+        case federationRuleID = "federation_rule_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

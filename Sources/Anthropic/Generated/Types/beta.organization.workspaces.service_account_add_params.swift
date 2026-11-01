@@ -4,20 +4,20 @@ import Foundation
 
 public struct BetaOrganizationWorkspacesServiceAccountAddParams: Codable, Hashable, Sendable {
     /// Tagged service account ID to add.
-    public var serviceAccountId: String
+    public var serviceAccountID: String
     /// Role to assign to the service account in this workspace.
     public var workspaceRole: BetaNoBillingWorkspaceRole
     /// Optional header to specify the beta version(s) you want to use.
     public var betas: [AnthropicBetaParam]?
 
-    public init(serviceAccountId: String, workspaceRole: BetaNoBillingWorkspaceRole, betas: [AnthropicBetaParam]? = nil) {
-        self.serviceAccountId = serviceAccountId
+    public init(serviceAccountID: String, workspaceRole: BetaNoBillingWorkspaceRole, betas: [AnthropicBetaParam]? = nil) {
+        self.serviceAccountID = serviceAccountID
         self.workspaceRole = workspaceRole
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
-        case serviceAccountId = "service_account_id"
+        case serviceAccountID = "service_account_id"
         case workspaceRole = "workspace_role"
         case betas
     }

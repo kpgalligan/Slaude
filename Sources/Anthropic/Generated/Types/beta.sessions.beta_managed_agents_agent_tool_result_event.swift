@@ -9,17 +9,17 @@ public struct BetaManagedAgentsAgentToolResultEvent: Codable, Hashable, Sendable
     /// Timestamp when this event was processed.
     public var processedAt: Date
     /// The id of the `agent.tool_use` event this result corresponds to.
-    public var toolUseId: String
+    public var toolUseID: String
     public var type: String
     /// The result content returned by the tool.
     public var content: [BetaManagedAgentsAgentToolResultEvent.Content]?
     /// Whether the tool execution resulted in an error.
     public var isError: Bool?
 
-    public init(id: String, processedAt: Date, toolUseId: String, type: String = "agent.tool_result", content: [BetaManagedAgentsAgentToolResultEvent.Content]? = nil, isError: Bool? = nil) {
+    public init(id: String, processedAt: Date, toolUseID: String, type: String = "agent.tool_result", content: [BetaManagedAgentsAgentToolResultEvent.Content]? = nil, isError: Bool? = nil) {
         self.id = id
         self.processedAt = processedAt
-        self.toolUseId = toolUseId
+        self.toolUseID = toolUseID
         self.type = type
         self.content = content
         self.isError = isError
@@ -28,7 +28,7 @@ public struct BetaManagedAgentsAgentToolResultEvent: Codable, Hashable, Sendable
     enum CodingKeys: String, CodingKey {
         case id
         case processedAt = "processed_at"
-        case toolUseId = "tool_use_id"
+        case toolUseID = "tool_use_id"
         case type
         case content
         case isError = "is_error"

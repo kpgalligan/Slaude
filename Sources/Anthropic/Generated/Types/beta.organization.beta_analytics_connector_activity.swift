@@ -80,7 +80,7 @@ public struct BetaAnalyticsConnectorActivity: Codable, Hashable, Sendable {
     public var product: String?
     /// Tagged RBAC group identifier (`rbac_group_...`), matching the spend-limits API
     /// spelling. Present only when the request grouped by `rbac_group_id`.
-    public var rbacGroupId: String?
+    public var rbacGroupID: String?
     /// Resolved RBAC group display name, alongside `rbac_group_id` when name resolution
     /// is available. Null if the group has been deleted or its name could not be
     /// resolved; `rbac_group_id` remains the stable key.
@@ -110,14 +110,14 @@ public struct BetaAnalyticsConnectorActivity: Codable, Hashable, Sendable {
     /// Tagged user identifier (e.g.
     ///
     /// `user_...`). Present only when the request grouped by `user_id`.
-    public var userId: String?
+    public var userID: String?
     /// Number of connector tool calls on the requested day whose trusted read-only
     /// annotation marked them not read-only. Call count, not distinct users. One of the
     /// three call-classification buckets; see `read_call_count` for the per-surface
     /// data-start dates, null conditions, and date-range guidance.
     public var writeCallCount: Int?
 
-    public init(chatMetrics: BetaAnalyticsConnectorChatMetrics, claudeCodeMetrics: BetaAnalyticsConnectorClaudeCodeMetrics, connectorName: String, coworkMetrics: BetaAnalyticsConnectorCoworkMetrics, distinctUserCount: Int, officeMetrics: BetaAnalyticsConnectorOfficeMetrics, chatCoworkUnifiedMetrics: BetaAnalyticsConnectorActivity.ChatCoworkUnifiedMetrics? = nil, connectorDisplayName: String? = nil, individualAuthDistinctUserCount: Int? = nil, managedAuthDistinctUserCount: Int? = nil, product: String? = nil, rbacGroupId: String? = nil, rbacGroupName: String? = nil, readCallCount: Int? = nil, unclassifiedCallCount: Int? = nil, userId: String? = nil, writeCallCount: Int? = nil) {
+    public init(chatMetrics: BetaAnalyticsConnectorChatMetrics, claudeCodeMetrics: BetaAnalyticsConnectorClaudeCodeMetrics, connectorName: String, coworkMetrics: BetaAnalyticsConnectorCoworkMetrics, distinctUserCount: Int, officeMetrics: BetaAnalyticsConnectorOfficeMetrics, chatCoworkUnifiedMetrics: BetaAnalyticsConnectorActivity.ChatCoworkUnifiedMetrics? = nil, connectorDisplayName: String? = nil, individualAuthDistinctUserCount: Int? = nil, managedAuthDistinctUserCount: Int? = nil, product: String? = nil, rbacGroupID: String? = nil, rbacGroupName: String? = nil, readCallCount: Int? = nil, unclassifiedCallCount: Int? = nil, userID: String? = nil, writeCallCount: Int? = nil) {
         self.chatMetrics = chatMetrics
         self.claudeCodeMetrics = claudeCodeMetrics
         self.connectorName = connectorName
@@ -129,11 +129,11 @@ public struct BetaAnalyticsConnectorActivity: Codable, Hashable, Sendable {
         self.individualAuthDistinctUserCount = individualAuthDistinctUserCount
         self.managedAuthDistinctUserCount = managedAuthDistinctUserCount
         self.product = product
-        self.rbacGroupId = rbacGroupId
+        self.rbacGroupID = rbacGroupID
         self.rbacGroupName = rbacGroupName
         self.readCallCount = readCallCount
         self.unclassifiedCallCount = unclassifiedCallCount
-        self.userId = userId
+        self.userID = userID
         self.writeCallCount = writeCallCount
     }
 
@@ -149,11 +149,11 @@ public struct BetaAnalyticsConnectorActivity: Codable, Hashable, Sendable {
         case individualAuthDistinctUserCount = "individual_auth_distinct_user_count"
         case managedAuthDistinctUserCount = "managed_auth_distinct_user_count"
         case product
-        case rbacGroupId = "rbac_group_id"
+        case rbacGroupID = "rbac_group_id"
         case rbacGroupName = "rbac_group_name"
         case readCallCount = "read_call_count"
         case unclassifiedCallCount = "unclassified_call_count"
-        case userId = "user_id"
+        case userID = "user_id"
         case writeCallCount = "write_call_count"
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 
 public struct ResourceAddParams: Codable, Hashable, Sendable {
     /// ID of a previously uploaded file.
-    public var fileId: String
+    public var fileID: String
     public var type: String
     /// Mount path in the container. Defaults to `/mnt/session/uploads/<file_id>`.
     public var mountPath: String??
@@ -18,21 +18,21 @@ public struct ResourceAddParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(fileId: String, type: String = "file", mountPath: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.fileId = fileId
+    public init(fileID: String, type: String = "file", mountPath: String?? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.fileID = fileID
         self.type = type
         self.mountPath = mountPath
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case fileId = "file_id"
+        case fileID = "file_id"
         case type
         case mountPath = "mount_path"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

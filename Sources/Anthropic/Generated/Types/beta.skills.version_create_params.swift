@@ -17,17 +17,17 @@ public struct BetaSkillsVersionCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(files: [FileUpload], betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(files: [FileUpload], betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.files = files
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
         case files
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

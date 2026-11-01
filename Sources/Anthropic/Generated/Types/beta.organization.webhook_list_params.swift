@@ -6,12 +6,12 @@ public struct WebhookListParams: Codable, Hashable, Sendable {
     /// ID of the object to use as a cursor for pagination.
     ///
     /// When provided, returns the page of results immediately after this object.
-    public var afterId: String??
+    public var afterID: String??
     /// ID of a webhook endpoint to use as a cursor.
     ///
     /// Returns the first `limit` endpoints that come before it in list order, not the
     /// `limit` endpoints just before it.
-    public var beforeId: String??
+    public var beforeID: String??
     /// Number of items to return per page, up to `100`. The default, `0`, means `20`.
     public var limit: Int?
     /// Sort order by `created_at`. Defaults to `desc`, newest first.
@@ -20,17 +20,17 @@ public struct WebhookListParams: Codable, Hashable, Sendable {
     /// header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(afterId: String?? = nil, beforeId: String?? = nil, limit: Int? = nil, order: Order?? = nil, betas: [AnthropicBetaParam]? = nil) {
-        self.afterId = afterId
-        self.beforeId = beforeId
+    public init(afterID: String?? = nil, beforeID: String?? = nil, limit: Int? = nil, order: Order?? = nil, betas: [AnthropicBetaParam]? = nil) {
+        self.afterID = afterID
+        self.beforeID = beforeID
         self.limit = limit
         self.order = order
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
-        case afterId = "after_id"
-        case beforeId = "before_id"
+        case afterID = "after_id"
+        case beforeID = "before_id"
         case limit
         case order
         case betas

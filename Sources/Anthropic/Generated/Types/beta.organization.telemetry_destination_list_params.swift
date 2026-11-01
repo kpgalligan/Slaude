@@ -17,22 +17,22 @@ public struct TelemetryDestinationListParams: Codable, Hashable, Sendable {
     /// or when its `exclude` list doesn't have it. Destinations in either state can
     /// match. An ID that isn't the ID of one of the organization's workspaces doesn't
     /// match any destination, not even one whose type is `all`.
-    public var workspaceIds: [String]?
+    public var workspaceIDs: [String]?
     /// This endpoint is in beta: requests must send `telemetry-destinations-2026-08-11`
     /// in this header.
     public var betas: [AnthropicBetaParam]?
 
-    public init(limit: Int? = nil, page: String? = nil, workspaceIds: [String]? = nil, betas: [AnthropicBetaParam]? = nil) {
+    public init(limit: Int? = nil, page: String? = nil, workspaceIDs: [String]? = nil, betas: [AnthropicBetaParam]? = nil) {
         self.limit = limit
         self.page = page
-        self.workspaceIds = workspaceIds
+        self.workspaceIDs = workspaceIDs
         self.betas = betas
     }
 
     enum CodingKeys: String, CodingKey {
         case limit
         case page
-        case workspaceIds = "workspace_ids"
+        case workspaceIDs = "workspace_ids"
         case betas
     }
 }

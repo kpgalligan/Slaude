@@ -11,7 +11,7 @@ public struct BetaLimitedNetworkParams: Codable, Hashable, Sendable {
     public var type: String
     /// Permits outbound access to MCP server endpoints configured on the agent, beyond
     /// those listed in the `allowed_hosts` array. Defaults to `false`.
-    public var allowMcpServers: Bool??
+    public var allowMCPServers: Bool??
     /// Permits outbound access to public package registries (PyPI, npm, etc.) beyond
     /// those listed in the `allowed_hosts` array. Defaults to `false` on creation. Must
     /// be `true` when `packages` are specified.
@@ -19,16 +19,16 @@ public struct BetaLimitedNetworkParams: Codable, Hashable, Sendable {
     /// Specifies domains the container can reach.
     public var allowedHosts: [String]??
 
-    public init(type: String = "limited", allowMcpServers: Bool?? = nil, allowPackageManagers: Bool?? = nil, allowedHosts: [String]?? = nil) {
+    public init(type: String = "limited", allowMCPServers: Bool?? = nil, allowPackageManagers: Bool?? = nil, allowedHosts: [String]?? = nil) {
         self.type = type
-        self.allowMcpServers = allowMcpServers
+        self.allowMCPServers = allowMCPServers
         self.allowPackageManagers = allowPackageManagers
         self.allowedHosts = allowedHosts
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case allowMcpServers = "allow_mcp_servers"
+        case allowMCPServers = "allow_mcp_servers"
         case allowPackageManagers = "allow_package_managers"
         case allowedHosts = "allowed_hosts"
     }

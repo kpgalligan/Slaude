@@ -3,7 +3,7 @@
 import Foundation
 
 public struct BetaSessionsThreadsEventStreamParams: Codable, Hashable, Sendable {
-    public var sessionId: String
+    public var sessionID: String
     /// When set, this connection also receives streaming deltas (`event_start`,
     /// `event_delta`) while an event is being produced, before the event itself
     /// arrives. Deltas are best-effort; when the final event is produced it carries the
@@ -25,19 +25,19 @@ public struct BetaSessionsThreadsEventStreamParams: Codable, Hashable, Sendable 
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(sessionId: String, eventDeltas: [BetaManagedAgentsDeltaType]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
-        self.sessionId = sessionId
+    public init(sessionID: String, eventDeltas: [BetaManagedAgentsDeltaType]? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
+        self.sessionID = sessionID
         self.eventDeltas = eventDeltas
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case sessionId = "session_id"
+        case sessionID = "session_id"
         case eventDeltas = "event_deltas"
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

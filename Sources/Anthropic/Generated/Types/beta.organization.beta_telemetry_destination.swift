@@ -16,7 +16,7 @@ public struct BetaTelemetryDestination: Codable, Hashable, Sendable {
     ///
     /// The API appends the per-signal path, such as `/v1/traces`, on delivery, unless
     /// `traces.endpoint_url` is set.
-    public var endpointUrl: String
+    public var endpointURL: String
     /// Names of the registered request headers.
     ///
     /// Header values are write-only and are never returned.
@@ -37,12 +37,12 @@ public struct BetaTelemetryDestination: Codable, Hashable, Sendable {
     /// Which of the organization's workspaces the destination covers.
     public var workspaces: BetaTelemetryDestinationWorkspaces
 
-    public init(id: String, createdAt: Date, deliveryHealth: BetaTelemetryDestinationDeliveryHealth, displayName: String? = nil, endpointUrl: String, headerNames: [String], state: BetaTelemetryDestinationState, traces: BetaTelemetryDestinationTraces, type: String = "telemetry_destination", updatedAt: Date, workspaces: BetaTelemetryDestinationWorkspaces) {
+    public init(id: String, createdAt: Date, deliveryHealth: BetaTelemetryDestinationDeliveryHealth, displayName: String? = nil, endpointURL: String, headerNames: [String], state: BetaTelemetryDestinationState, traces: BetaTelemetryDestinationTraces, type: String = "telemetry_destination", updatedAt: Date, workspaces: BetaTelemetryDestinationWorkspaces) {
         self.id = id
         self.createdAt = createdAt
         self.deliveryHealth = deliveryHealth
         self.displayName = displayName
-        self.endpointUrl = endpointUrl
+        self.endpointURL = endpointURL
         self.headerNames = headerNames
         self.state = state
         self.traces = traces
@@ -56,7 +56,7 @@ public struct BetaTelemetryDestination: Codable, Hashable, Sendable {
         case createdAt = "created_at"
         case deliveryHealth = "delivery_health"
         case displayName = "display_name"
-        case endpointUrl = "endpoint_url"
+        case endpointURL = "endpoint_url"
         case headerNames = "header_names"
         case state
         case traces

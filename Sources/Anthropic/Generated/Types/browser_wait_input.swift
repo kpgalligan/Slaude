@@ -7,15 +7,15 @@ public struct BrowserWaitInput: Codable, Hashable, Sendable {
     /// Seconds to wait (maximum 30).
     public var duration: Double
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(duration: Double, tabId: String? = nil) {
+    public init(duration: Double, tabID: String? = nil) {
         self.duration = duration
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case duration
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

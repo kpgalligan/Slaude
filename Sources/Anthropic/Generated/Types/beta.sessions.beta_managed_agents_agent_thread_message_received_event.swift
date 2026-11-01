@@ -9,7 +9,7 @@ public struct BetaManagedAgentsAgentThreadMessageReceivedEvent: Codable, Hashabl
     /// Message content blocks.
     public var content: [BetaManagedAgentsAgentThreadMessageReceivedEvent.Content]
     /// Public `sthr_` ID of the thread that sent the message.
-    public var fromSessionThreadId: String
+    public var fromSessionThreadID: String
     /// Timestamp when the message was received.
     public var processedAt: Date
     public var type: String
@@ -18,10 +18,10 @@ public struct BetaManagedAgentsAgentThreadMessageReceivedEvent: Codable, Hashabl
     /// Absent when received from the primary agent.
     public var fromAgentName: String?
 
-    public init(id: String, content: [BetaManagedAgentsAgentThreadMessageReceivedEvent.Content], fromSessionThreadId: String, processedAt: Date, type: String = "agent.thread_message_received", fromAgentName: String? = nil) {
+    public init(id: String, content: [BetaManagedAgentsAgentThreadMessageReceivedEvent.Content], fromSessionThreadID: String, processedAt: Date, type: String = "agent.thread_message_received", fromAgentName: String? = nil) {
         self.id = id
         self.content = content
-        self.fromSessionThreadId = fromSessionThreadId
+        self.fromSessionThreadID = fromSessionThreadID
         self.processedAt = processedAt
         self.type = type
         self.fromAgentName = fromAgentName
@@ -30,7 +30,7 @@ public struct BetaManagedAgentsAgentThreadMessageReceivedEvent: Codable, Hashabl
     enum CodingKeys: String, CodingKey {
         case id
         case content
-        case fromSessionThreadId = "from_session_thread_id"
+        case fromSessionThreadID = "from_session_thread_id"
         case processedAt = "processed_at"
         case type
         case fromAgentName = "from_agent_name"

@@ -9,23 +9,23 @@ public struct BetaManagedAgentsRepositoryCheckoutError: Codable, Hashable, Senda
     /// URL of the repository that could not be cloned.
     ///
     /// Null when it could not be identified.
-    public var repositoryUrl: String?
+    public var repositoryURL: String?
     /// What the client should do next.
     ///
     /// Always `retrying`: the session keeps running without the repository.
     public var retryStatus: BetaManagedAgentsRepositoryCheckoutError.RetryStatus
     public var type: String
 
-    public init(message: String, repositoryUrl: String? = nil, retryStatus: BetaManagedAgentsRepositoryCheckoutError.RetryStatus, type: String = "repository_checkout_error") {
+    public init(message: String, repositoryURL: String? = nil, retryStatus: BetaManagedAgentsRepositoryCheckoutError.RetryStatus, type: String = "repository_checkout_error") {
         self.message = message
-        self.repositoryUrl = repositoryUrl
+        self.repositoryURL = repositoryURL
         self.retryStatus = retryStatus
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
         case message
-        case repositoryUrl = "repository_url"
+        case repositoryURL = "repository_url"
         case retryStatus = "retry_status"
         case type
     }

@@ -11,15 +11,15 @@ public struct BetaBrowserLeftMouseDownInput: Codable, Hashable, Sendable {
     /// full-viewport screenshot).
     public var target: BetaBrowserCoordinateTarget
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(target: BetaBrowserCoordinateTarget, tabId: String? = nil) {
+    public init(target: BetaBrowserCoordinateTarget, tabID: String? = nil) {
         self.target = target
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case target
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

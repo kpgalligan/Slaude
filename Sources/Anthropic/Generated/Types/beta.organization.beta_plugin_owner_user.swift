@@ -6,15 +6,15 @@ public struct BetaPluginOwnerUser: Codable, Hashable, Sendable {
     /// The Plugin lives in one member's personal plugin marketplace.
     public var type: String
     /// The member's User ID.
-    public var userId: String
+    public var userID: String
 
-    public init(type: String = "user", userId: String) {
+    public init(type: String = "user", userID: String) {
         self.type = type
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
         case type
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

@@ -33,14 +33,14 @@ public struct MemoryCreateParams: Codable, Hashable, Sendable {
     /// Only needed for credentials that can act on more than one Workspace. A
     /// credential that belongs to a specific Workspace may omit it; if sent, it must
     /// match that Workspace.
-    public var workspaceId: String?
+    public var workspaceID: String?
 
-    public init(content: String? = nil, path: String, view: BetaManagedAgentsMemoryView? = nil, betas: [AnthropicBetaParam]? = nil, workspaceId: String? = nil) {
+    public init(content: String? = nil, path: String, view: BetaManagedAgentsMemoryView? = nil, betas: [AnthropicBetaParam]? = nil, workspaceID: String? = nil) {
         self.content = content
         self.path = path
         self.view = view
         self.betas = betas
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -48,7 +48,7 @@ public struct MemoryCreateParams: Codable, Hashable, Sendable {
         case path
         case view
         case betas
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -57,6 +57,6 @@ public struct MemoryCreateParams: Codable, Hashable, Sendable {
         try c.encode(path, forKey: .path)
         try c.encodeIfPresent(view, forKey: .view)
         try c.encodeIfPresent(betas, forKey: .betas)
-        try c.encodeIfPresent(workspaceId, forKey: .workspaceId)
+        try c.encodeIfPresent(workspaceID, forKey: .workspaceID)
     }
 }

@@ -23,17 +23,17 @@ public struct WorkspaceCreateParams: Codable, Hashable, Sendable {
     /// attached to a Workspace it cannot be detached or replaced. To rotate key
     /// material, rotate the underlying key on your cloud KMS; the `external_key_id`
     /// stays the same.
-    public var externalKeyId: String??
+    public var externalKeyID: String??
     /// User-defined tags as string key-value pairs.
     ///
     /// Keys may not begin with `anthropic`.
     public var tags: [String: String]??
 
-    public init(name: String, dataResidency: DataResidencyCreateConfigParam?? = nil, displayColor: String?? = nil, externalKeyId: String?? = nil, tags: [String: String]?? = nil) {
+    public init(name: String, dataResidency: DataResidencyCreateConfigParam?? = nil, displayColor: String?? = nil, externalKeyID: String?? = nil, tags: [String: String]?? = nil) {
         self.name = name
         self.dataResidency = dataResidency
         self.displayColor = displayColor
-        self.externalKeyId = externalKeyId
+        self.externalKeyID = externalKeyID
         self.tags = tags
     }
 
@@ -41,7 +41,7 @@ public struct WorkspaceCreateParams: Codable, Hashable, Sendable {
         case name
         case dataResidency = "data_residency"
         case displayColor = "display_color"
-        case externalKeyId = "external_key_id"
+        case externalKeyID = "external_key_id"
         case tags
     }
 }

@@ -10,15 +10,15 @@ public struct BrowserNavigateInput: Codable, Hashable, Sendable {
     /// The URL to navigate to, or "back" / "forward" / "reload" for history navigation.
     public var url: String
     /// Tab to act on. Defaults to the active tab when omitted.
-    public var tabId: String?
+    public var tabID: String?
 
-    public init(url: String, tabId: String? = nil) {
+    public init(url: String, tabID: String? = nil) {
         self.url = url
-        self.tabId = tabId
+        self.tabID = tabID
     }
 
     enum CodingKeys: String, CodingKey {
         case url
-        case tabId = "tab_id"
+        case tabID = "tab_id"
     }
 }

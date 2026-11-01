@@ -7,20 +7,20 @@ public struct BetaOrganizationWorkspacesServiceAccountRemoveResponse: Codable, H
     ///
     /// Removal is idempotent; see the endpoint description for the implicit-membership
     /// no-op.
-    public var serviceAccountId: String
+    public var serviceAccountID: String
     public var type: String
     /// Tagged workspace ID (`wrkspc_...`) named in the delete request.
-    public var workspaceId: String
+    public var workspaceID: String
 
-    public init(serviceAccountId: String, type: String = "service_account_workspace_member_deleted", workspaceId: String) {
-        self.serviceAccountId = serviceAccountId
+    public init(serviceAccountID: String, type: String = "service_account_workspace_member_deleted", workspaceID: String) {
+        self.serviceAccountID = serviceAccountID
         self.type = type
-        self.workspaceId = workspaceId
+        self.workspaceID = workspaceID
     }
 
     enum CodingKeys: String, CodingKey {
-        case serviceAccountId = "service_account_id"
+        case serviceAccountID = "service_account_id"
         case type
-        case workspaceId = "workspace_id"
+        case workspaceID = "workspace_id"
     }
 }

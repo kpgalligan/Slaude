@@ -5,19 +5,19 @@ import Foundation
 /// Mount a file uploaded via the Files API into the session.
 public struct BetaManagedAgentsFileResourceParams: Codable, Hashable, Sendable {
     /// ID of a previously uploaded file.
-    public var fileId: String
+    public var fileID: String
     public var type: String
     /// Mount path in the container. Defaults to `/mnt/session/uploads/<file_id>`.
     public var mountPath: String??
 
-    public init(fileId: String, type: String = "file", mountPath: String?? = nil) {
-        self.fileId = fileId
+    public init(fileID: String, type: String = "file", mountPath: String?? = nil) {
+        self.fileID = fileID
         self.type = type
         self.mountPath = mountPath
     }
 
     enum CodingKeys: String, CodingKey {
-        case fileId = "file_id"
+        case fileID = "file_id"
         case type
         case mountPath = "mount_path"
     }

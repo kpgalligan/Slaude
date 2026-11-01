@@ -39,13 +39,13 @@ public struct MessageBatch: Codable, Hashable, Sendable {
     ///
     /// Results in the file are not guaranteed to be in the same order as requests. Use
     /// the `custom_id` field to match results to requests.
-    public var resultsUrl: String?
+    public var resultsURL: String?
     /// Object type.
     ///
     /// For Message Batches, this is always `"message_batch"`.
     public var type: String
 
-    public init(id: String, archivedAt: Date? = nil, cancelInitiatedAt: Date? = nil, createdAt: Date, endedAt: Date? = nil, expiresAt: Date, processingStatus: ProcessingStatus, requestCounts: MessageBatchRequestCounts, resultsUrl: String? = nil, type: String = "message_batch") {
+    public init(id: String, archivedAt: Date? = nil, cancelInitiatedAt: Date? = nil, createdAt: Date, endedAt: Date? = nil, expiresAt: Date, processingStatus: ProcessingStatus, requestCounts: MessageBatchRequestCounts, resultsURL: String? = nil, type: String = "message_batch") {
         self.id = id
         self.archivedAt = archivedAt
         self.cancelInitiatedAt = cancelInitiatedAt
@@ -54,7 +54,7 @@ public struct MessageBatch: Codable, Hashable, Sendable {
         self.expiresAt = expiresAt
         self.processingStatus = processingStatus
         self.requestCounts = requestCounts
-        self.resultsUrl = resultsUrl
+        self.resultsURL = resultsURL
         self.type = type
     }
 
@@ -67,7 +67,7 @@ public struct MessageBatch: Codable, Hashable, Sendable {
         case expiresAt = "expires_at"
         case processingStatus = "processing_status"
         case requestCounts = "request_counts"
-        case resultsUrl = "results_url"
+        case resultsURL = "results_url"
         case type
     }
 

@@ -46,7 +46,7 @@ public struct BetaUserProfile: Codable, Hashable, Sendable {
     /// Not enforced unique. Legacy field, present only under the
     /// `user-profiles-2026-03-24` and `user-profiles-2026-08-18` beta headers; without
     /// one of them, the value is `external_user_details.reference_id`.
-    public var externalId: String?
+    public var externalID: String?
     /// Details about the entity this profile represents, as the platform states them;
     /// not verified by Anthropic. Every field is present, `null` until the platform
     /// supplies a value. Absent under the legacy `user-profiles-2026-03-24` and
@@ -61,7 +61,7 @@ public struct BetaUserProfile: Codable, Hashable, Sendable {
     /// `external_user_details.onboarded_at`.
     public var externalUserOnboardedAt: Date?
 
-    public init(id: String, createdAt: Date, metadata: [String: String], name: String? = nil, trustGrants: [String: BetaUserProfileTrustGrant], type: String = "user_profile", updatedAt: Date, accessType: AccessType? = nil, externalId: String? = nil, externalUserDetails: BetaUserProfileExternalUserDetails? = nil, externalUserOnboardedAt: Date? = nil) {
+    public init(id: String, createdAt: Date, metadata: [String: String], name: String? = nil, trustGrants: [String: BetaUserProfileTrustGrant], type: String = "user_profile", updatedAt: Date, accessType: AccessType? = nil, externalID: String? = nil, externalUserDetails: BetaUserProfileExternalUserDetails? = nil, externalUserOnboardedAt: Date? = nil) {
         self.id = id
         self.createdAt = createdAt
         self.metadata = metadata
@@ -70,7 +70,7 @@ public struct BetaUserProfile: Codable, Hashable, Sendable {
         self.type = type
         self.updatedAt = updatedAt
         self.accessType = accessType
-        self.externalId = externalId
+        self.externalID = externalID
         self.externalUserDetails = externalUserDetails
         self.externalUserOnboardedAt = externalUserOnboardedAt
     }
@@ -84,7 +84,7 @@ public struct BetaUserProfile: Codable, Hashable, Sendable {
         case type
         case updatedAt = "updated_at"
         case accessType = "access_type"
-        case externalId = "external_id"
+        case externalID = "external_id"
         case externalUserDetails = "external_user_details"
         case externalUserOnboardedAt = "external_user_onboarded_at"
     }

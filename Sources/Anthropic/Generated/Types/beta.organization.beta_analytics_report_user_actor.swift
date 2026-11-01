@@ -23,14 +23,14 @@ public struct BetaAnalyticsReportUserActor: Codable, Hashable, Sendable {
     /// Actor type. Always `"user_actor"`.
     public var type: String
     /// Tagged user ID.
-    public var userId: String
+    public var userID: String
 
-    public init(deleted: Bool, emailAddress: String? = nil, name: String? = nil, type: String = "user_actor", userId: String) {
+    public init(deleted: Bool, emailAddress: String? = nil, name: String? = nil, type: String = "user_actor", userID: String) {
         self.deleted = deleted
         self.emailAddress = emailAddress
         self.name = name
         self.type = type
-        self.userId = userId
+        self.userID = userID
     }
 
     enum CodingKeys: String, CodingKey {
@@ -38,6 +38,6 @@ public struct BetaAnalyticsReportUserActor: Codable, Hashable, Sendable {
         case emailAddress = "email_address"
         case name
         case type
-        case userId = "user_id"
+        case userID = "user_id"
     }
 }

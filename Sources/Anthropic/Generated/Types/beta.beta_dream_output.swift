@@ -8,16 +8,16 @@ public struct BetaDreamOutput: Codable, Hashable, Sendable {
     ///
     /// With `output_behavior` set to `create_new`, this is a new memory store. With
     /// `update_existing`, it is the input memory store.
-    public var memoryStoreId: String
+    public var memoryStoreID: String
     public var type: String
 
-    public init(memoryStoreId: String, type: String = "memory_store") {
-        self.memoryStoreId = memoryStoreId
+    public init(memoryStoreID: String, type: String = "memory_store") {
+        self.memoryStoreID = memoryStoreID
         self.type = type
     }
 
     enum CodingKeys: String, CodingKey {
-        case memoryStoreId = "memory_store_id"
+        case memoryStoreID = "memory_store_id"
         case type
     }
 }
