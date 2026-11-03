@@ -74,6 +74,10 @@ reports `swift`.
   Swift helpers read on and withhold their snapshot from the span, so the span has the same attributes.
 * A response made from bytes is closed from the start in httpx; a Swift `HTTPResponse` with a whole body is not closed
   until it is read, so `stream.response.is_closed` is not asserted.
+* A Messages stream that ends before `message_stop` throws `StreamEndedEarlyError` to the application, where
+  upstream's sees no error (`StreamedMessage.end` still fails the span with `api_error`, as the body reader reports the
+  end first; `errorType` gives the error the same type). The ported tests of such streams expect the error, and their
+  span assertions are upstream's. A cancelled stream ends its span as `closed` (no status), not as `read`.
 * Dropped streams and responses end their span in `deinit`, which Swift runs when the last reference goes, so the
   `del ...; gc.collect()` tests are ported as values that go out of scope.
 

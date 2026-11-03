@@ -310,11 +310,14 @@ public final class BetaThreadMessageStream<Output: Sendable>: AsyncSequence, @un
         while try await nextEvent() != nil {}
     }
 
+    /// Waits until the stream has been read to completion and returns the reply. It never returns a partial reply:
+    /// see `MessageStream.getFinalMessage()`.
     public func getFinalMessage() async throws -> ParsedBetaMessage<Output> {
         try await untilDone()
         guard let message = currentMessageSnapshot else {
             throw AnthropicError("The stream ended before a `message_start` event was received")
         }
+        guard stream.messageComplete else { throw StreamEndedEarlyError(response: stream.response) }
         return message
     }
 
@@ -323,13 +326,14 @@ public final class BetaThreadMessageStream<Output: Sendable>: AsyncSequence, @un
         return try await stream.getFinalText()
     }
 
-    public var textStream: AsyncThrowingStream<String, Error> {
-        AsyncThrowingStream(unfolding: { [self] in
+    /// Just the text deltas of the reply. It ends, and throws, as the stream does.
+    public var textStream: MessageTextStream {
+        MessageTextStream { [self] in
             while let event = try await self.nextEvent() {
                 if case .contentBlockDelta(let e) = event, case .textDelta(let d) = e.delta { return d.text }
             }
             return nil
-        })
+        }
     }
 
     /// `_end_turn`: record the stream and free the thread, once.

@@ -192,6 +192,17 @@ final class SSEEventIterator: @unchecked Sendable {
 /// unions adopt): an event that does not decode (a field that drifted from the schema) is handed out as the type's
 /// `unknown` case holding its JSON, and the stream goes on, as the Python and TypeScript SDKs do. An `error` event
 /// ends the stream with the typed error for its `error.type` (`BaseClient.makeStreamError`).
+///
+/// A stream ends normally only when its body ended, and, for a Messages stream (`StreamEndEvent`), only after its
+/// `message_stop` event. Otherwise reading it throws, and every later read throws the same error:
+///
+/// * `CancellationError` when the reading task is cancelled before that, or when a Messages stream was closed
+///   (`close()`) before `message_stop`. The response is closed at once, which cancels its request, and nothing more
+///   of the body is read.
+/// * `StreamEndedEarlyError` when a Messages stream's body ended, or its connection broke, before `message_stop`.
+///
+/// A cancel or `close()` after `message_stop` ends a Messages stream normally. A stream without an end event (a
+/// Session's events) ends normally when it is closed.
 public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable {
     public let response: HTTPResponse
     let client: BaseClient
@@ -203,7 +214,8 @@ public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable
     init(response: HTTPResponse, client: BaseClient, decode: @escaping Decode) {
         self.response = response
         self.client = client
-        self.state = State(response: response, client: client, decode: decode)
+        self.state = State(response: response, client: client, decode: decode,
+                           endEvent: (Element.self as? any StreamEndEvent.Type)?.endEventName)
     }
 
     /// The raw server-sent events, before JSON parsing and event-name filtering.
@@ -211,65 +223,150 @@ public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable
         SSEDecoder.events(from: response.bytes())
     }
 
+    /// Whether the stream had its end event (`message_stop`); false for a stream without one (`StreamEndEvent`).
+    public var receivedEndEvent: Bool { state.receivedEndEvent }
+
     /// The iteration state shared by the stream and its iterators (`__stream__`). Dropping the last
     /// reference to it closes the response.
     final class State: @unchecked Sendable {
+        /// How a stream ended: what every later read returns.
+        enum Ending {
+            case done
+            case failed(any Error)
+        }
+
         // Created on first use: the body is only taken when iteration starts, so it can still be
         // read raw (`stream.response.read()`) before that.
         private var events: AsyncThrowingStream<ServerSentEvent, Error>.AsyncIterator?
         let response: HTTPResponse
         let client: BaseClient
         let decode: Decode
-        private var finished = false
+        /// The event without which the stream is not whole (`message_stop`), if it has one.
+        let endEvent: String?
+        // `close()` may come from another task than the one reading, so these two are behind the lock.
+        private let lock = NSLock()
+        private var ending: Ending?
+        private var sawEndEvent = false
 
-        init(response: HTTPResponse, client: BaseClient, decode: @escaping Decode) {
+        init(response: HTTPResponse, client: BaseClient, decode: @escaping Decode, endEvent: String?) {
             self.response = response
             self.client = client
             self.decode = decode
+            self.endEvent = endEvent
         }
 
         deinit { response.close() }
 
-        func finish() {
-            finished = true
+        var receivedEndEvent: Bool { lock.withLock { sawEndEvent } }
+
+        /// Whether the stream is not whole yet: it has an end event and has not had it.
+        private var isIncomplete: Bool { lock.withLock { endEvent != nil && !sawEndEvent } }
+        /// Whether the stream is whole: it had its end event. One without an end event never knows.
+        private var isWhole: Bool { lock.withLock { endEvent != nil && sawEndEvent } }
+
+        /// Ends the stream with `how`, unless it has ended already, and closes the response (which cancels its
+        /// request). Returns the ending that holds.
+        @discardableResult
+        func end(_ how: Ending) -> Ending {
+            let ending: Ending = lock.withLock {
+                if let ending = self.ending { return ending }
+                self.ending = how
+                return how
+            }
             response.close()
+            return ending
+        }
+
+        /// The consumer closed the stream: one that is not whole yet is cancelled. A stream without an end event
+        /// (a Session's events) is closed to stop it, which ends it.
+        func close() {
+            end(isIncomplete ? .failed(CancellationError()) : .done)
+        }
+
+        private func result(_ ending: Ending) throws -> Element? {
+            switch ending {
+            case .done: return nil
+            case .failed(let error): throw error
+            }
+        }
+
+        /// Ends the stream because its task was cancelled: only a stream that is whole ends normally.
+        private func cancelled() throws -> Element? {
+            if isWhole {
+                response.streamObserver?.end(.read, error: nil)
+                return try result(end(.done))
+            }
+            response.streamObserver?.end(.closed, error: nil)
+            return try result(end(.failed(CancellationError())))
+        }
+
+        /// Ends the stream with `error`. Every later read throws it again while the stream is not whole, so that
+        /// nothing reads a partial Message as the whole one; otherwise later reads end, as Python's do.
+        private func failed(_ error: any Error) throws -> Element? {
+            response.streamObserver?.end(.failed, error: error)
+            if case .failed(let held) = end(isIncomplete ? .failed(error) : .done) { throw held }
+            throw error
+        }
+
+        /// Ends the stream with an error of reading its body: a cancel, or a broken connection.
+        private func failedReading(_ error: any Error) throws -> Element? {
+            if Task.isCancelled || isCancellation(error) { return try cancelled() }
+            guard let endEvent, isIncomplete, !(error is AnthropicError) else { return try failed(error) }
+            return try failed(StreamEndedEarlyError(response: response, endEvent: endEvent, underlying: error))
         }
 
         func next() async throws -> Element? {
-            if finished { return nil }
+            if let ending = lock.withLock({ self.ending }) { return try result(ending) }
+            // A cancelled task reads nothing more. (An `AsyncThrowingStream` ends without an error when its task is
+            // cancelled, so the body's end alone would look like a normal one.)
+            if Task.isCancelled { return try cancelled() }
             if events == nil {
                 // A stream of a traced call tells the call's span how the application reads it.
                 response.streamObserver?.begin()
                 events = client.makeSSEEvents(response.bytes()).makeAsyncIterator()
             }
-            do {
-                while let sse = try await events!.next() {
-                    if sse.event == "ping" { continue }
-                    guard let name = sse.event else { continue }
-                    if name == "error" {
-                        var body: JSONValue = .string(sse.data)
-                        let message: String
-                        if let parsed = try? sse.json() {
-                            body = parsed
-                            message = pythonRepr(parsed)
-                        } else {
-                            message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
-                        }
-                        throw client.makeStreamError(message, body: body, response: response)
-                    }
-                    if sse.data.isEmpty { continue }
-                    let item = try decode(sse, response, client)
-                    response.streamObserver?.item((item as? any ObservedStreamItem)?.observedItem ?? item)
-                    return item
+            while true {
+                let next: ServerSentEvent?
+                do {
+                    next = try await events!.next()
+                } catch {
+                    if let ending = lock.withLock({ self.ending }) { return try result(ending) }
+                    return try failedReading(error)
                 }
-                response.streamObserver?.end(.read, error: nil)
-                finish()
-                return nil
-            } catch {
-                if !finished { response.streamObserver?.end(.failed, error: error) }
-                finish()
-                throw error
+                // Closed by another task while this one waited.
+                if let ending = lock.withLock({ self.ending }) { return try result(ending) }
+                guard let sse = next else { break }
+                if sse.event == "ping" { continue }
+                guard let name = sse.event else { continue }
+                if name == "error" {
+                    var body: JSONValue = .string(sse.data)
+                    let message: String
+                    if let parsed = try? sse.json() {
+                        body = parsed
+                        message = pythonRepr(parsed)
+                    } else {
+                        message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
+                    }
+                    return try failed(client.makeStreamError(message, body: body, response: response))
+                }
+                if name == endEvent { lock.withLock { sawEndEvent = true } }
+                if sse.data.isEmpty { continue }
+                let item: Element
+                do {
+                    item = try decode(sse, response, client)
+                } catch {
+                    return try failed(error)
+                }
+                response.streamObserver?.item((item as? any ObservedStreamItem)?.observedItem ?? item)
+                return item
             }
+            // The body ended: because the task was cancelled, or before the end event, or whole.
+            if Task.isCancelled { return try cancelled() }
+            if let endEvent, isIncomplete {
+                return try failed(StreamEndedEarlyError(response: response, endEvent: endEvent))
+            }
+            response.streamObserver?.end(.read, error: nil)
+            return try result(end(.done))
         }
     }
 
@@ -281,11 +378,45 @@ public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable
     public func makeAsyncIterator() -> AsyncIterator { AsyncIterator(state: state) }
 
     /// Closes the response and releases the connection. Called automatically when the stream is
-    /// read to completion.
+    /// read to completion. A read of a stream closed before its end throws `CancellationError`.
     public func close() {
         response.streamObserver?.end(.closed, error: nil)
-        state.finish()
+        state.close()
     }
+
+    /// Ends the stream with `error`, which every later read throws, and closes the response: for a reader of the
+    /// events that cannot go on (a tool input that does not parse).
+    func fail(_ error: any Error) {
+        response.streamObserver?.end(.failed, error: error)
+        state.end(.failed(error))
+    }
+}
+
+/// Whether `error` is a cancel: Swift's, or a transport's (`URLError.cancelled`).
+func isCancellation(_ error: any Error) -> Bool {
+    if error is CancellationError { return true }
+    if let e = error as? URLError, e.code == .cancelled { return true }
+    return false
+}
+
+/// An event union whose stream is whole only once its end event arrived: the Messages events, which end with
+/// `message_stop`. A `Stream` of one that ends before that event throws `StreamEndedEarlyError`, or
+/// `CancellationError` when it was cancelled.
+public protocol StreamEndEvent {
+    /// The SSE event name that ends the stream.
+    static var endEventName: String { get }
+}
+
+extension RawMessageStreamEvent: StreamEndEvent {
+    public static var endEventName: String { "message_stop" }
+}
+
+extension BetaRawMessageStreamEvent: StreamEndEvent {
+    public static var endEventName: String { "message_stop" }
+}
+
+extension JSONStreamEvent: StreamEndEvent where Event: StreamEndEvent {
+    public static var endEventName: String { Event.endEventName }
 }
 
 extension Stream: TracedEventStream {}

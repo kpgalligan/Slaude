@@ -42,11 +42,14 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
         snapshot.map { ParsedBetaMessage(message: $0, parsedOutputs: parsedOutputs) }
     }
 
+    /// Waits until the stream has been read to completion and returns the accumulated message. It never returns a
+    /// partial message: see `MessageStream.getFinalMessage()`.
     public func getFinalMessage() async throws -> ParsedBetaMessage<Output> {
         try await untilDone()
         guard let message = currentMessageSnapshot else {
             throw AnthropicError("The stream ended before a `message_start` event was received")
         }
+        guard messageComplete else { throw StreamEndedEarlyError(response: response) }
         return message
     }
 
@@ -66,13 +69,14 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
         while try await nextEvent() != nil {}
     }
 
-    public var textStream: AsyncThrowingStream<String, Error> {
-        AsyncThrowingStream(unfolding: { [self] in
+    /// Just the text deltas of the stream. It ends, and throws, as the stream does.
+    public var textStream: MessageTextStream {
+        MessageTextStream { [self] in
             while let event = try await self.nextEvent() {
                 if case .contentBlockDelta(let e) = event, case .textDelta(let d) = e.delta { return d.text }
             }
             return nil
-        })
+        }
     }
 
     public struct AsyncIterator: AsyncIteratorProtocol {

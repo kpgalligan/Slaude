@@ -35,7 +35,7 @@ func assertBasicResponse(_ events: [ParsedMessageStreamEvent], _ message: Messag
     #expect(try JSONValue.from(message.content[0]) == ["type": "text", "text": "Hello there!"])
     #expect(events.map(\.type) == [
         "message_start", "content_block_start", "content_block_delta", "text", "content_block_delta", "text",
-        "content_block_delta", "text", "content_block_stop", "message_delta",
+        "content_block_delta", "text", "content_block_stop", "message_delta", "message_stop",
     ])
 }
 
@@ -74,14 +74,14 @@ func assertToolUseResponse(_ events: [ParsedMessageStreamEvent], _ message: Mess
     #expect(events.map(\.type) == [
         "message_start", "content_block_start", "content_block_delta", "text", "content_block_delta", "text", "content_block_stop",
         "content_block_start", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_delta",
-        "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_stop", "message_delta",
+        "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_stop", "message_delta", "message_stop",
     ])
 }
 
 let expectedServerToolUseEventTypes: [String] =
     ["message_start", "content_block_start"] + Array(repeating: ["content_block_delta", "input_json"], count: 6).flatMap { $0 } + [
         "content_block_stop", "content_block_start", "content_block_stop", "content_block_start", "content_block_delta", "citation",
-        "content_block_delta", "text", "content_block_delta", "text", "content_block_stop", "message_delta",
+        "content_block_delta", "text", "content_block_delta", "text", "content_block_stop", "message_delta", "message_stop",
     ]
 
 let expectedServerToolPartials = ["", #"{"query": ""#, "anthropic cl", "aude re", "lease notes", #""}"#]
@@ -245,8 +245,7 @@ func assertRefusalResponse(stopReason: String?, category: String?, explanation: 
     }
 
     @Test func messageStopEventSerialization() async throws {
-        // trailing blank line terminates the final `message_stop` SSE so it is dispatched
-        let server = LibMockServer([.sse(getResponse("basic_response.txt") + "\n")])
+        let server = LibMockServer([.sse(getResponse("basic_response.txt"))])
         let events = try await collect(try await open(server, model: "claude-opus-4-7"))
         guard case .messageStop(let stop)? = events.last else {
             Issue.record("expected message_stop last, got \(events.last.map(\.type) ?? "nothing")")

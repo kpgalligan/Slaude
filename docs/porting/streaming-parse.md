@@ -47,6 +47,14 @@ and their `beta` twins).
 * `stream(...)` is `async throws` and returns once the response headers arrived (Python's
   `async with` entering the manager). A stream is one sequence: iterating it, `textStream`,
   `untilDone()` and `getFinalMessage()` all continue where the previous consumer stopped.
+* **Cancellation and early ends.** A Messages stream ends normally only after `message_stop` (`StreamEndEvent` in
+  `Core/Streaming.swift`). Before it, a cancelled task or `close()` makes every read throw `CancellationError`, and a
+  body that ends or breaks makes every read throw `StreamEndedEarlyError`; `getFinalMessage()` /
+  `getFinalText()` of `MessageStream`, `BetaMessageStream`, `BetaThreadMessageStream` and `JSONMessageStream` throw
+  rather than return a partial message (upstream returns the snapshot). `messageComplete` (typed) and `isComplete`
+  (JSON) say whether `message_stop` arrived. `textStream` is a `MessageTextStream` rather than an
+  `AsyncThrowingStream(unfolding:)`, which would end without an error in a cancelled task. A tool input that does not
+  parse ends a `JSONMessageStream` with that error (`Stream.fail`), which later reads rethrow.
 * **Refusal fallbacks.** `BetaRefusalFallbackMiddleware` conforms to the core `Middleware` protocol.
   Python's context variable becomes a task-local: `BetaFallbackState().run { ... }` replaces
   `with state:`. Python logs to `anthropic.lib.middleware`; Swift takes a `MiddlewareLogger`

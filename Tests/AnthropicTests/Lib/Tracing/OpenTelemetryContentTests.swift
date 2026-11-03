@@ -459,7 +459,8 @@ func tracingContentClient(_ spans: TracingSpans, _ router: TracingRouter, maxCon
         let router = TracingRouter()
         router.route("POST", "/v1/messages", .sse(events))
 
-        try await tracingHelperUntilDone(try tracingContentClient(spans, router), beta: beta)
+        // The application sees the stream end early too (upstream's sees no error).
+        await #expect(throws: StreamEndedEarlyError.self) { try await tracingHelperUntilDone(try tracingContentClient(spans, router), beta: beta) }
 
         let span = try spans.one("anthropic.messages.create")
         #expect(span.statusCode == .error)
@@ -475,7 +476,7 @@ func tracingContentClient(_ spans: TracingSpans, _ router: TracingRouter, maxCon
         let router = TracingRouter()
         router.route("POST", "/v1/messages", .sse(Array(tracingStreamEvents()[..<3])))
 
-        try await tracingHelperUntilDone(try tracingClient(spans, router), beta: false)
+        await #expect(throws: StreamEndedEarlyError.self) { try await tracingHelperUntilDone(try tracingClient(spans, router), beta: false) }
 
         let span = try spans.one("anthropic.messages.create")
         #expect(span.statusCode == .error)
@@ -502,7 +503,11 @@ func tracingContentClient(_ spans: TracingSpans, _ router: TracingRouter, maxCon
         router.route("POST", "/v1/messages", .lostConnection(tracingSSE(tracingCutToolStreamEvents()),
                                                             headers: tracingResponseHeaders.merging(["content-type": "text/event-stream"]) { $1 }))
 
-        await #expect(throws: URLError.self) { try await tracingHelperUntilDone(try tracingContentClient(spans, router), beta: false) }
+        // The connection broke before `message_stop`: the error under the stream's is the transport's.
+        let error = await #expect(throws: StreamEndedEarlyError.self) {
+            try await tracingHelperUntilDone(try tracingContentClient(spans, router), beta: false)
+        }
+        #expect(error?.underlying is URLError)
 
         let span = try spans.one("anthropic.messages.create")
         #expect(span.statusCode == .error)
@@ -545,7 +550,7 @@ func tracingContentClient(_ spans: TracingSpans, _ router: TracingRouter, maxCon
         router.route("POST", "/v1/messages", .sse([]), .sse(tracingStreamEvents()))
         let client = try tracingContentClient(spans, router)
 
-        try await tracingHelperUntilDone(client, beta: beta)
+        await #expect(throws: StreamEndedEarlyError.self) { try await tracingHelperUntilDone(client, beta: beta) }
         if beta {
             try await client.beta.messages.stream(maxTokens: 1024, messages: tracingBetaMessages(tracingHello), model: "claude-test").close()
         } else {

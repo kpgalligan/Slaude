@@ -11,7 +11,7 @@ let expectedBetaBasicMessage: JSONValue = [
 
 let expectedBetaBasicEventTypes = [
     "message_start", "content_block_start", "content_block_delta", "text", "content_block_delta", "text", "content_block_delta", "text",
-    "content_block_stop", "message_delta",
+    "content_block_stop", "message_delta", "message_stop",
 ]
 
 let expectedBetaToolUseMessage: JSONValue = [
@@ -28,7 +28,7 @@ let expectedBetaToolUseMessage: JSONValue = [
 let expectedBetaToolUseEventTypes = [
     "message_start", "content_block_start", "content_block_delta", "text", "content_block_delta", "text", "content_block_stop",
     "content_block_start", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json",
-    "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_stop", "message_delta",
+    "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_stop", "message_delta", "message_stop",
 ]
 
 let expectedIncompleteMessage: JSONValue = [
@@ -47,7 +47,7 @@ let expectedIncompleteMessage: JSONValue = [
 let expectedIncompleteEventTypes = [
     "message_start", "content_block_start", "content_block_delta", "text", "content_block_delta", "text", "content_block_delta", "text",
     "content_block_delta", "text", "content_block_delta", "text", "content_block_stop", "content_block_start", "content_block_delta",
-    "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "message_delta",
+    "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "content_block_delta", "input_json", "message_delta", "message_stop",
 ]
 
 let expectedCompactionMessage: JSONValue = [
@@ -61,12 +61,12 @@ let expectedCompactionMessage: JSONValue = [
 
 let expectedCompactionEventTypes = [
     "message_start", "content_block_start", "content_block_delta", "compaction", "content_block_stop", "content_block_start",
-    "content_block_delta", "text", "content_block_stop", "message_delta",
+    "content_block_delta", "text", "content_block_stop", "message_delta", "message_stop",
 ]
 
 let expectedFallbackEventTypes = [
     "message_start", "content_block_start", "content_block_stop", "content_block_start", "content_block_delta", "text", "content_block_stop",
-    "message_delta",
+    "message_delta", "message_stop",
 ]
 
 let inputTransformationsCases: [(String, JSONValue)] = [
@@ -186,7 +186,7 @@ let weatherTool: JSONValue = ["name": "get_weather", "description": "Weather loo
     }
 
     @Test func messageStopEventSerialization() async throws {
-        let server = LibMockServer([.sse(getResponse("basic_response.txt") + "\n")])
+        let server = LibMockServer([.sse(getResponse("basic_response.txt"))])
         let events = try await collect(try await open(server, model: "claude-opus-4-7"))
         guard case .messageStop(let stop)? = events.last, case .text = stop.message.content[0] else {
             Issue.record("expected message_stop with a text block")

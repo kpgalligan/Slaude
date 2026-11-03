@@ -179,11 +179,15 @@ let jsonStreamMessage = #"{"model":"claude-opus-5-5","id":"msg_1","type":"messag
         #expect(server.requests[0].headers["anthropic-beta"] == nil)
     }
 
-    @Test func aStreamCutShortIsIncompleteWithThePartialMessage() async throws {
+    @Test func aStreamCutShortThrowsAndKeepsThePartialMessage() async throws {
         let script = Array(jsonStreamScript.prefix(13))  // stops inside the tool input
         let server = LibMockServer([sseReply(script)])
         let stream = try await server.client().beta.messages.createStreaming(body: ["model": "m", "max_tokens": 1, "messages": []])
-        let message = try await stream.getFinalMessage()
+        let error = await #expect(throws: StreamEndedEarlyError.self) { _ = try await stream.getFinalMessage() }
+        #expect(error?.underlying == nil)
+        // Every later read throws it again, so nothing takes the partial Message for the whole one.
+        await #expect(throws: StreamEndedEarlyError.self) { _ = try await stream.getFinalMessage() }
+        let message = try #require(stream.message)
         #expect(!stream.isComplete)
         #expect(stream.accumulator.partialInputJSON(at: 2) == #"{"zip": "9"#)
         // A tool input still arriving is parsed as far as it goes.

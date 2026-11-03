@@ -377,12 +377,13 @@ open class BaseClient: @unchecked Sendable {
             return (response, options)
         } catch let e as AnthropicError {
             throw e
+        } catch let error where Task.isCancelled || isCancellation(error) {
+            // A cancel is not a connection error, whatever the transport made of it, and is never retried.
+            throw CancellationError()
         } catch is TransportTimeoutError {
             throw APITimeoutError(request: request)
         } catch let e as URLError where e.code == .timedOut {
             throw APITimeoutError(request: request)
-        } catch is CancellationError {
-            throw CancellationError()
         } catch {
             throw APIConnectionError(request: request, underlying: error)
         }
@@ -464,6 +465,8 @@ open class BaseClient: @unchecked Sendable {
                     response = r
                 }
             } catch {
+                // A cancelled task makes no more attempts, whatever its attempt (or a middleware) threw.
+                if Task.isCancelled && !(error is CancellationError) { throw CancellationError() }
                 let (retry, failed) = shouldRetryError(error)
                 if remaining <= 0 || !retry { throw error }
                 failed?.close()
@@ -500,10 +503,14 @@ open class BaseClient: @unchecked Sendable {
         return makeStatusError(message, body: body, response: response)
     }
 
+    /// Waits before the next attempt. A cancelled task throws `CancellationError` before and after the wait, so it
+    /// makes no more attempts even with a `sleeper` that does not honour cancellation.
     func sleepForRetry(retriesTaken: Int, maxRetries: Int, options: FinalRequestOptions, response: HTTPResponse?) async throws {
+        try Task.checkCancellation()
         let remaining = maxRetries - retriesTaken
         let t = calculateRetryTimeout(remainingRetries: remaining, options: options, responseHeaders: response?.headers)
         try await sleeper(t)
+        try Task.checkCancellation()
     }
 
     /// Seconds to wait before retrying, honouring `retry-after-ms` / `retry-after`

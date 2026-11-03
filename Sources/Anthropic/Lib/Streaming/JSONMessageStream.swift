@@ -68,8 +68,10 @@ func jsonStreamingOptions(_ client: BaseClient, _ body: RawJSON, headers: Header
 /// Message (`message`) is built from the JSON alone (`JSONMessageAccumulator`), so it keeps every field.
 ///
 /// An `error` event ends the stream with the typed error for its `error.type` (an `OverloadedError` for
-/// `overloaded_error`). A stream that ends before `message_stop` (closed, cancelled, cut off) leaves `isComplete`
-/// false and `message` partial: check `isComplete` before keeping the message.
+/// `overloaded_error`). A stream never ends normally before `message_stop`: reading one that is cancelled (its task,
+/// or `close()`) throws `CancellationError`, and one whose body ended or whose connection broke first throws
+/// `StreamEndedEarlyError`. Every later read throws the same error, and `getFinalMessage()` throws it rather than
+/// return the partial Message. `message` stays readable as accumulated so far, with `isComplete` false.
 ///
 /// Like `Stream`, it has a single position; don't iterate it from several tasks at once.
 public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, @unchecked Sendable {
@@ -103,7 +105,8 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
     /// Whether `message_stop` was received, so that `message` is the whole Message.
     public var isComplete: Bool { accumulator.isComplete }
 
-    /// Closes the response. The Message stays as accumulated so far.
+    /// Closes the response, which cancels the request. The Message stays as accumulated so far; before
+    /// `message_stop`, a read after this throws `CancellationError`.
     public func close() { events.close() }
 
     /// Reads the remaining events.
@@ -111,13 +114,14 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
         while try await nextEvent() != nil {}
     }
 
-    /// Reads the remaining events and returns the Message. It is partial when the stream ended before
-    /// `message_stop` (`isComplete` is false).
+    /// Reads the remaining events and returns the whole Message. It never returns a partial one: a stream that was
+    /// cancelled throws `CancellationError`, and one that ended before `message_stop` throws `StreamEndedEarlyError`.
     public func getFinalMessage() async throws -> RawJSON {
         try await untilDone()
         guard let message = accumulator.message else {
             throw AnthropicError("The stream ended before a `message_start` event was received")
         }
+        guard isComplete else { throw StreamEndedEarlyError(response: response) }
         return message
     }
 
@@ -139,7 +143,8 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
             try accumulator.apply(event.json)
         } catch {
             withholdMessageSnapshot(events)
-            events.close()
+            // The Message cannot be built past this event, so the stream ends here and every later read throws this.
+            events.fail(error)
             throw error
         }
         if tracedMessage != nil, ["content_block_stop", "message_delta", "message_stop"].contains(event.type ?? "") {

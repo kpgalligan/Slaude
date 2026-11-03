@@ -347,6 +347,8 @@ func errorType(_ error: Error) -> String {
     if let e = error as? URLError {
         return e.code == .timedOut ? "client_timeout_error" : "connection_error"
     }
+    // As the span of a stream the server cut short is failed when the body reader reports the end first.
+    if let e = error as? StreamEndedEarlyError { return e.underlying.map(errorType) ?? "api_error" }
     if error is APIConnectionError { return "connection_error" }
     if let e = error as? APIStatusError {
         if let type = e.type?.rawValue, !type.isEmpty { return type }

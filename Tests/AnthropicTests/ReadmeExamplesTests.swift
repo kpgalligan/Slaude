@@ -93,6 +93,51 @@ import Testing
             == #"{"role":"assistant","content":[{"type":"text","text":"Sunny","citations":null,"new_field":{"b":1,"a":2}}]}"#)
     }
 
+    /// README "Cancellation and streams that end early".
+    @Test func cancellationAndStreamsThatEndEarly() async throws {
+        let sse = [
+            #"event: message_start"#, #"data: {"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5","content":[],"stop_reason":null,"usage":{"input_tokens":1,"output_tokens":0}}}"#, "",
+            #"event: content_block_start"#, #"data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}"#, "",
+            #"event: content_block_delta"#, #"data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Sun"}}"#, "", "",
+        ].joined(separator: "\n")
+        // The reply starts, and the rest never comes.
+        let client = try client { request in
+            HTTPResponse(statusCode: 200, headers: ["content-type": "text/event-stream"], stream: ByteStream { $0.yield(Data(sse.utf8)) },
+                         request: request)
+        }
+        final class Shown: @unchecked Sendable {
+            let lock = NSLock()
+            var events = 0
+        }
+        let shown = Shown()
+        @Sendable func show(_ event: JSONStreamEvent<BetaRawMessageStreamEvent>) { shown.lock.withLock { shown.events += 1 } }
+        var reports: [String] = []
+        func report(_ text: String, _ requestID: String?) { reports.append(text) }
+        var history: [RawJSON] = [["role": "user", "content": "Weather?"]]
+        let body: RawJSON = ["model": "claude-opus-5-5", "max_tokens": 1024, "messages": .array(history)]
+
+        let turn = Task {
+            let stream = try await client.beta.messages.createStreaming(body: body)
+            for try await event in stream { show(event) }
+            return stream.messageParam!  // only reached after message_stop
+        }
+        while shown.lock.withLock({ shown.events }) < 3 { try await Task.sleep(nanoseconds: 1_000_000) }
+        // When the user stops the turn:
+        turn.cancel()
+
+        var stopped = false
+        do {
+            history.append(try await turn.value)
+        } catch is CancellationError {
+            stopped = true  // stopped: the history stays as it was
+        } catch let error as StreamEndedEarlyError {
+            report("The reply was cut short.", error.requestID)  // the server or the network ended it
+        }
+        #expect(stopped)
+        #expect(reports.isEmpty)
+        #expect(history.count == 1)
+    }
+
     @Test func pagination() async throws {
         let client = try client { request in
             let after = request.query("after_id")

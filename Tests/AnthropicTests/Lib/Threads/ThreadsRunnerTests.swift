@@ -278,7 +278,7 @@ private func thAppending(_ added: JSONValue...) -> (BetaToolRunnerParams) throws
             var text = stream.textStream.makeAsyncIterator()
             _ = try await text.next()
         } else {
-            try await stream.untilDone()
+            await #expect(throws: StreamEndedEarlyError.self) { try await stream.untilDone() }
         }
         stream.close()
         let messagesAfterTheStream = thread.messagesJSON

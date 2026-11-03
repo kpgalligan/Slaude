@@ -148,7 +148,7 @@ private let XLSX_SKILL: JSONValue = ["type": "anthropic", "skill_id": "xlsx", "v
         let thread = try thMakeThread(mock)
         try await thread.send(thMarked("Hello"))
         let stream = try await thread.stream(thMarkedTwice("Again"))
-        try await stream.untilDone()
+        await #expect(throws: StreamEndedEarlyError.self) { try await stream.untilDone() }
         stream.close()
 
         try await thread.send(try thMessages(newMessages), overrides: thOverrides())

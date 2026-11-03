@@ -422,13 +422,22 @@ class TestGen:
         if isinstance(r, Ref) and isinstance(r.decl, AliasDecl):
             r = self.conv_union(r.decl)
         if isinstance(r, UnionT):
+            key = r.discriminator or "type"
             member = r.members[0]
             data = self.samples.value(member)
-            name = self.ctx.emitter.member_discriminator_value(member, r.discriminator or "type") or "message"
+            name = self.ctx.emitter.member_discriminator_value(member, key) or "message"
+            events = [(name, data)]
+            # A Messages stream is whole only once its `message_stop` event arrived (Core/Streaming.swift,
+            # `StreamEndEvent`), and reading one that ends before it throws, so the sample ends with that event.
+            for other in r.members[1:]:
+                if self.ctx.emitter.member_discriminator_value(other, key) == "message_stop":
+                    events.append(("message_stop", self.samples.value(other)))
+                    break
         else:
             data = self.samples.value(ir)
             name = data.get("type", "message") if isinstance(data, dict) else "message"
-        return f"event: {name}\ndata: {json.dumps(data)}\n\n"
+            events = [(name, data)]
+        return "".join(f"event: {n}\ndata: {json.dumps(d)}\n\n" for n, d in events)
 
     def conv_union(self, d: AliasDecl) -> object:
         ir = self.ctx.conv.alias_ir(d)

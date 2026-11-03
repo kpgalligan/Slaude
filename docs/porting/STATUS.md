@@ -78,6 +78,26 @@ test transpiler doesn't handle; each is ported by hand: the batch `results` test
   type with (529, 429, 500; `response.statusCode` stays the stream's 200), with `errorMessage` its `error.message`.
   Python raises `APIStatusError` with status 200 for every one; an event with an `error.type` this SDK does not know
   still does.
+* Cancellation and streams that end early. An asyncio cancel raises `CancelledError` at the next `await`; in Swift an
+  `AsyncThrowingStream` ends without an error when its task is cancelled, and URLSession reports a cancelled task as
+  `URLError.cancelled`, so a cancelled stream looked like a whole one and a cancel while waiting for headers was retried
+  as an `APIConnectionError`. Now a cancel throws `CancellationError` wherever it lands: `URLSessionTransport` reports
+  its cancelled tasks so (including a task cancelled before it was sent, which is never sent), the request pipeline
+  neither wraps nor retries one (`attemptRequest`, `sendRequest`, `sleepForRetry`), `HTTPResponse.read()` does not
+  return a body a cancel cut short, and a `Stream` throws it from a cancelled task or after its consumer's `close()`.
+  A Messages stream (`StreamEndEvent`: the GA and beta event unions and `JSONStreamEvent` over them) is whole only
+  with its `message_stop`: one whose body ends, or whose connection breaks, before it throws `StreamEndedEarlyError`
+  (an `APIConnectionError`; `underlying` is the transport's error, if any), where upstream's raw stream ends normally
+  and its helper's `get_final_message()` returns the partial snapshot (the TypeScript helper's `finalMessage()`
+  throws). Every later read rethrows the error, and the final-message helpers check `message_stop` too. A stream
+  without an end event (Sessions) still ends normally when it is closed. `textStream` is a `MessageTextStream`, which
+  throws as its stream does (an `AsyncThrowingStream(unfolding:)` ends normally when its task is cancelled).
+  Ported tests follow: upstream's streaming fixtures end without the blank line after their last event, so Python never
+  dispatches their `message_stop`, and `getResponse` ends that event (the expected event lists end with
+  `message_stop`); the generated streaming tests' sample ends with `message_stop` (`Tools/codegen/testsgen.py`); and
+  the tracing and thread tests whose stream is cut short expect `StreamEndedEarlyError` where upstream's application
+  sees no error (their span assertions are unchanged). `Core/StreamCancellationTests.swift` cancels real URLSession
+  requests against a server on 127.0.0.1 (`Support/LoopbackHTTPServer.swift`, Apple platforms only).
 * Structured outputs use a `StructuredOutput` protocol (a `Decodable` type supplying its JSON schema) instead of
   pydantic schema inference; function tools declare their input schema explicitly instead of inferring it from a
   Python signature.

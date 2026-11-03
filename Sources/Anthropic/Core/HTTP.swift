@@ -227,8 +227,11 @@ public final class HTTPResponse: @unchecked Sendable {
         if let s {
             do {
                 for try await chunk in s { data.append(chunk) }
+                // A body stream ends without an error when its task is cancelled, with only part of the body read.
+                try Task.checkCancellation()
             } catch {
                 streamObserver?.end(.failed, error: error)
+                if isCancellation(error) { close() }
                 throw error
             }
             streamObserver?.end(.read, error: nil)
@@ -332,7 +335,8 @@ final class ObservedBodyReader: @unchecked Sendable {
         do {
             if let chunk = try await iterator.next() { return chunk }
             done = true
-            response?.streamObserver?.end(.read, error: nil)
+            // A body stream ends without an error when its task is cancelled: the application stopped reading.
+            response?.streamObserver?.end(Task.isCancelled ? .closed : .read, error: nil)
             return nil
         } catch {
             done = true
@@ -421,9 +425,22 @@ public final class URLSessionTransport: NSObject, HTTPTransport, URLSessionDataD
             urlRequest.timeoutInterval = .greatestFiniteMagnitude
         }
         let task = session.dataTask(with: urlRequest)
+        let id = task.taskIdentifier
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (cont: CheckedContinuation<HTTPResponse, Error>) in
-                lock.withLock { tasks[task.taskIdentifier] = TaskState(request: request, continuation: cont) }
+                lock.withLock { tasks[id] = TaskState(request: request, continuation: cont) }
+                // In a task that was cancelled already, the handler below ran first: it cancelled `task` before there
+                // was a state to report the cancel to, so it is reported here, and the request is never sent.
+                if Task.isCancelled {
+                    let pending: CheckedContinuation<HTTPResponse, Error>? = lock.withLock {
+                        let state = tasks.removeValue(forKey: id)
+                        defer { state?.responseContinuation = nil }
+                        return state?.responseContinuation
+                    }
+                    task.cancel()
+                    pending?.resume(throwing: CancellationError())
+                    return
+                }
                 task.resume()
             }
         } onCancel: {
@@ -432,6 +449,9 @@ public final class URLSessionTransport: NSObject, HTTPTransport, URLSessionDataD
     }
 
     public func close() async { session.invalidateAndCancel() }
+
+    /// How many data tasks have not ended yet (for tests: a cancelled request leaves none behind).
+    var activeTaskCount: Int { lock.withLock { tasks.count } }
 
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
                            completionHandler: @escaping (URLSession.ResponseDisposition) -> Void)
@@ -470,16 +490,25 @@ public final class URLSessionTransport: NSObject, HTTPTransport, URLSessionDataD
         lock.withLock { tasks[id] }?.bodyContinuation?.yield(data)
     }
 
+    /// The task ended. A task that was cancelled (by its Swift task, by closing its response or the transport) fails
+    /// with `CancellationError`, whether it was waiting for its response or reading the body, so that a cancel is
+    /// never taken for the end of a body or for a connection error.
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         let id = task.taskIdentifier
-        guard let state = lock.withLock({ tasks.removeValue(forKey: id) }) else { return }
-        var mapped: Error? = error
-        if let e = error as? URLError, e.code == .timedOut { mapped = TransportTimeoutError() }
-        if let cont = state.responseContinuation {
-            cont.resume(throwing: mapped ?? URLError(.badServerResponse))
+        let taken: (CheckedContinuation<HTTPResponse, Error>?, ByteStream.Continuation?)? = lock.withLock {
+            guard let state = tasks.removeValue(forKey: id) else { return nil }
+            defer { state.responseContinuation = nil }
+            return (state.responseContinuation, state.bodyContinuation)
         }
-        if let b = state.bodyContinuation {
-            if let mapped, (error as? URLError)?.code != .cancelled { b.finish(throwing: mapped) } else { b.finish() }
+        guard let (response, body) = taken else { return }
+        var mapped: Error? = error
+        if let e = error as? URLError {
+            if e.code == .timedOut { mapped = TransportTimeoutError() }
+            if e.code == .cancelled { mapped = CancellationError() }
+        }
+        response?.resume(throwing: mapped ?? URLError(.badServerResponse))
+        if let body {
+            if let mapped { body.finish(throwing: mapped) } else { body.finish() }
         }
     }
 }

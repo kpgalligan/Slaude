@@ -309,7 +309,7 @@ private func thToolDefinitions(_ tools: [any BetaToolLike]?) throws -> JSONValue
         let thread = try thMakeThread(mock)
         try await thread.send(thUser("Hello"))
         let stream = try await thread.stream(thUser("Weather?"))
-        try await stream.untilDone()
+        await #expect(throws: StreamEndedEarlyError.self) { try await stream.untilDone() }
         stream.close()
         let afterStream = (thRoles(thread.messagesJSON), thread.previousMessageID)
 
@@ -359,11 +359,9 @@ private func thToolDefinitions(_ tools: [any BetaToolLike]?) throws -> JSONValue
         let thread = try thMakeThread(mock)
 
         let stream = try await thread.stream(thUser("Count"))
-        if fails {
-            await #expect(throws: (any Error).self) { try await stream.untilDone() }
-        } else {
-            try await stream.untilDone()
-        }
+        // Either way the stream ended before `message_stop`; a broken connection is the error under it.
+        let error = await #expect(throws: StreamEndedEarlyError.self) { try await stream.untilDone() }
+        #expect((error?.underlying is URLError) == fails)
         try await thread.send(thUser("Just the total"))
         stream.close()
 

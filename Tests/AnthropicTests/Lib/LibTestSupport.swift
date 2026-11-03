@@ -2,9 +2,15 @@ import Foundation
 import Testing
 @testable import Anthropic
 
-/// `tests/lib/streaming/helpers.get_response`: the fixture's lines, each terminated by `\n`.
+/// `tests/lib/streaming/helpers.get_response`: the fixture's lines, each terminated by `\n`, and the blank line that
+/// ends the last event.
+///
+/// The fixture files end without that blank line, so Python's decoder never dispatches their last event, the
+/// `message_stop` of all but one. A Slaude Messages stream is whole only with its `message_stop` (one that ends before
+/// it throws `StreamEndedEarlyError`), so the body ends the event, as the API does.
 func getResponse(_ name: String) -> String {
-    linesWithNewlines(fixture(name))
+    let body = linesWithNewlines(fixture(name))
+    return body.hasSuffix("\n\n") ? body : body + "\n"
 }
 
 func linesWithNewlines(_ s: String) -> String {

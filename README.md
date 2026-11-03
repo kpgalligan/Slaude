@@ -100,8 +100,9 @@ if stream.isComplete, let reply = stream.messageParam {
 
 The body is sent exactly as given, with `stream: true` added. The stream builds the reply from the events' JSON: each
 `content_block_start` object as received, with text, thinking, signature and citations deltas applied, and a tool
-input's `input_json_delta` parts parsed at its `content_block_stop` in the model's key order. `isComplete` stays
-false if the stream ended before `message_stop`. `RawJSON(encoding:)` turns a typed value into `RawJSON`.
+input's `input_json_delta` parts parsed at its `content_block_stop` in the model's key order. A loop over the stream
+that ends without an error has had `message_stop`, so `isComplete` is true there (see below for one that is cancelled
+or cut short). `RawJSON(encoding:)` turns a typed value into `RawJSON`.
 
 Every request body is deterministic. A body built from typed parameters has each object's keys sorted, so the same
 request produces the same bytes in every process, which prompt caching needs. A `RawJSON` body keeps its own order,
@@ -151,6 +152,40 @@ do {
 Requests are retried twice by default on connection errors, 408, 409, 429 and 5xx, honouring
 `retry-after`/`retry-after-ms` (`maxRetries:` configures it), and time out after 10 minutes
 (`timeout:`).
+
+### Cancellation and streams that end early
+
+A Messages stream never ends normally before its message is whole. Reading one throws:
+
+- `CancellationError` when the task reading it is cancelled, or `close()` was called on it, before `message_stop`. The
+  response is closed at once, which cancels the URLSession task: the connection closes and nothing more is read.
+- `StreamEndedEarlyError` (an `APIConnectionError`) when its body ended, or its connection broke, before
+  `message_stop` without a cancel. `underlying` is the transport's error when it reported one (URLSession reports a
+  chunked body cut off by the server as a normal end, so `underlying` is often `nil`), and `requestID` the response's.
+
+Every later read of that stream throws the same error, and `getFinalMessage()` / `getFinalText()` throw it rather than
+return a partial message; what arrived stays readable as such (`stream.message`, `currentMessageSnapshot`, with
+`isComplete` / `messageComplete` false). A cancel while the request is still waiting for its response headers throws
+`CancellationError` too, never `APIConnectionError`, and is not retried. A cancel or `close()` after `message_stop`
+ends the stream normally.
+
+```swift
+let turn = Task {
+    let stream = try await client.beta.messages.createStreaming(body: body)
+    for try await event in stream { show(event) }
+    return stream.messageParam!  // only reached after message_stop
+}
+// When the user stops the turn:
+turn.cancel()
+
+do {
+    history.append(try await turn.value)
+} catch is CancellationError {
+    // stopped: the history stays as it was
+} catch let error as StreamEndedEarlyError {
+    report("The reply was cut short.", error.requestID)  // the server or the network ended it
+}
+```
 
 ### Helpers
 

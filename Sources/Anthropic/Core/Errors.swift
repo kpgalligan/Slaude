@@ -116,6 +116,33 @@ open class APITimeoutError: APIConnectionError, @unchecked Sendable {
     }
 }
 
+/// A stream ended before its end event (`message_stop` for a Messages stream), and not because it was cancelled: the
+/// server ended the body early, or the connection broke. A stream that is cancelled (its task, or `close()`) throws
+/// `CancellationError` instead.
+///
+/// `underlying` is the transport's error when the connection broke (a `URLError` such as `networkConnectionLost`, or
+/// `TransportTimeoutError` when the body stalled past the timeout), and `nil` when the body ended without the end
+/// event. Every later read of the stream throws it again, and the final-message helpers throw it rather than return
+/// the partial Message. Python's and TypeScript's SDKs end such a stream normally.
+open class StreamEndedEarlyError: APIConnectionError, @unchecked Sendable {
+    /// The response whose body ended early.
+    public let response: HTTPResponse
+    /// The event the stream ended without.
+    public let endEvent: String
+
+    public init(response: HTTPResponse, endEvent: String = "message_stop", underlying: Error? = nil) {
+        self.response = response
+        self.endEvent = endEvent
+        let message = underlying == nil
+            ? "The stream ended before its `\(endEvent)` event."
+            : "The connection was lost before the stream's `\(endEvent)` event."
+        super.init(message: message, request: response.request, underlying: underlying)
+    }
+
+    /// The `request-id` header of the response.
+    public var requestID: String? { response.headers["request-id"] }
+}
+
 /// An error that opts into the SDK's retry policy: throw it (e.g. from middleware) to have the
 /// request attempt retried while retries remain.
 open class RetryableError: AnthropicError, @unchecked Sendable {}

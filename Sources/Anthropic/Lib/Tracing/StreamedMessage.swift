@@ -88,7 +88,8 @@ final class StreamedMessage: StreamObserver, @unchecked Sendable {
             // An application that reads the bytes of the body itself leaves the events unknown.
             span.setStatus(.ok)
         } else if how == .read {
-            // The server cut the stream short. The application sees no error, so only the span fails.
+            // The server cut the stream short. Upstream's application sees no error; a Swift one gets
+            // `StreamEndedEarlyError` from the stream, and the span fails the same way.
             setErrorStatus(span, AnthropicError("The stream ended before its end event."), type: "api_error")
         }
         span.end()

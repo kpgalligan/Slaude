@@ -49,17 +49,24 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
     /// been read to completion.
     public func close() { rawStream.close() }
 
-    /// The message accumulated so far; `nil` before `message_start` arrived.
+    /// The message accumulated so far; `nil` before `message_start` arrived. It is partial until `messageComplete`.
     public var currentMessageSnapshot: ParsedMessage<Output>? {
         snapshot.map { ParsedMessage(message: $0, parsedOutputs: parsedOutputs) }
     }
 
+    /// Whether `message_stop` was received, so that the snapshot is the whole message.
+    public var messageComplete: Bool { rawStream.receivedEndEvent }
+
     /// Waits until the stream has been read to completion and returns the accumulated message.
+    ///
+    /// It never returns a partial message: a stream that was cancelled (its task, or `close()`) throws
+    /// `CancellationError`, and one that ended before `message_stop` throws `StreamEndedEarlyError`.
     public func getFinalMessage() async throws -> ParsedMessage<Output> {
         try await untilDone()
         guard let message = currentMessageSnapshot else {
             throw AnthropicError("The stream ended before a `message_start` event was received")
         }
+        guard messageComplete else { throw StreamEndedEarlyError(response: response) }
         return message
     }
 
@@ -82,14 +89,14 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
         while try await nextEvent() != nil {}
     }
 
-    /// Just the text deltas of the stream.
-    public var textStream: AsyncThrowingStream<String, Error> {
-        AsyncThrowingStream(unfolding: { [self] in
+    /// Just the text deltas of the stream. It ends, and throws, as the stream does.
+    public var textStream: MessageTextStream {
+        MessageTextStream { [self] in
             while let event = try await self.nextEvent() {
                 if case .contentBlockDelta(let e) = event, case .textDelta(let d) = e.delta { return d.text }
             }
             return nil
-        })
+        }
     }
 
     public struct AsyncIterator: AsyncIteratorProtocol {
@@ -284,4 +291,22 @@ public func buildEvents(_ event: RawMessageStreamEvent, snapshot: Message) -> [P
     case .unknown:
         return [.raw(event)]
     }
+}
+
+/// The text deltas of a Messages stream (`text_stream`): `for try await text in stream.textStream { ... }`.
+///
+/// It reads the stream it came from, so it ends and throws as that stream does: a read in a cancelled task throws
+/// `CancellationError` (an `AsyncThrowingStream(unfolding:)` ends without an error when its task is cancelled).
+public struct MessageTextStream: AsyncSequence, Sendable {
+    public typealias Element = String
+    let produce: @Sendable () async throws -> String?
+
+    init(_ produce: @escaping @Sendable () async throws -> String?) { self.produce = produce }
+
+    public struct AsyncIterator: AsyncIteratorProtocol {
+        let produce: @Sendable () async throws -> String?
+        public mutating func next() async throws -> String? { try await produce() }
+    }
+
+    public func makeAsyncIterator() -> AsyncIterator { AsyncIterator(produce: produce) }
 }

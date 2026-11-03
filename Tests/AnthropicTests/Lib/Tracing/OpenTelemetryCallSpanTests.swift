@@ -921,9 +921,10 @@ final class TracingGate: @unchecked Sendable {
         events[events.count - 1] = events[events.count - 1].without("usage")
         let spans = TracingSpans()
         // The event does not decode, and the stream hands it out undecoded and goes on (upstream's helper fails on it
-        // with an `AttributeError`; a Swift stream reads leniently, `LenientStreamEvent`).
+        // with an `AttributeError`; a Swift stream reads leniently, `LenientStreamEvent`), to its end, which comes
+        // before `message_stop`.
         let error = try await readStream(events, beta: beta, helper: helper, spans: spans)
-        #expect(error == nil)
+        #expect(error is StreamEndedEarlyError)
 
         // The snapshot lacks what the event has, so the span has only what the events before it gave.
         let span = try spans.one("anthropic.messages.create")
@@ -1133,7 +1134,8 @@ final class TracingGate: @unchecked Sendable {
         let response = HTTPResponse(statusCode: 200, body: Data(), request: HTTPRequest(method: "POST", url: URL(string: tracingBaseURL)!))
         let helper = MessageStream<Never>(rawStream: SSEStream(response: response, client: try mockClient()))
         var events = 0
-        for try await _ in helper { events += 1 }
+        // Upstream's ends without an error; a Messages stream without its `message_stop` throws.
+        await #expect(throws: StreamEndedEarlyError.self) { for try await _ in helper { events += 1 } }
         #expect(events == 0)
     }
 
