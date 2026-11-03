@@ -120,7 +120,9 @@ extension JSONValue {
         try parse(Data(string.utf8))
     }
 
-    /// Serializes a `JSONValue` to JSON data.
+    /// Serializes a `JSONValue` to JSON data. Without `sortedKeys` the key order is a `Dictionary`'s, which differs from
+    /// one instance (and process) to the next; a request body is written by `BaseClient.serializeBody`, which is the same
+    /// for equal bodies, and `RawJSON` keeps an order of its own.
     public static func serialize(_ value: JSONValue, sortedKeys: Bool = false) throws -> Data {
         let encoder = JSONEncoder()
         var formatting: JSONEncoder.OutputFormatting = [.withoutEscapingSlashes]

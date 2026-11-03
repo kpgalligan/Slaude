@@ -68,6 +68,10 @@ reports `swift`.
   sorted; the parts that the SDK makes have Python's order. Sizes do not depend on the order.
 * A stream helper's snapshot is a typed Message re-encoded to JSON, which leaves out a `null` optional field
   (`page_age: None` in a streamed web search result).
+* A stream reads leniently (`LenientStreamEvent`): an event of a known type that does not decode is handed out as
+  `unknown` and the stream goes on, as upstream's stream without a helper does. Upstream's helper fails on such an event
+  (`AttributeError` in `test_stream_ended_after_a_message_delta_that_cannot_be_accumulated_has_nothing_of_it`); the
+  Swift helpers read on and withhold their snapshot from the span, so the span has the same attributes.
 * A response made from bytes is closed from the start in httpx; a Swift `HTTPResponse` with a whole body is not closed
   until it is read, so `stream.response.is_closed` is not asserted.
 * Dropped streams and responses end their span in `deinit`, which Swift runs when the last reference goes, so the

@@ -187,15 +187,23 @@ final class SSEEventIterator: @unchecked Sendable {
 ///
 /// Like Python's, a stream has a single position: iterating it again continues where the previous
 /// iteration stopped. Don't iterate one stream from several tasks at once.
-public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchecked Sendable {
+///
+/// Reading is lenient where the element type allows it (`LenientStreamEvent`, which the Messages and Sessions event
+/// unions adopt): an event that does not decode (a field that drifted from the schema) is handed out as the type's
+/// `unknown` case holding its JSON, and the stream goes on, as the Python and TypeScript SDKs do. An `error` event
+/// ends the stream with the typed error for its `error.type` (`BaseClient.makeStreamError`).
+public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable {
     public let response: HTTPResponse
     let client: BaseClient
     let state: State
 
-    init(response: HTTPResponse, client: BaseClient) {
+    /// Makes an element of the `data` (never empty) of one event.
+    typealias Decode = @Sendable (ServerSentEvent, HTTPResponse, BaseClient) throws -> Element
+
+    init(response: HTTPResponse, client: BaseClient, decode: @escaping Decode) {
         self.response = response
         self.client = client
-        self.state = State(response: response, client: client)
+        self.state = State(response: response, client: client, decode: decode)
     }
 
     /// The raw server-sent events, before JSON parsing and event-name filtering.
@@ -211,11 +219,13 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
         private var events: AsyncThrowingStream<ServerSentEvent, Error>.AsyncIterator?
         let response: HTTPResponse
         let client: BaseClient
+        let decode: Decode
         private var finished = false
 
-        init(response: HTTPResponse, client: BaseClient) {
+        init(response: HTTPResponse, client: BaseClient, decode: @escaping Decode) {
             self.response = response
             self.client = client
+            self.decode = decode
         }
 
         deinit { response.close() }
@@ -245,11 +255,11 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
                         } else {
                             message = sse.data.isEmpty ? "Error code: \(response.statusCode)" : sse.data
                         }
-                        throw client.makeStatusError(message, body: body, response: response)
+                        throw client.makeStreamError(message, body: body, response: response)
                     }
                     if sse.data.isEmpty { continue }
-                    let item = try client.decodeData(Element.self, Data(sse.data.utf8), response: response)
-                    response.streamObserver?.item(item)
+                    let item = try decode(sse, response, client)
+                    response.streamObserver?.item((item as? any ObservedStreamItem)?.observedItem ?? item)
                     return item
                 }
                 response.streamObserver?.end(.read, error: nil)
@@ -279,4 +289,60 @@ public final class Stream<Element: Decodable & Sendable>: AsyncSequence, @unchec
 }
 
 extension Stream: TracedEventStream {}
+
+extension Stream where Element: Decodable {
+    /// A stream that decodes each event's `data` into `Element`, leniently when `Element` is a `LenientStreamEvent`.
+    convenience init(response: HTTPResponse, client: BaseClient) {
+        self.init(response: response, client: client) { sse, response, client in
+            try client.decodeStreamEvent(Element.self, Data(sse.data.utf8), response: response)
+        }
+    }
+}
+
+/// An event union whose undecodable events a stream hands out instead of failing: the Messages and Sessions event
+/// unions, whose `unknown` case holds an event's JSON.
+///
+/// An event of a type this SDK version does not know already decodes as `unknown`; this also covers an event of a
+/// known type that does not decode because a field drifted from the schema (a `null` where a number was expected, a
+/// required key left out), which the Python SDK's `construct_type` and the TypeScript SDK's casts let through too.
+public protocol LenientStreamEvent: Decodable, Sendable {
+    /// The value for an event that does not decode: the `unknown` case holding its JSON.
+    static func undecodable(_ json: JSONValue) -> Self
+}
+
+extension RawMessageStreamEvent: LenientStreamEvent {
+    public static func undecodable(_ json: JSONValue) -> RawMessageStreamEvent { .unknown(json) }
+}
+
+extension BetaRawMessageStreamEvent: LenientStreamEvent {
+    public static func undecodable(_ json: JSONValue) -> BetaRawMessageStreamEvent { .unknown(json) }
+}
+
+extension BetaManagedAgentsStreamSessionEvents: LenientStreamEvent {
+    public static func undecodable(_ json: JSONValue) -> BetaManagedAgentsStreamSessionEvents { .unknown(json) }
+}
+
+extension BetaManagedAgentsStreamSessionThreadEvents: LenientStreamEvent {
+    public static func undecodable(_ json: JSONValue) -> BetaManagedAgentsStreamSessionThreadEvents { .unknown(json) }
+}
+
+/// A stream element that tells a call's span which value to observe (a `JSONStreamEvent`: its typed event).
+protocol ObservedStreamItem {
+    var observedItem: Any { get }
+}
+
+extension BaseClient {
+    /// Decodes one event of a stream. A `LenientStreamEvent` that is JSON but does not decode becomes the type's
+    /// `unknown` case; anything else that does not decode throws `APIResponseValidationError`, as a response does.
+    func decodeStreamEvent<T: Decodable>(_ type: T.Type, _ data: Data, response: HTTPResponse) throws -> T {
+        do {
+            return try decodeData(T.self, data, response: response)
+        } catch let error as APIResponseValidationError {
+            guard let lenient = T.self as? any LenientStreamEvent.Type, let json = error.body,
+                  let value = lenient.undecodable(json) as? T
+            else { throw error }
+            return value
+        }
+    }
+}
 

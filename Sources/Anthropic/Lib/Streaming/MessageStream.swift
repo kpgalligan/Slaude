@@ -108,6 +108,10 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
                 done = true
                 return nil
             }
+            if case .unknown(let json) = event, isUndecodedMessageEvent(json) {
+                // The snapshot takes only part of it (`accumulateUndecodedEvent`), so it is not the Message the events make.
+                withholdMessageSnapshot(rawStream)
+            }
             if snapshot == nil {
                 guard case .messageStart = event else { return .raw(event) }
             }
@@ -194,10 +198,40 @@ public func accumulateEvent(_ event: RawMessageStreamEvent, snapshot current: Me
         if let v = e.usage.cacheReadInputTokens { snapshot.usage.cacheReadInputTokens = v }
         if let v = e.usage.serverToolUse { snapshot.usage.serverToolUse = v }
         if let v = e.usage.outputTokensDetails { snapshot.usage.outputTokensDetails = v }
-    case .messageStart, .messageStop, .contentBlockStop, .unknown:
+    case .unknown(let json):
+        accumulateUndecodedEvent(json, into: &snapshot)
+    case .messageStart, .messageStop, .contentBlockStop:
         break
     }
     return snapshot
+}
+
+/// Whether `json`, an event a stream handed out as `unknown`, has a type the Messages events have: one whose fields
+/// drifted from the schema, rather than an event type this SDK does not know.
+func isUndecodedMessageEvent(_ json: JSONValue) -> Bool {
+    switch json["type"]?.stringValue {
+    case "message_start", "message_delta", "message_stop", "content_block_start", "content_block_delta", "content_block_stop": return true
+    default: return false
+    }
+}
+
+/// What the snapshot needs of an event that a stream handed out undecoded; see `accumulateUndecodedBetaEvent`.
+func accumulateUndecodedEvent(_ json: JSONValue, into snapshot: inout Message) {
+    switch json["type"]?.stringValue {
+    case "content_block_start":
+        let block = json["content_block"] ?? .null
+        snapshot.content.append((try? block.decode(as: ContentBlock.self)) ?? .unknown(block))
+    case "message_delta":
+        if let delta = try? (json["delta"] ?? .null).decode(as: RawMessageDeltaEvent.Delta.self) {
+            snapshot.stopReason = delta.stopReason
+            snapshot.stopSequence = delta.stopSequence
+            snapshot.stopDetails = delta.stopDetails
+            if let container = delta.container { snapshot.container = container }
+        }
+        if let outputTokens = json["usage"]?["output_tokens"]?.intValue { snapshot.usage.outputTokens = outputTokens }
+    default:
+        break
+    }
 }
 
 /// Appends a tool-input delta to its buffer and parses the buffer so far. Returns `nil` while the

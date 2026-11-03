@@ -10,7 +10,8 @@ and their `beta` twins).
 | --- | --- |
 | `lib/streaming/_messages.py`, `_types.py` | `Sources/Anthropic/Lib/Streaming/MessageStream.swift`, `MessageStreamEvents.swift` |
 | `lib/streaming/_beta_messages.py`, `_beta_types.py` | `Sources/Anthropic/Lib/Streaming/BetaMessageStream.swift`, `MessageStreamEvents.swift` |
-| `jiter.from_json(..., partial_mode=...)` | `Sources/Anthropic/Lib/Streaming/PartialJSON.swift` |
+| `jiter.from_json(..., partial_mode=...)` | `Sources/Anthropic/Lib/Streaming/PartialJSON.swift` (the parser is `Core/JSONText.swift`, shared with `RawJSON.parse`) |
+| — (verbatim JSON: `createStreaming(body:)`) | `Sources/Anthropic/Lib/Streaming/JSONMessageStream.swift`, `Core/RawJSON.swift`, `Core/JSONStreamEvent.swift` |
 | `messages.stream`, `beta.messages.stream` | `Sources/Anthropic/Lib/Streaming/MessagesStreamResource.swift` |
 | `messages.batches.results`, `beta.messages.batches.results` | `Sources/Anthropic/Lib/Streaming/BatchResults.swift` |
 | `lib/_parse/_transform.py`, `_response.py` | `Sources/Anthropic/Lib/Parse/StructuredOutput.swift`, `ParsedMessage.swift` |
@@ -34,6 +35,15 @@ and their `beta` twins).
   `.compaction`); events the stream does not process (unknown types, anything before
   `message_start`) pass through as `.raw(...)`. The names avoid the generated aliases
   `MessageStreamEvent` / `MessageStopEvent` / `ContentBlockStopEvent` (= the raw types).
+* **Verbatim JSON.** `createStreaming(body:)` (GA and beta) sends a `RawJSON` body unchanged and returns a
+  `JSONMessageStream`: each event is a `JSONStreamEvent` (the SSE name, the data as `RawJSON` in document order, the
+  typed event, and `decodingError` when a known event did not decode). `JSONMessageAccumulator` is
+  `accumulate_event` over that JSON, so the Message keeps every field the API sent: `message`, `messageParam` (the
+  turn to append to a history) and `isComplete` (`message_stop` seen). A tool input is parsed at its
+  `content_block_stop` in partial mode (`trailingStrings` with the fine-grained tool streaming beta, as the typed
+  streams do), keeping the model's key order; an input that is not JSON raises the upstream `ValueError` there.
+  `RawJSON.parse` and `PartialJSON` share one parser, which accepts only the JSON grammar (no leading zeros) and nests at
+  most 64 levels (it recurses per level, on a task's 512 KiB stack).
 * `stream(...)` is `async throws` and returns once the response headers arrived (Python's
   `async with` entering the manager). A stream is one sequence: iterating it, `textStream`,
   `untilDone()` and `getFinalMessage()` all continue where the previous consumer stopped.

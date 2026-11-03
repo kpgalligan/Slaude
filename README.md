@@ -13,7 +13,7 @@ which it tracks version for version. Currently tracking **anthropic 2.3.0** (API
   streaming and eager tools), memory/computer/browser/agent toolsets, message threads, environment
   workers, credentials (profiles, workload identity federation), OpenTelemetry tracing, refusal
   fallbacks, webhooks, and the AWS, Bedrock, Vertex, Google Cloud and Azure Foundry clients.
-- ~3,750 tests in all. See [docs/porting/STATUS.md](docs/porting/STATUS.md) for the upstream → Swift
+- ~3,800 tests in all. See [docs/porting/STATUS.md](docs/porting/STATUS.md) for the upstream → Swift
   map and what (if anything) was skipped, and why.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the transformation works and how Python
@@ -67,6 +67,45 @@ for try await event in stream {
     }
 }
 ```
+
+Stream reading is lenient: an event, block or delta type this version does not know, or an event whose fields
+drifted from the schema (a `null` where a number was expected), comes through as the `unknown` case with its JSON and
+the stream goes on. An `error` event throws the typed error for its `error.type`: `OverloadedError` for
+`overloaded_error` (with `statusCode` 529), `RateLimitError`, `InternalServerError` for `api_error`, and so on;
+`errorMessage` is its `error.message`.
+
+### Raw JSON for a verbatim history
+
+A typed `BetaMessage` keeps only the fields this SDK version models, and `JSONValue` keeps no key order. A client that
+keeps its history as the JSON the API returned, and sends it back unchanged on every request, uses `RawJSON` with
+`createStreaming(body:)` (beta and GA). `RawJSON` is an order-preserving JSON value: parsing keeps each object's keys in
+document order, every field, explicit `null`s and each number's text. Building one keeps insertion order, and
+`serialized()` writes the stored order back without re-sorting.
+
+```swift
+var history: [RawJSON] = [["role": "user", "content": "What's the weather in Paris?"]]
+let tools: [RawJSON] = try toolDefinitions.map { try RawJSON.parse($0) }  // JSON text, in its own order
+
+let stream = try await client.beta.messages.createStreaming(
+    body: ["model": "claude-opus-5-5", "max_tokens": 1024, "tools": .array(tools), "messages": .array(history)]
+)
+for try await event in stream {
+    // `event.json` is the event as received; `event.event` is the typed event, `.unknown` when it doesn't decode
+    if case .contentBlockDelta(let e) = event.event, case .textDelta(let d) = e.delta { print(d.text, terminator: "") }
+}
+if stream.isComplete, let reply = stream.messageParam {
+    history.append(reply)  // {"role": "assistant", "content": [...]}, every block as the API sent it
+}
+```
+
+The body is sent exactly as given, with `stream: true` added. The stream builds the reply from the events' JSON: each
+`content_block_start` object as received, with text, thinking, signature and citations deltas applied, and a tool
+input's `input_json_delta` parts parsed at its `content_block_stop` in the model's key order. `isComplete` stays
+false if the stream ended before `message_stop`. `RawJSON(encoding:)` turns a typed value into `RawJSON`.
+
+Every request body is deterministic. A body built from typed parameters has each object's keys sorted, so the same
+request produces the same bytes in every process, which prompt caching needs. A `RawJSON` body keeps its own order,
+and middleware or `extraBody` changes are folded in without reordering the rest.
 
 ### Pagination
 

@@ -114,6 +114,11 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
                 done = true
                 return nil
             }
+            if case .unknown(let json) = event, isUndecodedMessageEvent(json) {
+                // The snapshot takes only part of it (`accumulateUndecodedBetaEvent`), so it is not the Message the
+                // events make.
+                withholdMessageSnapshot(rawStream)
+            }
             if snapshot == nil {
                 guard case .messageStart = event else { return .raw(event) }
             }
@@ -232,10 +237,34 @@ public func accumulateBetaEvent(_ event: BetaRawMessageStreamEvent, snapshot cur
         if let v = e.usage.outputTokensDetails { snapshot.usage.outputTokensDetails = v }
         if let v = e.usage.iterations { snapshot.usage.iterations = v }
         if let v = e.usage.fallbackCredit { snapshot.usage.fallbackCredit = v }
-    case .messageStart, .messageStop, .contentBlockStop, .unknown:
+    case .unknown(let json):
+        accumulateUndecodedBetaEvent(json, into: &snapshot)
+    case .messageStart, .messageStop, .contentBlockStop:
         break
     }
     return snapshot
+}
+
+/// What the snapshot needs of an event that a stream handed out undecoded (`LenientStreamEvent`): an event of a known
+/// type whose fields drifted from the schema. A block start still takes its place, so that the deltas that follow
+/// find their block, and a message delta still gives its stop reason. Other events, and an event of a type this SDK
+/// does not know, change nothing.
+func accumulateUndecodedBetaEvent(_ json: JSONValue, into snapshot: inout BetaMessage) {
+    switch json["type"]?.stringValue {
+    case "content_block_start":
+        let block = json["content_block"] ?? .null
+        snapshot.content.append((try? block.decode(as: BetaContentBlock.self)) ?? .unknown(block))
+    case "message_delta":
+        if let delta = try? (json["delta"] ?? .null).decode(as: BetaRawMessageDeltaEvent.Delta.self) {
+            snapshot.stopReason = delta.stopReason
+            snapshot.stopSequence = delta.stopSequence
+            snapshot.stopDetails = delta.stopDetails
+            if let container = delta.container { snapshot.container = container }
+        }
+        if let outputTokens = json["usage"]?["output_tokens"]?.intValue { snapshot.usage.outputTokens = outputTokens }
+    default:
+        break
+    }
 }
 
 /// The events to yield for one raw event (`lib/streaming/_beta_messages.build_events`).

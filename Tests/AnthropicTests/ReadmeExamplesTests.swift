@@ -58,6 +58,41 @@ import Testing
         #expect(text == "Hello world")
     }
 
+    /// README "Raw JSON for a verbatim history".
+    @Test func rawJSONForAVerbatimHistory() async throws {
+        let sse = [
+            #"event: message_start"#, #"data: {"type":"message_start","message":{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5","content":[],"stop_reason":null,"usage":{"input_tokens":1,"output_tokens":0}}}"#, "",
+            #"event: content_block_start"#, #"data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":"","citations":null,"new_field":{"b":1,"a":2}}}"#, "",
+            #"event: content_block_delta"#, #"data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Sunny"}}"#, "",
+            #"event: content_block_stop"#, #"data: {"type":"content_block_stop","index":0}"#, "",
+            #"event: message_delta"#, #"data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":1}}"#, "",
+            #"event: message_stop"#, #"data: {"type":"message_stop"}"#, "", "",
+        ].joined(separator: "\n")
+        let client = try client { request in
+            #expect(String(decoding: request.body ?? Data(), as: UTF8.self)
+                == #"{"model":"claude-opus-5-5","max_tokens":1024,"tools":[{"name":"get_weather","input_schema":{"type":"object","properties":{}}}],"messages":[{"role":"user","content":"What's the weather in Paris?"}],"stream":true}"#)
+            return HTTPResponse(statusCode: 200, headers: ["content-type": "text/event-stream"], stream: chunked(Data(sse.utf8), size: 13), request: request)
+        }
+        let toolDefinitions = [#"{"name": "get_weather", "input_schema": {"type": "object", "properties": {}}}"#]
+
+        var history: [RawJSON] = [["role": "user", "content": "What's the weather in Paris?"]]
+        let tools: [RawJSON] = try toolDefinitions.map { try RawJSON.parse($0) }  // JSON text, in its own order
+
+        let stream = try await client.beta.messages.createStreaming(
+            body: ["model": "claude-opus-5-5", "max_tokens": 1024, "tools": .array(tools), "messages": .array(history)]
+        )
+        var text = ""
+        for try await event in stream {
+            if case .contentBlockDelta(let e) = event.event, case .textDelta(let d) = e.delta { text += d.text }
+        }
+        if stream.isComplete, let reply = stream.messageParam {
+            history.append(reply)
+        }
+        #expect(text == "Sunny")
+        #expect(history.last?.serializedString
+            == #"{"role":"assistant","content":[{"type":"text","text":"Sunny","citations":null,"new_field":{"b":1,"a":2}}]}"#)
+    }
+
     @Test func pagination() async throws {
         let client = try client { request in
             let after = request.query("after_id")

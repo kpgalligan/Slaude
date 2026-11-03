@@ -920,9 +920,10 @@ final class TracingGate: @unchecked Sendable {
         var events = tracingEventsUpToMessageDelta()
         events[events.count - 1] = events[events.count - 1].without("usage")
         let spans = TracingSpans()
-        // The event does not decode, and the reading fails on it.
+        // The event does not decode, and the stream hands it out undecoded and goes on (upstream's helper fails on it
+        // with an `AttributeError`; a Swift stream reads leniently, `LenientStreamEvent`).
         let error = try await readStream(events, beta: beta, helper: helper, spans: spans)
-        #expect(error != nil)
+        #expect(error == nil)
 
         // The snapshot lacks what the event has, so the span has only what the events before it gave.
         let span = try spans.one("anthropic.messages.create")

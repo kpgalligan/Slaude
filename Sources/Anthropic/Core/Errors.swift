@@ -53,9 +53,11 @@ open class APIResponseValidationError: APIError, @unchecked Sendable {
 /// A webhook payload could not be verified.
 open class APIWebhookValidationError: APIError, @unchecked Sendable {}
 
-/// The API responded with a 4xx or 5xx status code.
+/// The API responded with a 4xx or 5xx status code, or a stream ended with an `error` event.
 open class APIStatusError: APIError, @unchecked Sendable {
     public let response: HTTPResponse
+    /// The response's status code. For an `error` event of a stream (whose response succeeded) it is the status the
+    /// API answers that `error.type` with (529 for `overloaded_error`), and `response.statusCode` is the stream's.
     public let statusCode: Int
     public let requestID: String?
     public let workspaceID: String?
@@ -67,12 +69,28 @@ open class APIStatusError: APIError, @unchecked Sendable {
         self.statusCode = response.statusCode
         self.requestID = response.headers["request-id"]
         self.workspaceID = response.headers["anthropic-workspace-id"]
-        if case .object(let o)? = body, case .object(let err)? = o["error"], case .string(let t)? = err["type"] {
-            self.type = ErrorType(rawValue: t)
-        } else {
-            self.type = nil
-        }
+        self.type = APIStatusError.errorType(body)
         super.init(message, request: response.request, body: body)
+    }
+
+    /// An error whose status is `statusCode` rather than the response's (an `error` event of a stream).
+    public init(_ message: String, response: HTTPResponse, body: JSONValue?, statusCode: Int) {
+        self.response = response
+        self.statusCode = statusCode
+        self.requestID = response.headers["request-id"]
+        self.workspaceID = response.headers["anthropic-workspace-id"]
+        self.type = APIStatusError.errorType(body)
+        super.init(message, request: response.request, body: body)
+    }
+
+    /// The `error.message` from the body, when present.
+    public var errorMessage: String? { body?["error"]?["message"]?.stringValue }
+
+    static func errorType(_ body: JSONValue?) -> ErrorType? {
+        if case .object(let o)? = body, case .object(let err)? = o["error"], case .string(let t)? = err["type"] {
+            return ErrorType(rawValue: t)
+        }
+        return nil
     }
 }
 
@@ -145,19 +163,41 @@ open class InternalServerError: APIStatusError, @unchecked Sendable {}
 
 /// Builds the typed status error for a response (`Anthropic._make_status_error`).
 func makeStatusError(_ message: String, body: JSONValue?, response: HTTPResponse) -> APIStatusError {
-    switch response.statusCode {
-    case 400: return BadRequestError(message, response: response, body: body)
-    case 401: return AuthenticationError(message, response: response, body: body)
-    case 403: return PermissionDeniedError(message, response: response, body: body)
-    case 404: return NotFoundError(message, response: response, body: body)
-    case 409: return ConflictError(message, response: response, body: body)
-    case 413: return RequestTooLargeError(message, response: response, body: body)
-    case 422: return UnprocessableEntityError(message, response: response, body: body)
-    case 429: return RateLimitError(message, response: response, body: body)
-    case 529: return OverloadedError(message, response: response, body: body)
-    case 500...: return InternalServerError(message, response: response, body: body)
-    default: return APIStatusError(message, response: response, body: body)
+    makeStatusError(message, body: body, response: response, status: response.statusCode)
+}
+
+/// The error class the first-party client raises for `status`, carrying `status` as its `statusCode`.
+func makeStatusError(_ message: String, body: JSONValue?, response: HTTPResponse, status: Int) -> APIStatusError {
+    switch status {
+    case 400: return BadRequestError(message, response: response, body: body, statusCode: status)
+    case 401: return AuthenticationError(message, response: response, body: body, statusCode: status)
+    case 403: return PermissionDeniedError(message, response: response, body: body, statusCode: status)
+    case 404: return NotFoundError(message, response: response, body: body, statusCode: status)
+    case 409: return ConflictError(message, response: response, body: body, statusCode: status)
+    case 413: return RequestTooLargeError(message, response: response, body: body, statusCode: status)
+    case 422: return UnprocessableEntityError(message, response: response, body: body, statusCode: status)
+    case 429: return RateLimitError(message, response: response, body: body, statusCode: status)
+    case 529: return OverloadedError(message, response: response, body: body, statusCode: status)
+    case 500...: return InternalServerError(message, response: response, body: body, statusCode: status)
+    default: return APIStatusError(message, response: response, body: body, statusCode: status)
     }
+}
+
+/// The HTTP status the API answers each `error.type` with (https://docs.anthropic.com/en/api/errors).
+let errorTypeStatus: [String: Int] = [
+    "invalid_request_error": 400, "authentication_error": 401, "billing_error": 402, "permission_error": 403,
+    "not_found_error": 404, "request_too_large": 413, "rate_limit_error": 429, "api_error": 500, "timeout_error": 504,
+    "overloaded_error": 529,
+]
+
+/// The typed error for an `error` event of a stream: the class a response with the status of its `error.type` gets,
+/// with that status. `nil` when the event names no `error.type` this SDK knows.
+///
+/// The Python SDK raises an `APIStatusError` with the stream's status (200) for every `error` event, so a mid-stream
+/// `overloaded_error` is not an `OverloadedError` there; here it is.
+func makeStreamEventError(_ message: String, body: JSONValue?, response: HTTPResponse) -> APIStatusError? {
+    guard let type = body?["error"]?["type"]?.stringValue, let status = errorTypeStatus[type] else { return nil }
+    return makeStatusError(message, body: body, response: response, status: status)
 }
 
 /// Renders a JSON value the way Python's `str()` renders the decoded object, so error messages

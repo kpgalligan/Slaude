@@ -73,6 +73,11 @@ public struct FinalRequestOptions: Sendable {
     public var followRedirects: Bool? = nil
     public var content: Data? = nil
     public var jsonData: JSONValue? = nil
+    /// The body in its own key order and number text, for a body that must be sent as it was received or built
+    /// (`messages.createStreaming(body:)`). `jsonData` then holds its `JSONValue` view, which middleware, platform
+    /// clients and spans read and may change; the body is written from this value with those changes folded in
+    /// (`RawJSON.reconciled(with:)`). Set both with `setRawJSONBody(_:)`.
+    public var rawJSONBody: RawJSON? = nil
     public var extraJSON: Body? = nil
     /// Set by the SDK method that makes the call, for the call's span. Not public options.
     public var spanName: String? = nil
@@ -109,6 +114,12 @@ public struct FinalRequestOptions: Sendable {
     }
 
     public func getMaxRetries(_ clientMaxRetries: Int) -> Int { maxRetries ?? clientMaxRetries }
+
+    /// Sends `body` as the JSON body, in its own order (`rawJSONBody`), with `jsonData` as its view.
+    public mutating func setRawJSONBody(_ body: RawJSON) {
+        rawJSONBody = body
+        jsonData = body.jsonValue
+    }
 
     /// Query parameter lookup.
     public func param(_ name: String) -> JSONValue? { params.last(where: { $0.0 == name })?.1 }

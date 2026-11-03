@@ -192,6 +192,12 @@ open class BaseClient: @unchecked Sendable {
         Anthropic_makeStatusError(message, body: body, response: response)
     }
 
+    /// Builds the error for an `error` event of a stream: the typed class of its `error.type` (`overloaded_error`
+    /// is an `OverloadedError` with status 529), or else what `makeStatusError` makes of the stream's response.
+    open func makeStreamError(_ message: String, body: JSONValue?, response: HTTPResponse) -> APIStatusError {
+        makeStreamEventError(message, body: body, response: response) ?? makeStatusError(message, body: body, response: response)
+    }
+
     /// Turns a response body into Server-Sent Events (Bedrock overrides this for its event stream).
     open func makeSSEEvents(_ bytes: ByteStream) -> AsyncThrowingStream<ServerSentEvent, Error> {
         SSEDecoder.events(from: bytes)
@@ -329,13 +335,23 @@ open class BaseClient: @unchecked Sendable {
                 }
                 body = Multipart.encode(fields: fields, files: options.files ?? [], boundary: boundary)
             } else if let jsonData {
-                body = try JSONValue.serialize(jsonData)
+                body = BaseClient.serializeBody(jsonData, raw: options.rawJSONBody)
             }
         } else {
             headers.remove("Content-Type")
         }
 
         return HTTPRequest(method: options.method.uppercased(), url: url, headers: headers, body: body, timeout: options.timeout ?? timeout)
+    }
+
+    /// The bytes of a JSON request body. They are the same for equal bodies in every process, which a prompt cache
+    /// needs (a `Dictionary`'s order differs from one instance to the next): a body built from typed params has each
+    /// object's keys sorted, and an ordered body (`FinalRequestOptions.rawJSONBody`) keeps its own order and number
+    /// text, with whatever was changed through `jsonData` since (by middleware, a platform client or `extraBody`)
+    /// folded in (`RawJSON.reconciled(with:)`).
+    static func serializeBody(_ jsonData: JSONValue, raw: RawJSON?) -> Data {
+        guard let raw else { return RawJSON(jsonData).serialized() }
+        return raw.reconciled(with: jsonData).serialized()
     }
 
     // MARK: - Sending
