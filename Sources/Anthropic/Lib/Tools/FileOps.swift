@@ -181,7 +181,7 @@ enum FileOps {
         let n = readlink(path, &buffer, buffer.count - 1)
         if n < 0 { return nil }
         buffer[n] = 0
-        return String(cString: buffer)
+        return String(decoding: buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
     }
 
     static var currentDirectory: String { FileManager.default.currentDirectoryPath }

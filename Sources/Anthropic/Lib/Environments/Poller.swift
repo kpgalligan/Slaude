@@ -123,7 +123,7 @@ func defaultWorkerID() -> String {
 func localHostName() -> String {
     var buffer = [CChar](repeating: 0, count: 256)
     guard gethostname(&buffer, buffer.count) == 0 else { return "localhost" }
-    return String(cString: buffer)
+    return String(decoding: buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
 }
 
 /// Work items claimed from a self-hosted environment (`aiter_work`). Each item it yields has been ack'd.

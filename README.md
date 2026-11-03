@@ -21,7 +21,10 @@ constructs map to Swift.
 
 ## Requirements
 
-Swift 6.0+ (tested with 6.4 on Linux). Foundation only, no third-party dependencies.
+Swift 6.0+. Foundation only, no third-party dependencies. `swift build` and `swift test` pass with Swift 6.2.3
+(Xcode 26.2) on macOS 26 (arm64, case-insensitive APFS), and the suite was tested with Swift 6.4 on Linux. CI
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds and tests on macOS with Xcode 26 and on Linux in the
+`swift:6.4.2-noble` container.
 
 ```swift
 // Package.swift

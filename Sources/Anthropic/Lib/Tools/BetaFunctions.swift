@@ -13,6 +13,16 @@ public typealias BetaFunctionToolResult = BetaToolResultBlockParam.Content_
 /// A tool's input: the `tool_use.input` object.
 public typealias BetaToolInput = [String: JSONValue]
 
+#if compiler(>=6.2)
+    /// What a typed tool's input must be: `Decodable`, with a metatype the tool's `@Sendable` function may capture
+    /// (SE-0470). Every concrete type qualifies unless its `Decodable` conformance is actor-isolated, which would make
+    /// decoding off that actor a data race.
+    public typealias BetaToolDecodableInput = Decodable & SendableMetatype
+#else
+    /// What a typed tool's input must be. `SendableMetatype` (SE-0470) arrives with Swift 6.2.
+    public typealias BetaToolDecodableInput = Decodable
+#endif
+
 /// An error a tool raises to return structured content with `is_error: true` (`ToolError`).
 ///
 /// When the tool runner catches it, it uses `content` as the tool result instead of the error's `repr`.
@@ -163,12 +173,12 @@ public final class BetaFunctionTool: BetaRunnableTool, @unchecked Sendable {
 
     /// A tool over a `Decodable` input. Input that doesn't decode raises
     /// `ValueError("Invalid arguments for function <name>")`, as pydantic's validation does upstream.
-    public convenience init<Input: Decodable>(name: String, description: String = "", inputSchema: [String: JSONValue],
-                                              deferLoading: Bool? = nil, cacheControl: BetaCacheControlEphemeralParam? = nil,
-                                              allowedCallers: [AllowedCaller]? = nil, eagerInputStreaming: Bool? = nil,
-                                              inputExamples: [[String: JSONValue]]? = nil, strict: Bool? = nil,
-                                              close: (@Sendable () async throws -> Void)? = nil,
-                                              _ function: @escaping @Sendable (Input) async throws -> BetaFunctionToolResult?)
+    public convenience init<Input: BetaToolDecodableInput>(name: String, description: String = "", inputSchema: [String: JSONValue],
+                                                           deferLoading: Bool? = nil, cacheControl: BetaCacheControlEphemeralParam? = nil,
+                                                           allowedCallers: [AllowedCaller]? = nil, eagerInputStreaming: Bool? = nil,
+                                                           inputExamples: [[String: JSONValue]]? = nil, strict: Bool? = nil,
+                                                           close: (@Sendable () async throws -> Void)? = nil,
+                                                           _ function: @escaping @Sendable (Input) async throws -> BetaFunctionToolResult?)
     {
         self.init(name: name, description: description, inputSchema: inputSchema, deferLoading: deferLoading,
                   cacheControl: cacheControl, allowedCallers: allowedCallers, eagerInputStreaming: eagerInputStreaming,
@@ -231,7 +241,7 @@ public final class BetaFunctionTool: BetaRunnableTool, @unchecked Sendable {
 
 let toolsLog = ToolLogger(name: "anthropic.lib.tools._beta_functions")
 
-private func typedFunction<Input: Decodable>(name: String, _ f: @escaping @Sendable (Input) async throws -> BetaFunctionToolResult?)
+private func typedFunction<Input: BetaToolDecodableInput>(name: String, _ f: @escaping @Sendable (Input) async throws -> BetaFunctionToolResult?)
     -> BetaFunctionTool.Function
 {
     { input in

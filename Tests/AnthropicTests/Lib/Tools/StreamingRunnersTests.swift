@@ -155,10 +155,15 @@ import Testing
         }
 
         #expect(toolset.calls.map(\.0) == ["navigate"] && toolset.calls.first?.1 == ["url": "u"])
-        #expect(results.map { [$0["tool_use_id"] ?? .null, $0["toolset_name"] ?? .null, $0["content"] ?? .null] } == [
+        // Typed lets: as one `#expect` expression this outran the Swift 6.2 type checker.
+        let rows: [[JSONValue]] = results.map { result -> [JSONValue] in
+            [result["tool_use_id"] ?? .null, result["toolset_name"] ?? .null, result["content"] ?? .null]
+        }
+        let expected: [[JSONValue]] = [
             ["toolu_member", "browser", #"navigate:{"url": "u"}"#],
             ["toolu_custom", nil, "custom:v"],
-        ])
+        ]
+        #expect(rows == expected)
     }
 }
 

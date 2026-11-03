@@ -1,0 +1,7 @@
+# The tracked Python SDK, vendored unmodified (Tools/update-upstream.sh replaces it).
+/upstream/** linguist-vendored
+# Written by Tools/codegen/generate.py; never edit by hand.
+/Sources/Anthropic/Generated/** linguist-generated
+/Tests/AnthropicTests/Generated/** linguist-generated
+/docs/porting/UNSUPPORTED_METHODS.txt linguist-generated
+/docs/porting/GENERATED_TESTS_SKIPPED.txt linguist-generated

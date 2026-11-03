@@ -79,3 +79,7 @@ Hand-ported tests use `MockTransport` (the counterpart of `httpx2.MockTransport`
 * Keep the upstream structure and names (camelCased); put a `/// Port of ...` reference where helpful.
 * Only use Foundation (no third-party packages): the toolchain must build offline.
 * Swift 6 strict concurrency: public types are `Sendable`.
+* A Swift file's name must differ, ignoring case, from every other Swift file's in its target: SwiftPM names
+  object files after basenames, so on a case-insensitive volume `diagnostics.swift` and `Diagnostics.swift` share
+  one `.o` and one drops out of the link. The codegen refuses such a generated name and `PackageLayoutTests` fails
+  on any pair; rename the hand-written file.

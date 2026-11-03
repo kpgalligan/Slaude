@@ -677,9 +677,7 @@ def gen_tests(ctx, out_dir: pathlib.Path) -> list[str]:
     for path in sorted((root / "api_resources").rglob("test_*.py")):
         rel = str(path.relative_to(root))
         src = tg.emit_file(path, rel)
-        if src:
-            name = rel.replace("/", ".").removesuffix(".py") + ".swift"
-            (out_dir / name).write_text(src)
+        if src and ctx.write_swift(out_dir / (rel.replace("/", ".").removesuffix(".py") + ".swift"), src):
             files += 1
     (out_dir.parent.parent.parent / "docs" / "porting" / "GENERATED_TESTS_SKIPPED.txt").write_text("Upstream tests not transformed (see reasons):\n\n" + "\n".join(tg.skipped) + "\n")
     print(f"tests: wrote {files} files, {tg.counts['tests']} tests, {len(tg.skipped)} skipped")

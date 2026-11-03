@@ -797,10 +797,9 @@ def gen_resources(ctx, out_dir: pathlib.Path) -> list[str]:
         if not name.startswith("anthropic.resources") or mod.is_package:
             continue
         src = gen.emit_module(mod)
-        if src:
-            (out_dir / (".".join(name.split(".")[2:]) + ".swift")).write_text(src)
+        if src and ctx.write_swift(out_dir / (".".join(name.split(".")[2:]) + ".swift"), src):
             count += 1
-    (out_dir / "_client.swift").write_text(gen.emit_client_accessors())
+    ctx.write_swift(out_dir / "_client.swift", gen.emit_client_accessors())
     report = out_dir.parent.parent.parent.parent / "docs" / "porting" / "UNSUPPORTED_METHODS.txt"
     report.write_text("Methods not handled by the transpiler (ported by hand in Sources/Anthropic/Lib):\n\n" + "\n".join(gen.unsupported) + "\n")
     print(f"resources: wrote {count} files, {len(gen.unsupported)} methods need hand-porting (see {report.name})")
