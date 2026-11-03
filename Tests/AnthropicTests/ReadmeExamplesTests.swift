@@ -78,19 +78,26 @@ import Testing
         var history: [RawJSON] = [["role": "user", "content": "What's the weather in Paris?"]]
         let tools: [RawJSON] = try toolDefinitions.map { try RawJSON.parse($0) }  // JSON text, in its own order
 
-        let stream = try await client.beta.messages.createStreaming(
+        let stream = try await client.beta.messages.stream(
             body: ["model": "claude-opus-5-5", "max_tokens": 1024, "tools": .array(tools), "messages": .array(history)]
         )
         var text = ""
         for try await event in stream {
             if case .contentBlockDelta(let e) = event.event, case .textDelta(let d) = e.delta { text += d.text }
         }
-        if stream.isComplete, let reply = stream.messageParam {
+        if stream.messageComplete, let reply = stream.messageParam {
             history.append(reply)
         }
         #expect(text == "Sunny")
         #expect(history.last?.serializedString
             == #"{"role":"assistant","content":[{"type":"text","text":"Sunny","citations":null,"new_field":{"b":1,"a":2}}]}"#)
+
+        // Saving and loading the history.
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("history-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: file) }
+        try RawJSON.array(history).serialized().write(to: file)
+        let loaded = try RawJSON.parse(Data(contentsOf: file)).arrayValue ?? []
+        #expect(loaded == history)
     }
 
     /// README "Cancellation and streams that end early".
@@ -117,7 +124,7 @@ import Testing
         let body: RawJSON = ["model": "claude-opus-5-5", "max_tokens": 1024, "messages": .array(history)]
 
         let turn = Task {
-            let stream = try await client.beta.messages.createStreaming(body: body)
+            let stream = try await client.beta.messages.stream(body: body)
             for try await event in stream { show(event) }
             return stream.messageParam!  // only reached after message_stop
         }

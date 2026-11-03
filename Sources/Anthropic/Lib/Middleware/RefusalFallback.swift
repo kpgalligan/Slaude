@@ -270,12 +270,13 @@ public final class BetaRefusalFallbackMiddleware: Middleware, @unchecked Sendabl
 
     func prependSeamBlocks(_ response: RawAPIResponse, _ seams: [JSONValue]) async throws -> RawAPIResponse {
         let data = try await response.http.read()
-        guard var message = (try? JSONValue.parse(data))?.objectValue, let content = message["content"]?.arrayValue else { return response }
-        message["content"] = .array(seams + content)
+        // The Message as received, so that its keys keep their order and its numbers their text.
+        guard case .object(var message)? = try? RawJSON.parse(data), let content = message["content"]?.arrayValue else { return response }
+        message["content"] = .array(seams.map(RawJSON.init) + content)
         let original = response.http
         return RawAPIResponse(
             http: HTTPResponse(statusCode: original.statusCode, headers: withoutEncodingHeaders(original.headers),
-                               body: try JSONValue.serialize(.object(message)), request: original.request, elapsed: original.elapsed),
+                               body: RawJSON.object(message).serialized(), request: original.request, elapsed: original.elapsed),
             options: response.options, retriesTaken: response.retriesTaken, client: response.client)
     }
 
@@ -380,8 +381,9 @@ func seamBlock(_ from: String, _ to: String, _ category: JSONValue) -> JSONValue
 
 // MARK: - SSE helpers
 
+/// `value` as compact JSON, each object's keys sorted, so that the same value is the same text in every process.
 func jsonDumps(_ value: JSONValue) -> String {
-    (try? JSONValue.serialize(value)).map { String(decoding: $0, as: UTF8.self) } ?? "null"
+    RawJSON(value).serializedString
 }
 
 /// Serializes an event back to its SSE wire form.
@@ -392,8 +394,19 @@ func serializeSSE(event: String?, data: String) -> String {
     return out + "\n"
 }
 
-func emitFrame(_ event: String, _ payload: [String: JSONValue]) -> Data {
-    Data(serializeSSE(event: event, data: jsonDumps(.object(payload))).utf8)
+/// An event's SSE frame. `original` is the event as received, when `payload` is its view with some fields changed (a
+/// shifted `index`): the frame keeps its key order and number text, with the changes folded in
+/// (`RawJSON.reconciled(with:)`), so that a consumer reading the JSON as it came (`stream(body:)`) gets the hop's
+/// events as the server sent them. A synthesized event has its keys sorted.
+func emitFrame(_ event: String, _ payload: [String: JSONValue], original: RawJSON? = nil) -> Data {
+    let data = original.map { $0.reconciled(with: .object(payload)).serializedString } ?? jsonDumps(.object(payload))
+    return Data(serializeSSE(event: event, data: data).utf8)
+}
+
+/// An event's `data` as JSON: as received (`raw`), and its view for the splice to read and change (`view`).
+func parseEventData(_ data: String) -> (raw: RawJSON, view: [String: JSONValue])? {
+    guard let raw = try? RawJSON.parse(data), let view = raw.jsonValue.objectValue else { return nil }
+    return (raw, view)
 }
 
 /// Forwards a decoded event in its original wire bytes, preserving SSE fields beyond `event:`/`data:`.
@@ -574,6 +587,8 @@ struct HopReader {
     private var model: String?
     private var startUsage: [String: JSONValue]?
     private var startEvent: [String: JSONValue]?
+    /// `startEvent` as received.
+    private var startRaw: RawJSON?
     private var heldStart: ServerSentEvent?
     private var held: [ServerSentEvent] = []
     private(set) var opened = false
@@ -592,10 +607,11 @@ struct HopReader {
     }
 
     mutating func feed(_ sse: ServerSentEvent) -> [Data] {
-        let parsed = (try? JSONValue.parse(sse.data))?.objectValue
-        let eventType = parsed?["type"]?.stringValue
+        let parsed = parseEventData(sse.data)
+        let raw = parsed?.raw
+        let eventType = parsed?.view["type"]?.stringValue
 
-        if var event = parsed {
+        if var event = parsed?.view {
             switch eventType {
             case "message_start":
                 if let message = event["message"]?.objectValue {
@@ -603,6 +619,7 @@ struct HopReader {
                     startUsage = message["usage"]?.objectValue
                 }
                 startEvent = event
+                startRaw = raw
                 heldStart = sse
                 return []
             case "content_block_start":
@@ -613,17 +630,17 @@ struct HopReader {
                     lastFallbackTo = to
                 }
                 tracker.start(&event)
-                frames.append(splice != nil ? emitFrame("content_block_start", event) : passthroughFrame(sse))
+                frames.append(splice != nil ? emitFrame("content_block_start", event, original: raw) : passthroughFrame(sse))
                 return frames
             case "content_block_delta":
                 var frames = open()
                 tracker.delta(&event)
-                frames.append(splice != nil ? emitFrame("content_block_delta", event) : passthroughFrame(sse))
+                frames.append(splice != nil ? emitFrame("content_block_delta", event, original: raw) : passthroughFrame(sse))
                 return frames
             case "content_block_stop":
                 var frames = open()
                 tracker.stop(&event)
-                frames.append(splice != nil ? emitFrame("content_block_stop", event) : passthroughFrame(sse))
+                frames.append(splice != nil ? emitFrame("content_block_stop", event, original: raw) : passthroughFrame(sse))
                 return frames
             case "message_delta":
                 let delta = event["delta"]?.objectValue ?? [:]
@@ -670,7 +687,7 @@ struct HopReader {
                     usage["iterations"] = .array(splice.iterations + [servingIterationEntry(usage, splice.model)])
                     event["usage"] = .object(usage)
                     forwardInputTransformations(&event, suppressedStartMessage())
-                    frames.append(emitFrame("message_delta", event))
+                    frames.append(emitFrame("message_delta", event, original: raw))
                     return frames
                 }
                 frames.append(passthroughFrame(sse))
@@ -706,7 +723,7 @@ struct HopReader {
                 message["id"] = .string(primaryID)
                 start["message"] = .object(message)
             }
-            frames.append(emitFrame("message_start", start))
+            frames.append(emitFrame("message_start", start, original: startRaw))
         }
         frames.append(contentsOf: seamFrames)
         frames.append(contentsOf: held.map(passthroughFrame))

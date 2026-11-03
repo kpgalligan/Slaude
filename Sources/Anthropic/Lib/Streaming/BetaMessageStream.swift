@@ -123,21 +123,24 @@ public final class BetaMessageStream<Output: Sendable>: AsyncSequence, @unchecke
                 // events make.
                 withholdMessageSnapshot(rawStream)
             }
-            if snapshot == nil {
-                guard case .messageStart = event else { return .raw(event) }
-            }
+            if snapshot == nil, !startsBetaMessage(event) { return .raw(event) }
             do {
                 snapshot = try accumulateBetaEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs, requestHeaders: response.request.headers)
+                if case .contentBlockStop(let e) = event, let parser, let message = snapshot, message.content.indices.contains(e.index),
+                   case .text(let t) = message.content[e.index]
+                {
+                    parsedOutputs[e.index] = try parser(t.text)
+                }
             } catch {
+                // The Message cannot be built past this event, so the stream ends here and every later read (and
+                // `getFinalMessage()`) throws this, as `JSONMessageStream` does.
                 withholdMessageSnapshot(rawStream)
+                rawStream.fail(error)
                 throw error
             }
             guard let message = snapshot else { continue }
-            if case .contentBlockStop(let e) = event {
+            if case .contentBlockStop = event {
                 completedBlocks += 1
-                if let parser, message.content.indices.contains(e.index), case .text(let t) = message.content[e.index] {
-                    parsedOutputs[e.index] = try parser(t.text)
-                }
             } else if case .messageStop = event {
                 messageComplete = true
             }
@@ -163,6 +166,9 @@ public func accumulateBetaEvent(_ event: BetaRawMessageStreamEvent, snapshot cur
 {
     guard var snapshot = current else {
         if case .messageStart(let e) = event { return e.message }
+        if case .unknown(let json) = event, startsBetaMessage(event) {
+            return try messageOfUndecodedStart(json, as: BetaRawMessageStartEvent.self).message
+        }
         throw AnthropicError("Unexpected event order, got \(betaRawEventType(event)) before \"message_start\"")
     }
     switch event {
@@ -177,6 +183,13 @@ public func accumulateBetaEvent(_ event: BetaRawMessageStreamEvent, snapshot cur
             throw AnthropicError("Unexpected content_block_delta for unknown content block index \(e.index)")
         }
         var content = snapshot.content[e.index]
+        let mode = betaToolInputMode(requestHeaders)
+        if case .unknown(let held) = content {
+            // A block whose start did not decode takes its deltas as JSON.
+            snapshot.content[e.index] = try blockApplyingDelta(try JSONValue.from(e.delta), to: content, held: held, index: e.index,
+                                                               jsonBufs: &jsonBufs, mode: mode, unknown: BetaContentBlock.unknown)
+            return snapshot
+        }
         switch e.delta {
         case .textDelta(let d):
             if case .text(var b) = content {
@@ -184,8 +197,6 @@ public func accumulateBetaEvent(_ event: BetaRawMessageStreamEvent, snapshot cur
                 content = .text(b)
             }
         case .inputJsonDelta(let d):
-            let anthropicBeta = requestHeaders?["anthropic-beta"] ?? ""
-            let mode: PartialJSONMode = anthropicBeta.contains("fine-grained-tool-streaming-2025-05-14") ? .trailingStrings : .on
             switch content {
             case .toolUse(var b):
                 if let input = try accumulateToolInput(&jsonBufs, index: e.index, partialJSON: d.partialJson, mode: mode) { b.input = input }
@@ -242,33 +253,67 @@ public func accumulateBetaEvent(_ event: BetaRawMessageStreamEvent, snapshot cur
         if let v = e.usage.iterations { snapshot.usage.iterations = v }
         if let v = e.usage.fallbackCredit { snapshot.usage.fallbackCredit = v }
     case .unknown(let json):
-        accumulateUndecodedBetaEvent(json, into: &snapshot)
+        try accumulateUndecodedBetaEvent(json, into: &snapshot, jsonBufs: &jsonBufs, requestHeaders: requestHeaders)
     case .messageStart, .messageStop, .contentBlockStop:
         break
     }
     return snapshot
 }
 
-/// What the snapshot needs of an event that a stream handed out undecoded (`LenientStreamEvent`): an event of a known
-/// type whose fields drifted from the schema. A block start still takes its place, so that the deltas that follow
-/// find their block, and a message delta still gives its stop reason. Other events, and an event of a type this SDK
-/// does not know, change nothing.
-func accumulateUndecodedBetaEvent(_ json: JSONValue, into snapshot: inout BetaMessage) {
-    switch json["type"]?.stringValue {
+/// Applies an event that a stream handed out undecoded (`LenientStreamEvent`), an event of a known type whose fields
+/// drifted from the schema, losing only what does not decode (`Lib/Streaming/UndecodedEvents.swift`):
+///
+/// * The event is decoded leaving out its drifted fields, and applied as a typed event. A `message_delta` keeps its
+///   stop reason and the counts that decode, whatever else drifted.
+/// * A `content_block_start` whose block does not decode even so adds the block as its JSON (`unknown`), and the
+///   deltas that follow are applied to that JSON; once it decodes, it is the typed block again.
+/// * A `content_block_delta` whose delta does not decode is applied to its block as JSON.
+///
+/// Other events, and an event of a type this SDK does not know, change nothing.
+func accumulateUndecodedBetaEvent(_ json: JSONValue, into snapshot: inout BetaMessage, jsonBufs: inout [Int: String],
+                                  requestHeaders: HTTPHeaders?) throws
+{
+    let type = json["type"]?.stringValue
+    guard type == "content_block_start" || type == "content_block_delta" || type == "message_delta" else { return }
+    let repairable = type == "message_delta" ? messageDeltaWithRequiredFields(json, outputTokens: snapshot.usage.outputTokens) : json
+    if let event = decodeLeavingOutDrift(BetaRawMessageStreamEvent.self, from: repairable) {
+        if case .unknown = event {} else {
+            snapshot = try accumulateBetaEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs, requestHeaders: requestHeaders)
+            return
+        }
+    }
+    switch type {
     case "content_block_start":
         let block = json["content_block"] ?? .null
-        snapshot.content.append((try? block.decode(as: BetaContentBlock.self)) ?? .unknown(block))
-    case "message_delta":
-        if let delta = try? (json["delta"] ?? .null).decode(as: BetaRawMessageDeltaEvent.Delta.self) {
-            snapshot.stopReason = delta.stopReason
-            snapshot.stopSequence = delta.stopSequence
-            snapshot.stopDetails = delta.stopDetails
-            if let container = delta.container { snapshot.container = container }
+        snapshot.content.append(decodeLeavingOutDrift(BetaContentBlock.self, from: block) ?? .unknown(block))
+        if block["type"]?.stringValue == "fallback", let to = block["to"], let model = try? (to["model"] ?? JSONValue.null).decode(as: Model.self) {
+            snapshot.model = model
         }
-        if let outputTokens = json["usage"]?["output_tokens"]?.intValue { snapshot.usage.outputTokens = outputTokens }
+    case "content_block_delta":
+        guard let index = json["index"]?.intValue, snapshot.content.indices.contains(index), let delta = json["delta"] else { return }
+        let block = snapshot.content[index]
+        var held: JSONValue?
+        if case .unknown(let j) = block { held = j }
+        snapshot.content[index] = try blockApplyingDelta(delta, to: block, held: held, index: index, jsonBufs: &jsonBufs,
+                                                         mode: betaToolInputMode(requestHeaders), unknown: BetaContentBlock.unknown)
     default:
         break
     }
+}
+
+/// Whether `event` is a `message_start`, decoded or not.
+func startsBetaMessage(_ event: BetaRawMessageStreamEvent) -> Bool {
+    switch event {
+    case .messageStart: return true
+    case .unknown(let json): return json["type"]?.stringValue == "message_start"
+    default: return false
+    }
+}
+
+/// How a beta stream parses tool inputs: with the `fine-grained-tool-streaming-2025-05-14` beta, incomplete strings
+/// are kept.
+func betaToolInputMode(_ requestHeaders: HTTPHeaders?) -> PartialJSONMode {
+    (requestHeaders?["anthropic-beta"] ?? "").contains("fine-grained-tool-streaming-2025-05-14") ? .trailingStrings : .on
 }
 
 /// The events to yield for one raw event (`lib/streaming/_beta_messages.build_events`).

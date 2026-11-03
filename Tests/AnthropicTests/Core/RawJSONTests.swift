@@ -76,21 +76,93 @@ private func text(_ data: Data?) -> String { String(decoding: data ?? Data(), as
     }
 
     @Test func nestingIsBoundedOnATaskStack() async throws {
-        // Parsing recurses once per level, and runs on a cooperative thread here, unoptimised in a debug build.
+        // The parser keeps its own stack; what recurses once per level is the work done on the value afterwards. Here
+        // it runs on a cooperative thread, unoptimised in a debug build, on a value twice as deep as the limit.
         func nested(_ depth: Int) -> String { String(repeating: #"{"a":["#, count: depth / 2) + "1" + String(repeating: "]}", count: depth / 2) }
-        let deepest = try RawJSON.parse(nested(64))
-        #expect(deepest.serialized().count == nested(64).utf8.count)
-        #expect(deepest.jsonValue != .null)
-        #expect(throws: PartialJSONError.self) { try RawJSON.parse(nested(66)) }
-        #expect(throws: PartialJSONError.self) { try RawJSON.parse(String(repeating: "[", count: 100_000)) }
+        let limit = JSONTextParser.maxDepth
+        let deepest = try RawJSON.parse(nested(limit))
+        #expect(deepest.serialized().count == nested(limit).utf8.count)
+        // The SDK's typed route, through `JSONEncoder` and `JSONDecoder`, at the limit.
+        #expect(try JSONValue.parse(JSONValue.serialize(deepest.jsonValue)) == deepest.jsonValue)
+        let twice = try JSONTextParser.parse(Data(nested(2 * limit).utf8), mode: .off, maxDepth: 2 * limit)
+        #expect(twice.serializedString == nested(2 * limit))
+        let view = twice.jsonValue
+        #expect(RawJSON(view) == twice)
+        #expect(twice.reconciled(with: view) == twice)
+        #expect(Set([twice, deepest]).count == 2)
+
+        // A tool input as deep as the streams take one can be put into a history and read back with it.
+        let input = try RawJSON.parse(nested(JSONTextParser.toolInputMaxDepth))
+        let history: RawJSON = [["role": "assistant", "content": [["type": "tool_use", "id": "t", "name": "n", "input": input]]]]
+        #expect(try RawJSON.parse(RawJSON.object(["history": history]).serializedString)["history"] == history)
+
+        for deeper in [nested(limit + 2), String(repeating: "[", count: 100_000)] {
+            do {
+                _ = try RawJSON.parse(deeper)
+                Issue.record("expected the nesting limit")
+            } catch let error as PartialJSONError {
+                #expect(error.exceedsNestingLimit)
+                #expect(error.message == "arrays and objects nested deeper than 128 levels")
+            }
+        }
+        #expect(throws: PartialJSONError.self) { try PartialJSON.parse(String(repeating: "[", count: 100_000)) }
     }
 
-    @Test func decodingAndEncodingGoThroughJSONValue() throws {
+    @Test func aToolInputNestedDeeperThanTheLimitSaysSo() throws {
+        func nested(_ depth: Int) -> String { String(repeating: #"{"a":"#, count: depth) + "1" + String(repeating: "}", count: depth) }
+        var bufs: [Int: String] = [:]
+        #expect(try accumulateToolInput(&bufs, index: 0, partialJSON: nested(JSONTextParser.toolInputMaxDepth), mode: .on) != nil)
+        bufs = [:]
+        do {
+            _ = try accumulateToolInput(&bufs, index: 0, partialJSON: nested(JSONTextParser.toolInputMaxDepth + 1), mode: .on)
+            Issue.record("expected a ValueError")
+        } catch let error as ValueError {
+            #expect(error.message.hasPrefix("The tool input nests arrays and objects deeper than the 120 levels this SDK parses."))
+        }
+    }
+
+    @Test func aLoneHighSurrogateAtTheEndOfADocumentIsReplaced() throws {
+        // Complete documents: the surrogate is lone, whatever is left of the input after it.
+        #expect(try RawJSON.parse(#"{"a":"\ud83d"}"#) == ["a": "\u{FFFD}"])
+        #expect(try RawJSON.parse(#""\ud83dx""#) == "\u{FFFD}x")
+        #expect(try RawJSON.parse(#""\ud83d\n""#) == "\u{FFFD}\n")
+        #expect(try PartialJSON.parse(#"{"a":"\ud83d"}"#, mode: .on) == ["a": "\u{FFFD}"])
+        #expect(try PartialJSON.parse(#"{"a":"\ud83d"}"#, mode: .trailingStrings) == ["a": "\u{FFFD}"])
+        // A pair, and a high surrogate whose low one has not arrived yet.
+        #expect(try RawJSON.parse(#""😀""#) == "😀")
+        #expect(try PartialJSON.parse(#"{"a":"x\ud83d"#, mode: .trailingStrings) == ["a": "x"])
+        #expect(try PartialJSON.parse(#"{"a":"x\ud83d\u"#, mode: .trailingStrings) == ["a": "x"])
+        #expect(try PartialJSON.parse(#"{"a":"x\ud83d\ude"#, mode: .trailingStrings) == ["a": "x"])
+        #expect(throws: PartialJSONError.self) { try RawJSON.parse(#""\ud83d"#) }
+    }
+
+    @Test func keysAreToldApartByTheirBytes() throws {
+        // "é" precomposed (U+00E9) and decomposed (e + U+0301): equal as Swift strings, two keys in JSON.
+        let source = "{\"\u{E9}\":1,\"e\u{301}\":2}"
+        let value = try RawJSON.parse(source)
+        #expect(value.objectValue?.count == 2)
+        #expect(value.serializedString == source)
+        #expect(value["\u{E9}"] == 1)
+        #expect(value["e\u{301}"] == 2)
+        #expect(value != (try RawJSON.parse("{\"e\u{301}\":1,\"\u{E9}\":2}")))
+        var object = RawJSONObject()
+        object["e\u{301}"] = 1
+        object["\u{E9}"] = 2
+        object.removeValue(forKey: "e\u{301}")
+        #expect(RawJSON.object(object).serializedString == "{\"\u{E9}\":2}")
+    }
+
+    @Test func decodingGoesThroughTheSDKsDecoderAndThereIsNoLossyCodable() throws {
         let value = try RawJSON.parse(#"{"type":"text","text":"hi","citations":null}"#)
         let block: BetaTextBlock = try value.decode()
         #expect(block.text == "hi")
         #expect(try RawJSON(encoding: block)["text"] == "hi")
-        #expect(try JSONValue.from(value) == value.jsonValue)
+        // A `Codable` round trip would sort keys and rewrite numbers; the text is what keeps them.
+        #expect(!((value as Any) is any Encodable) && !((value as Any) is any Decodable))
+        let received = try RawJSON.parse(#"[{"role":"user","content":[{"b":1.50,"a":1}]}]"#)
+        let reloaded = try RawJSON.parse(received.serialized())
+        #expect(reloaded == received)
+        #expect(reloaded.serializedString == #"[{"role":"user","content":[{"b":1.50,"a":1}]}]"#)
     }
 
     @Test func reconcilingKeepsWhatAViewLeftAlone() throws {

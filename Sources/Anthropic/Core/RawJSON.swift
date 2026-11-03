@@ -15,12 +15,15 @@ import Foundation
 /// * `serialized()` writes the stored order and number text, with no re-sorting.
 /// * Converting a `JSONValue` (`init(_:)`, `init(encoding:)`) sorts each object's keys, so that the result is the same
 ///   in every process.
+/// * An object's keys are told apart by their UTF-8 bytes, as JSON does (Swift's `String` equality would make a
+///   precomposed and a decomposed `"é"` one key).
 ///
 /// Two values are equal when they hold the same keys in the same order and numbers with the same text (`1` and `1.0`
 /// differ); compare `jsonValue`s to ignore both.
 ///
-/// `Codable` conformance goes through `JSONValue`, so decoding with a `Decoder` sorts each object's keys (a `Decoder`
-/// hands keys over unordered); use `parse(_:)` to keep the document's order.
+/// It is deliberately not `Codable`: a `Decoder` hands an object's keys over unordered, and an `Encoder` writes a
+/// number from its value, so either would lose what this type keeps. Store a value as its text (`serialized()`,
+/// `serializedString`) and read it back with `parse(_:)`, which gives the same value.
 public enum RawJSON: Sendable, Hashable {
     case null
     case bool(Bool)
@@ -115,12 +118,9 @@ extension RawJSON {
         }
     }
 
-    /// An encodable value (a typed model or params type) as ordered JSON, with each object's keys sorted.
+    /// An encodable value (a typed model or params type) as ordered JSON, with each object's keys sorted. `RawJSON`
+    /// values are combined with `.array(_:)` and `.object(_:)` (or a literal), which keep their order.
     public init<T: Encodable>(encoding value: T) throws {
-        if let v = value as? RawJSON {
-            self = v
-            return
-        }
         self.init(try JSONValue.from(value))
     }
 
@@ -194,16 +194,6 @@ extension RawJSON: CustomStringConvertible {
     public var description: String { serializedString }
 }
 
-extension RawJSON: Codable {
-    public init(from decoder: Decoder) throws {
-        self.init(try JSONValue(from: decoder))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        try jsonValue.encode(to: encoder)
-    }
-}
-
 extension RawJSON: ExpressibleByNilLiteral, ExpressibleByBooleanLiteral, ExpressibleByIntegerLiteral,
     ExpressibleByFloatLiteral, ExpressibleByStringLiteral, ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral
 {
@@ -218,14 +208,16 @@ extension RawJSON: ExpressibleByNilLiteral, ExpressibleByBooleanLiteral, Express
 
 /// A JSON object whose keys keep their order: document order when parsed, insertion order when built.
 ///
-/// It is a collection of `(key, value)` pairs in that order, with dictionary-style lookup by key.
+/// It is a collection of `(key, value)` pairs in that order, with dictionary-style lookup by key. Keys are told apart
+/// by their UTF-8 bytes, as JSON does: two keys that `String` compares as equal (a precomposed and a decomposed
+/// `"é"`) are two keys here, and a lookup finds only the key with the same bytes.
 public struct RawJSONObject: Sendable, Hashable, RandomAccessCollection, ExpressibleByDictionaryLiteral {
     public typealias Element = (key: String, value: RawJSON)
     public typealias Index = Int
 
     private var _keys: [String] = []
     private var _values: [RawJSON] = []
-    private var positions: [String: Int] = [:]
+    private var positions: [ByteKey: Int] = [:]
 
     public init() {}
 
@@ -250,14 +242,14 @@ public struct RawJSONObject: Sendable, Hashable, RandomAccessCollection, Express
     public subscript(position: Int) -> Element { (_keys[position], _values[position]) }
 
     /// The position of `key`, if it is there.
-    public func index(forKey key: String) -> Int? { positions[key] }
+    public func index(forKey key: String) -> Int? { positions[ByteKey(key)] }
 
     /// The value for `key`. Assigning replaces it in place, or appends a new key; assigning `nil` removes the key.
     public subscript(key: String) -> RawJSON? {
-        get { positions[key].map { _values[$0] } }
+        get { positions[ByteKey(key)].map { _values[$0] } }
         set {
             if let newValue {
-                if let p = positions[key] { _values[p] = newValue } else { append(key, newValue) }
+                if let p = positions[ByteKey(key)] { _values[p] = newValue } else { append(key, newValue) }
             } else {
                 removeValue(forKey: key)
             }
@@ -268,7 +260,7 @@ public struct RawJSONObject: Sendable, Hashable, RandomAccessCollection, Express
     /// that is not there is appended, starting from `null`.
     public mutating func modifyValue<R>(forKey key: String, _ body: (inout RawJSON) throws -> R) rethrows -> R {
         let p: Int
-        if let existing = positions[key] {
+        if let existing = positions[ByteKey(key)] {
             p = existing
         } else {
             p = _keys.count
@@ -279,31 +271,47 @@ public struct RawJSONObject: Sendable, Hashable, RandomAccessCollection, Express
 
     /// Appends a key known not to be there.
     mutating func append(_ key: String, _ value: RawJSON) {
-        if let p = positions[key] {
+        let k = ByteKey(key)
+        if let p = positions[k] {
             _values[p] = value
             return
         }
-        positions[key] = _keys.count
+        positions[k] = _keys.count
         _keys.append(key)
         _values.append(value)
     }
 
     @discardableResult
     public mutating func removeValue(forKey key: String) -> RawJSON? {
-        guard let p = positions.removeValue(forKey: key) else { return nil }
+        guard let p = positions.removeValue(forKey: ByteKey(key)) else { return nil }
         _keys.remove(at: p)
         let old = _values.remove(at: p)
-        for k in _keys[p...] { positions[k, default: 0] -= 1 }
+        for k in _keys[p...] { positions[ByteKey(k), default: 0] -= 1 }
         return old
     }
 
     public static func == (a: RawJSONObject, b: RawJSONObject) -> Bool {
-        a._keys == b._keys && a._values == b._values
+        a._keys.count == b._keys.count && zip(a._keys, b._keys).allSatisfy { ByteKey($0) == ByteKey($1) } && a._values == b._values
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(_keys)
+        hasher.combine(_keys.count)
+        for key in _keys { hasher.combine(ByteKey(key)) }
         hasher.combine(_values)
+    }
+
+    /// A key as JSON compares it: by its UTF-8 bytes.
+    struct ByteKey: Hashable {
+        let string: String
+
+        init(_ string: String) { self.string = string }
+
+        static func == (a: ByteKey, b: ByteKey) -> Bool { a.string.utf8.elementsEqual(b.string.utf8) }
+
+        func hash(into hasher: inout Hasher) {
+            var s = string
+            s.withUTF8 { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
+        }
     }
 }
 

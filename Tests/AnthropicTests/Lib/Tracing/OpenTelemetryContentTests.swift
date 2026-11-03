@@ -504,7 +504,7 @@ func tracingContentClient(_ spans: TracingSpans, _ router: TracingRouter, maxCon
                                                             headers: tracingResponseHeaders.merging(["content-type": "text/event-stream"]) { $1 }))
 
         // The connection broke before `message_stop`: the error under the stream's is the transport's.
-        let error = await #expect(throws: StreamEndedEarlyError.self) {
+        let error = await expectThrows(StreamEndedEarlyError.self) {
             try await tracingHelperUntilDone(try tracingContentClient(spans, router), beta: false)
         }
         #expect(error?.underlying is URLError)

@@ -53,6 +53,43 @@
     /// Long enough for a retry made at once to have reached the server.
     private func settle() async { try? await Task.sleep(nanoseconds: 300_000_000) }
 
+    /// `task`'s result, or a failure recorded as an issue when it takes longer than `timeout` seconds: a regression that
+    /// keeps a cancel from reaching the URLSession task then fails here in seconds, instead of waiting out the client's
+    /// 10-minute read timeout. (Awaiting `task.result` does not end when the test is cancelled, so a `.timeLimit` alone
+    /// would not end the wait.)
+    private func outcome<T: Sendable>(of task: Task<T, any Error>, within timeout: TimeInterval = 15) async -> Result<T, any Error> {
+        let outcome = await withCheckedContinuation { (continuation: CheckedContinuation<Result<T, any Error>?, Never>) in
+            let first = FirstResume(continuation)
+            Task { first.resume(await task.result) }
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                first.resume(nil)
+            }
+        }
+        guard let outcome else {
+            Issue.record("the task did not end within \(timeout) s")
+            task.cancel()
+            return .failure(TimedOut())
+        }
+        return outcome
+    }
+
+    private struct TimedOut: Error {}
+
+    /// Resumes a continuation once, with whichever value comes first.
+    private final class FirstResume<T: Sendable>: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<Result<T, any Error>?, Never>?
+        init(_ continuation: CheckedContinuation<Result<T, any Error>?, Never>) { self.continuation = continuation }
+        func resume(_ value: Result<T, any Error>?) {
+            let continuation = lock.withLock { () -> CheckedContinuation<Result<T, any Error>?, Never>? in
+                defer { self.continuation = nil }
+                return self.continuation
+            }
+            continuation?.resume(returning: value)
+        }
+    }
+
     private final class LoopbackCounter: @unchecked Sendable {
         private let lock = NSLock()
         private var count = 0
@@ -60,7 +97,7 @@
         var value: Int { lock.withLock { count } }
     }
 
-    @Suite struct StreamCancellationTests {
+    @Suite(.timeLimit(.minutes(1))) struct StreamCancellationTests {
         enum Stop: String, CaseIterable, Sendable { case cancelTheTask, closeTheStream }
 
         @Test(arguments: Stop.allCases)
@@ -69,7 +106,7 @@
             defer { server.stop() }
             let transport = loopbackTransport()
             let client = try loopbackClient(server, transport)
-            let stream = try await client.beta.messages.createStreaming(body: loopbackBody)
+            let stream = try await client.beta.messages.stream(body: loopbackBody)
             let events = LoopbackCounter()
             let reader = Task {
                 for try await _ in stream { events.increment() }
@@ -81,7 +118,7 @@
             case .closeTheStream: stream.close()
             }
 
-            let result = await reader.result
+            let result = await outcome(of: reader)
             guard case .failure(let error) = result, error is CancellationError else {
                 Issue.record("expected CancellationError, got \(result)")
                 return
@@ -89,8 +126,8 @@
             // The URLSession task is cancelled at once: the connection closes and the transport holds no task.
             #expect(await whenSoon { server.closedByClient == 1 })
             #expect(await whenSoon { transport.activeTaskCount == 0 })
-            #expect(!stream.isComplete)
-            #expect(stream.message?["content"]?[0]?["text"] == "Hello")
+            #expect(!stream.messageComplete)
+            #expect(stream.currentMessageSnapshot?["content"]?[0]?["text"] == "Hello")
             // Nothing reads the partial Message as the whole one.
             await #expect(throws: CancellationError.self) { _ = try await stream.getFinalMessage() }
             await #expect(throws: CancellationError.self) {
@@ -119,7 +156,7 @@
             case .closeTheStream: stream.close()
             }
 
-            let result = await reader.result
+            let result = await outcome(of: reader)
             guard case .failure(let error) = result, error is CancellationError else {
                 Issue.record("expected CancellationError, got \(result)")
                 return
@@ -142,7 +179,7 @@
             let client = try loopbackClient(server, transport)
             let request = Task {
                 if streamed {
-                    _ = try await client.beta.messages.createStreaming(body: loopbackBody)
+                    _ = try await client.beta.messages.stream(body: loopbackBody)
                 } else {
                     _ = try await client.messages.create(maxTokens: 64, messages: [userMessage("Hi")], model: "claude-opus-5-5")
                 }
@@ -150,7 +187,7 @@
             #expect(await whenSoon { server.requests.count == 1 })
             request.cancel()
 
-            let result = await request.result
+            let result = await outcome(of: request)
             guard case .failure(let error) = result, error is CancellationError else {
                 Issue.record("expected CancellationError, got \(result)")
                 return
@@ -169,10 +206,10 @@
             let client = try loopbackClient(server, transport)
             let request = Task {
                 withUnsafeCurrentTask { $0?.cancel() }
-                _ = try await client.beta.messages.createStreaming(body: loopbackBody)
+                _ = try await client.beta.messages.stream(body: loopbackBody)
             }
 
-            let result = await request.result
+            let result = await outcome(of: request)
             guard case .failure(let error) = result, error is CancellationError else {
                 Issue.record("expected CancellationError, got \(result)")
                 return
@@ -189,10 +226,10 @@
             defer { server.stop() }
             let transport = loopbackTransport()
             let client = try loopbackClient(server, transport)
-            let stream = try await client.beta.messages.createStreaming(body: loopbackBody)
+            let stream = try await client.beta.messages.stream(body: loopbackBody)
             let events = LoopbackCounter()
 
-            let error = await #expect(throws: StreamEndedEarlyError.self) {
+            let error = await expectThrows(StreamEndedEarlyError.self) {
                 for try await _ in stream { events.increment() }
             }
             #expect(events.value == replyStart.count)
@@ -208,8 +245,8 @@
             #expect(error?.requestID == "req_loopback")
             // Every later read throws it again; the partial Message stays readable as such.
             await #expect(throws: StreamEndedEarlyError.self) { _ = try await stream.getFinalMessage() }
-            #expect(!stream.isComplete)
-            #expect(stream.message?["content"]?[0]?["text"] == "Hello")
+            #expect(!stream.messageComplete)
+            #expect(stream.currentMessageSnapshot?["content"]?[0]?["text"] == "Hello")
             #expect(await whenSoon { transport.activeTaskCount == 0 })
             await settle()
             #expect(server.requests.count == 1)
@@ -221,10 +258,10 @@
             defer { server.stop() }
             let transport = loopbackTransport()
             let client = try loopbackClient(server, transport)
-            let stream = try await client.beta.messages.createStreaming(body: loopbackBody)
+            let stream = try await client.beta.messages.stream(body: loopbackBody)
 
             let message = try await stream.getFinalMessage()
-            #expect(stream.isComplete)
+            #expect(stream.messageComplete)
             #expect(message["content"]?[0]?["text"] == "Hello")
             #expect(message["stop_reason"] == "end_turn")
             // A stream read to its end reads as ended, not cancelled, even when closed afterwards.

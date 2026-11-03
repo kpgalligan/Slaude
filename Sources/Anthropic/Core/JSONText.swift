@@ -25,24 +25,43 @@ public struct PartialJSONError: Error, CustomStringConvertible, LocalizedError, 
 
     public var description: String { "\(message) at line \(line) column \(column)" }
     public var errorDescription: String? { description }
+
+    /// Whether the document nests arrays and objects deeper than the parser goes (128 levels; 120 for a tool input),
+    /// rather than not being JSON.
+    public var exceedsNestingLimit: Bool { message.hasPrefix(JSONTextParser.nestingLimitPrefix) }
 }
 
-/// A recursive-descent JSON parser over UTF-8 bytes that builds `RawJSON`, optionally accepting a truncated
-/// document (jiter's partial modes).
+/// A JSON parser over UTF-8 bytes that builds `RawJSON`, optionally accepting a truncated document (jiter's partial
+/// modes).
+///
+/// It keeps the arrays and objects it is inside on a stack of its own rather than recursing, so parsing a deep
+/// document costs heap, not the thread's stack (a task's is 512 KiB). Nesting is still bounded (`maxDepth`), because
+/// the work done on the value afterwards recurses once per level.
 struct JSONTextParser {
-    /// How deep arrays and objects may nest. The parser recurses once per level, and a task runs on a thread with a
-    /// 512 KiB stack: unoptimised, a level of objects takes about 3.5 KiB of it, so 64 levels stay well inside it with
-    /// room for the caller and for the recursive work done on the value afterwards (`serialized()`, `jsonValue`). The
-    /// API's JSON nests a handful of levels, and a tool input is parsed on its own.
-    static let maxDepth = 64
+    /// How deep arrays and objects may nest. On a task's 512 KiB stack, in an unoptimised build (macOS 26, Swift
+    /// 6.2.3), the recursive work on a value overflowed at about 320 levels for `reconciled(with:)` (which writes every
+    /// ordered request body), 384 for `jsonValue`, 448 for `serialized()`, and about 190 for the SDK's `JSONValue`
+    /// `Codable` route through `JSONEncoder` (any typed use of the value). 128 keeps a margin under all of them;
+    /// `nestingIsBoundedOnATaskStack` runs the value's own operations at twice the limit. The API's JSON nests a
+    /// handful of levels. (The recursive parser before it took about 3.5 KiB of that stack a level, so it stopped at 64.)
+    static let maxDepth = 128
+
+    /// How deep a tool input may nest: 8 levels less than a document, so that the history holding it (the array of
+    /// messages, the message, its content and the block are 4 levels around it), in a wrapper of the application's
+    /// own, still parses when it is read back.
+    static let toolInputMaxDepth = maxDepth - 8
+
+    /// The message of the error for a document nested deeper than `depth`.
+    static func nestingLimitMessage(_ depth: Int) -> String { "\(nestingLimitPrefix)\(depth) levels" }
+    static let nestingLimitPrefix = "arrays and objects nested deeper than "
 
     let bytes: [UInt8]
     let mode: PartialJSONMode
+    let maxDepth: Int
     var i = 0
-    var depth = 0
 
-    static func parse(_ data: Data, mode: PartialJSONMode) throws -> RawJSON {
-        var p = JSONTextParser(bytes: [UInt8](data), mode: mode)
+    static func parse(_ data: Data, mode: PartialJSONMode, maxDepth: Int = JSONTextParser.maxDepth) throws -> RawJSON {
+        var p = JSONTextParser(bytes: [UInt8](data), mode: mode, maxDepth: maxDepth)
         p.skipWhitespace()
         guard let value = try p.parseValue() else {
             throw p.error(p.atEnd ? "EOF while parsing a value" : "expected value")
@@ -52,9 +71,10 @@ struct JSONTextParser {
         return value
     }
 
-    init(bytes: [UInt8], mode: PartialJSONMode) {
+    init(bytes: [UInt8], mode: PartialJSONMode, maxDepth: Int = JSONTextParser.maxDepth) {
         self.bytes = bytes
         self.mode = mode
+        self.maxDepth = maxDepth
     }
 
     var atEnd: Bool { i >= bytes.count }
@@ -73,29 +93,134 @@ struct JSONTextParser {
         while i < bytes.count, bytes[i] == 0x20 || bytes[i] == 0x09 || bytes[i] == 0x0A || bytes[i] == 0x0D { i += 1 }
     }
 
-    /// Parses a value. Returns `nil` when the input ended before the value was complete enough
-    /// to keep (only in partial modes).
-    mutating func parseValue() throws -> RawJSON? {
-        skipWhitespace()
-        guard i < bytes.count else {
-            if partial { return nil }
-            throw error("EOF while parsing a value")
+    /// An array or object being parsed: what it holds so far, and for an object the key whose value comes next.
+    private enum Open {
+        case array([RawJSON])
+        case object(RawJSONObject, key: String?)
+    }
+
+    /// The containers that the input ended inside, closed with what they hold (a partial mode's result): `value`, the
+    /// value being parsed, goes into the innermost one unless it is `nil` (cut off before it was complete enough to
+    /// keep), and each container into the one around it.
+    private func closing(_ stack: [Open], with value: RawJSON?) -> RawJSON? {
+        var value = value
+        for open in stack.reversed() {
+            switch open {
+            case .array(var items):
+                if let value { items.append(value) }
+                value = .array(items)
+            case .object(var object, let key):
+                if let value, let key { object[key] = value }
+                value = .object(object)
+            }
         }
-        switch bytes[i] {
-        case UInt8(ascii: "{"), UInt8(ascii: "["):
-            if depth >= JSONTextParser.maxDepth { throw error("recursion limit exceeded") }
-            depth += 1
-            defer { depth -= 1 }
-            return bytes[i] == UInt8(ascii: "{") ? try parseObject() : try parseArray()
-        case UInt8(ascii: "\""):
-            guard let (s, complete) = try parseString() else { return nil }
-            if !complete && mode != .trailingStrings { return nil }
-            return .string(s)
-        case UInt8(ascii: "t"): return try parseLiteral("true", .bool(true))
-        case UInt8(ascii: "f"): return try parseLiteral("false", .bool(false))
-        case UInt8(ascii: "n"): return try parseLiteral("null", .null)
-        case UInt8(ascii: "-"), UInt8(ascii: "0")...UInt8(ascii: "9"): return try parseNumber()
-        default: throw error("expected value")
+        return value
+    }
+
+    /// Throws `message` for input that ended, except in a partial mode.
+    private func endOfInput(_ message: String) throws {
+        if !partial { throw error(message) }
+    }
+
+    /// Reads an object's next key and its colon, up to its value. False when the input ended first (in a partial
+    /// mode; otherwise it throws), with the key dropped.
+    private mutating func readKey(into stack: inout [Open]) throws -> Bool {
+        skipWhitespace()
+        if atEnd {
+            try endOfInput("EOF while parsing an object")
+            return false
+        }
+        guard bytes[i] == UInt8(ascii: "\"") else { throw error("key must be a string") }
+        guard let (key, complete) = try parseString(), complete else {
+            try endOfInput("EOF while parsing an object")
+            return false
+        }
+        skipWhitespace()
+        if atEnd {
+            try endOfInput("EOF while parsing an object")
+            return false
+        }
+        guard bytes[i] == UInt8(ascii: ":") else { throw error("expected `:`") }
+        i += 1
+        skipWhitespace()
+        if atEnd {
+            try endOfInput("EOF while parsing a value")
+            return false
+        }
+        guard case .object(let object, _)? = stack.popLast() else { return false }
+        stack.append(.object(object, key: key))
+        return true
+    }
+
+    /// Parses a value. Returns `nil` when the input ended before the value was complete enough to keep (only in
+    /// partial modes); an array or object the input ended inside is kept with what it holds, a key without a value
+    /// dropped. An object given a key twice keeps its first place and takes its last value, as JavaScript's
+    /// `JSON.parse` does.
+    mutating func parseValue() throws -> RawJSON? {
+        var stack: [Open] = []
+        while true {
+            // A value comes next: of the innermost container, or the document's.
+            skipWhitespace()
+            if atEnd {
+                if case .array? = stack.last { try endOfInput("EOF while parsing a list") } else { try endOfInput("EOF while parsing a value") }
+                return closing(stack, with: nil)
+            }
+            var value: RawJSON?
+            switch bytes[i] {
+            case UInt8(ascii: "{"), UInt8(ascii: "["):
+                if stack.count >= maxDepth { throw error(JSONTextParser.nestingLimitMessage(maxDepth)) }
+                let isObject = bytes[i] == UInt8(ascii: "{")
+                i += 1
+                skipWhitespace()
+                if i < bytes.count, bytes[i] == UInt8(ascii: isObject ? "}" : "]") {
+                    i += 1
+                    value = isObject ? .object(RawJSONObject()) : .array([])
+                } else if isObject {
+                    stack.append(.object(RawJSONObject(), key: nil))
+                    if try !readKey(into: &stack) { return closing(stack, with: nil) }
+                    continue
+                } else {
+                    stack.append(.array([]))
+                    continue
+                }
+            case UInt8(ascii: "\""):
+                if let (s, complete) = try parseString(), complete || mode == .trailingStrings { value = .string(s) }
+            case UInt8(ascii: "t"): value = try parseLiteral("true", .bool(true))
+            case UInt8(ascii: "f"): value = try parseLiteral("false", .bool(false))
+            case UInt8(ascii: "n"): value = try parseLiteral("null", .null)
+            case UInt8(ascii: "-"), UInt8(ascii: "0")...UInt8(ascii: "9"): value = try parseNumber()
+            default: throw error("expected value")
+            }
+            // `value` is done: it goes into its container, and the containers that close after it into theirs.
+            while let open = stack.popLast() {
+                let isObject: Bool
+                switch open {
+                case .array(var items):
+                    if let value { items.append(value) }
+                    stack.append(.array(items))
+                    isObject = false
+                case .object(var object, let key):
+                    if let value, let key { object[key] = value }
+                    stack.append(.object(object, key: nil))
+                    isObject = true
+                }
+                let eof = isObject ? "EOF while parsing an object" : "EOF while parsing a list"
+                skipWhitespace()
+                if atEnd {
+                    try endOfInput(eof)
+                    return closing(stack, with: nil)
+                }
+                if bytes[i] == UInt8(ascii: ",") {
+                    i += 1
+                    if isObject, try !readKey(into: &stack) { return closing(stack, with: nil) }
+                    break
+                }
+                guard bytes[i] == UInt8(ascii: isObject ? "}" : "]") else { throw error(isObject ? "expected `,` or `}`" : "expected `,` or `]`") }
+                i += 1
+                value = closing([stack.removeLast()], with: nil)
+                if stack.isEmpty { return value }
+            }
+            if stack.isEmpty { return value }
         }
     }
 
@@ -206,9 +331,9 @@ struct JSONTextParser {
         throw error("EOF while parsing a string")
     }
 
-    /// Parses `\uXXXX` (and a following low surrogate) at `pos`. Returns the scalar and the
-    /// number of bytes consumed, or `nil` when the input ends inside the escape. A lone surrogate, which a Swift
-    /// string cannot hold, becomes U+FFFD.
+    /// Parses `\uXXXX` (and a following low surrogate) at `pos`. Returns the scalar and the number of bytes consumed,
+    /// or `nil` when the input ends inside the escape, or inside the `\uXXXX` that may follow a high surrogate. A lone
+    /// surrogate, which a Swift string cannot hold, becomes U+FFFD.
     func parseUnicodeEscape(at pos: Int) throws -> (Unicode.Scalar, Int)? {
         func hex(_ at: Int) throws -> UInt32? {
             guard at + 4 <= bytes.count else { return nil }
@@ -218,110 +343,16 @@ struct JSONTextParser {
             return v
         }
         guard let hi = try hex(pos + 2) else { return nil }
-        if (0xD800...0xDBFF).contains(hi) {
-            guard pos + 12 <= bytes.count else { return nil }
-            if bytes[pos + 6] == UInt8(ascii: "\\"), bytes[pos + 7] == UInt8(ascii: "u"), let lo = try hex(pos + 8),
-               (0xDC00...0xDFFF).contains(lo)
-            {
-                let v = 0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00)
-                return (Unicode.Scalar(v) ?? "\u{FFFD}", 12)
-            }
-            return ("\u{FFFD}", 6)
-        }
-        return (Unicode.Scalar(hi) ?? "\u{FFFD}", 6)
-    }
-
-    mutating func parseArray() throws -> RawJSON? {
-        i += 1
-        var items: [RawJSON] = []
-        skipWhitespace()
-        if i < bytes.count, bytes[i] == UInt8(ascii: "]") {
-            i += 1
-            return .array(items)
-        }
-        while true {
-            skipWhitespace()
-            if atEnd {
-                if partial { return .array(items) }
-                throw error("EOF while parsing a list")
-            }
-            let v = try parseValue()
-            if let v { items.append(v) }
-            if atEnd {
-                if partial { return .array(items) }
-                throw error("EOF while parsing a list")
-            }
-            skipWhitespace()
-            if atEnd {
-                if partial { return .array(items) }
-                throw error("EOF while parsing a list")
-            }
-            if bytes[i] == UInt8(ascii: ",") {
-                i += 1
-                continue
-            }
-            if bytes[i] == UInt8(ascii: "]") {
-                i += 1
-                return .array(items)
-            }
-            throw error("expected `,` or `]`")
-        }
-    }
-
-    /// Parses an object in document order. A key given twice keeps its first place and takes its last value, as
-    /// JavaScript's `JSON.parse` does.
-    mutating func parseObject() throws -> RawJSON? {
-        i += 1
-        var obj = RawJSONObject()
-        skipWhitespace()
-        if i < bytes.count, bytes[i] == UInt8(ascii: "}") {
-            i += 1
-            return .object(obj)
-        }
-        while true {
-            skipWhitespace()
-            if atEnd {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing an object")
-            }
-            guard bytes[i] == UInt8(ascii: "\"") else { throw error("key must be a string") }
-            guard let (key, complete) = try parseString(), complete else {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing an object")
-            }
-            skipWhitespace()
-            if atEnd {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing an object")
-            }
-            guard bytes[i] == UInt8(ascii: ":") else { throw error("expected `:`") }
-            i += 1
-            skipWhitespace()
-            if atEnd {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing a value")
-            }
-            let v = try parseValue()
-            if let v { obj[key] = v }
-            if atEnd {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing an object")
-            }
-            skipWhitespace()
-            if atEnd {
-                if partial { return .object(obj) }
-                throw error("EOF while parsing an object")
-            }
-            if bytes[i] == UInt8(ascii: ",") {
-                i += 1
-                continue
-            }
-            if bytes[i] == UInt8(ascii: "}") {
-                i += 1
-                return .object(obj)
-            }
-            throw error("expected `,` or `}`")
-        }
+        guard (0xD800...0xDBFF).contains(hi) else { return (Unicode.Scalar(hi) ?? "\u{FFFD}", 6) }
+        let next = pos + 6
+        if next >= bytes.count { return nil }
+        guard bytes[next] == UInt8(ascii: "\\") else { return ("\u{FFFD}", 6) }
+        if next + 1 >= bytes.count { return nil }
+        guard bytes[next + 1] == UInt8(ascii: "u") else { return ("\u{FFFD}", 6) }
+        guard let lo = try hex(next + 2) else { return nil }
+        guard (0xDC00...0xDFFF).contains(lo) else { return ("\u{FFFD}", 6) }
+        let v = 0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00)
+        return (Unicode.Scalar(v) ?? "\u{FFFD}", 12)
     }
 }
 

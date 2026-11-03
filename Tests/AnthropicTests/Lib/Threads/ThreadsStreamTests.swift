@@ -360,7 +360,7 @@ private func thToolDefinitions(_ tools: [any BetaToolLike]?) throws -> JSONValue
 
         let stream = try await thread.stream(thUser("Count"))
         // Either way the stream ended before `message_stop`; a broken connection is the error under it.
-        let error = await #expect(throws: StreamEndedEarlyError.self) { try await stream.untilDone() }
+        let error = await expectThrows(StreamEndedEarlyError.self) { try await stream.untilDone() }
         #expect((error?.underlying is URLError) == fails)
         try await thread.send(thUser("Just the total"))
         stream.close()

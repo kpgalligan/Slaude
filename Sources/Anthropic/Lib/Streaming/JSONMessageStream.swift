@@ -5,38 +5,59 @@ import Foundation
 // and `JSONValue` loses key order, either of which changes the bytes of an earlier turn.
 
 extension BetaMessagesResource {
-    /// Creates a Message, streamed, from a request body given as JSON, and reads its events with their JSON kept
-    /// (`JSONMessageStream`).
+    /// Creates a Message, streamed, from a request body given as JSON, and reads its events with their JSON kept,
+    /// building the Message as JSON as they arrive (`JSONMessageStream`): the JSON counterpart of `stream(...)`.
     ///
     /// The body is sent as it is: its keys in their order, every field (including ones this SDK does not model),
     /// explicit `null`s and numbers as written; `stream` is set to `true`. Build it from the history you received
     /// (`JSONMessageStream.messageParam`) and typed values where you have them (`RawJSON(encoding:)`, which sorts
     /// their keys, so they too are the same bytes on every request). The other arguments are `createStreaming`'s.
+    public func stream(body: RawJSON, betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil,
+                       workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil,
+                       extraBody: Body? = nil, timeout: Timeout? = nil) async throws -> JSONMessageStream<BetaRawMessageStreamEvent>
+    {
+        JSONMessageStream(events: try await createStreaming(body: body, betas: betas, userProfileID: userProfileID, workspaceID: workspaceID,
+                                                            extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody,
+                                                            timeout: timeout))
+    }
+
+    /// Like `stream(body:)`, without the accumulation: the events, each with its JSON and its typed event, as
+    /// `createStreaming(...)` gives the typed events alone.
     public func createStreaming(body: RawJSON, betas: [AnthropicBetaParam]? = nil, userProfileID: String? = nil,
                                 workspaceID: String? = nil, extraHeaders: Headers? = nil, extraQuery: Query? = nil,
-                                extraBody: Body? = nil, timeout: Timeout? = nil) async throws -> JSONMessageStream<BetaRawMessageStreamEvent>
+                                extraBody: Body? = nil, timeout: Timeout? = nil) async throws -> Stream<JSONStreamEvent<BetaRawMessageStreamEvent>>
     {
         let headers = mergeHeaders(stripNotGiven([("anthropic-beta", joinHeaderValues(betas, extra: [], separator: ",")),
                                                   ("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]),
                                    extraHeaders)
         let options = try jsonStreamingOptions(client, body, headers: headers, extraQuery: extraQuery, extraBody: extraBody,
                                                   timeout: timeout, qualifiers: ["beta": "true"])
-        return JSONMessageStream(events: try await client.requestJSONStreamResponse(BetaRawMessageStreamEvent.self, options).parse())
+        return try await client.requestJSONStreamResponse(BetaRawMessageStreamEvent.self, options).parse()
     }
 }
 
 extension MessagesResource {
     /// Creates a Message, streamed, from a request body given as JSON, and reads its events with their JSON kept
-    /// (`JSONMessageStream`). See `beta.messages.createStreaming(body:)`.
+    /// (`JSONMessageStream`). See `beta.messages.stream(body:)`.
+    public func stream(body: RawJSON, userProfileID: String? = nil, workspaceID: String? = nil,
+                       extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil,
+                       timeout: Timeout? = nil) async throws -> JSONMessageStream<RawMessageStreamEvent>
+    {
+        JSONMessageStream(events: try await createStreaming(body: body, userProfileID: userProfileID, workspaceID: workspaceID,
+                                                            extraHeaders: extraHeaders, extraQuery: extraQuery, extraBody: extraBody,
+                                                            timeout: timeout))
+    }
+
+    /// Like `stream(body:)`, without the accumulation. See `beta.messages.createStreaming(body:)`.
     public func createStreaming(body: RawJSON, userProfileID: String? = nil, workspaceID: String? = nil,
                                 extraHeaders: Headers? = nil, extraQuery: Query? = nil, extraBody: Body? = nil,
-                                timeout: Timeout? = nil) async throws -> JSONMessageStream<RawMessageStreamEvent>
+                                timeout: Timeout? = nil) async throws -> Stream<JSONStreamEvent<RawMessageStreamEvent>>
     {
         let headers = mergeHeaderLayers(stripNotGiven([("anthropic-user-profile-id", userProfileID), ("anthropic-workspace-id", workspaceID)]),
                                         extraHeaders)
         let options = try jsonStreamingOptions(client, body, headers: headers, extraQuery: extraQuery, extraBody: extraBody,
                                                   timeout: timeout, qualifiers: nil)
-        return JSONMessageStream(events: try await client.requestJSONStreamResponse(RawMessageStreamEvent.self, options).parse())
+        return try await client.requestJSONStreamResponse(RawMessageStreamEvent.self, options).parse()
     }
 }
 
@@ -60,18 +81,21 @@ func jsonStreamingOptions(_ client: BaseClient, _ body: RawJSON, headers: Header
 }
 
 /// A Messages stream read with every event's JSON kept, which builds the Message as JSON as it goes
-/// (`messages.createStreaming(body:)`, `beta.messages.createStreaming(body:)`).
+/// (`messages.stream(body:)`, `beta.messages.stream(body:)`).
+///
+/// Its names follow `MessageStream`'s: `currentMessageSnapshot`, `messageComplete`, `getFinalMessage()`.
 ///
 /// Iterating it gives each event with its JSON and its typed event (`JSONStreamEvent`). Reading is lenient: an
 /// event, block or delta type this SDK version does not know, or an event whose fields drifted from the schema, is
 /// handed out with its JSON (the typed event is then the `unknown` case) and the stream goes on. The accumulated
-/// Message (`message`) is built from the JSON alone (`JSONMessageAccumulator`), so it keeps every field.
+/// Message (`currentMessageSnapshot`) is built from the JSON alone (`JSONMessageAccumulator`), so it keeps every field.
 ///
 /// An `error` event ends the stream with the typed error for its `error.type` (an `OverloadedError` for
 /// `overloaded_error`). A stream never ends normally before `message_stop`: reading one that is cancelled (its task,
 /// or `close()`) throws `CancellationError`, and one whose body ended or whose connection broke first throws
 /// `StreamEndedEarlyError`. Every later read throws the same error, and `getFinalMessage()` throws it rather than
-/// return the partial Message. `message` stays readable as accumulated so far, with `isComplete` false.
+/// return the partial Message. `currentMessageSnapshot` stays readable as accumulated so far, with `messageComplete`
+/// false.
 ///
 /// Like `Stream`, it has a single position; don't iterate it from several tasks at once.
 public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, @unchecked Sendable {
@@ -98,12 +122,13 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
     public var requestID: String? { response.headers["request-id"] }
     public var workspaceID: String? { response.headers["anthropic-workspace-id"] }
 
-    /// The Message built so far, as JSON: `message_start`'s `message` with the blocks and deltas applied.
-    public var message: RawJSON? { accumulator.message }
+    /// The Message built so far, as JSON: `message_start`'s `message` with the blocks and deltas applied; `nil` before
+    /// `message_start`. It is partial until `messageComplete`.
+    public var currentMessageSnapshot: RawJSON? { accumulator.message }
     /// The Message as a turn of a later request's `messages`: `{"role": "assistant", "content": [...]}`.
     public var messageParam: RawJSON? { accumulator.messageParam }
-    /// Whether `message_stop` was received, so that `message` is the whole Message.
-    public var isComplete: Bool { accumulator.isComplete }
+    /// Whether `message_stop` was received, so that `currentMessageSnapshot` is the whole Message.
+    public var messageComplete: Bool { accumulator.messageComplete }
 
     /// Closes the response, which cancels the request. The Message stays as accumulated so far; before
     /// `message_stop`, a read after this throws `CancellationError`.
@@ -121,7 +146,7 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
         guard let message = accumulator.message else {
             throw AnthropicError("The stream ended before a `message_start` event was received")
         }
-        guard isComplete else { throw StreamEndedEarlyError(response: response) }
+        guard messageComplete else { throw StreamEndedEarlyError(response: response) }
         return message
     }
 
@@ -148,10 +173,16 @@ public final class JSONMessageStream<Event: LenientStreamEvent>: AsyncSequence, 
             throw error
         }
         if tracedMessage != nil, ["content_block_stop", "message_delta", "message_stop"].contains(event.type ?? "") {
-            tracedMessage?.updateSnapshot(accumulator.message)
+            tracedMessage?.updateSnapshot(accumulator.message.map(TracedMessageJSON.init))
         }
         return event
     }
+}
+
+/// The Message a call's span takes its output content from, converted only when the span reads it.
+private struct TracedMessageJSON: Encodable, Sendable {
+    let message: RawJSON
+    func encode(to encoder: any Encoder) throws { try message.jsonValue.encode(to: encoder) }
 }
 
 /// Builds a streamed Message as JSON from its events' JSON, keeping every field as received
@@ -178,7 +209,7 @@ public struct JSONMessageAccumulator: Sendable {
     private var inputJSON: [Int: String] = [:]
     private let toolInputMode: PartialJSONMode
     /// Whether `message_stop` was received.
-    public private(set) var isComplete = false
+    public private(set) var messageComplete = false
 
     /// `toolInputMode` is how a tool input is parsed: `.on` drops a string it stops in, `.trailingStrings` keeps it
     /// (with the `fine-grained-tool-streaming-2025-05-14` beta, an input may stop anywhere).
@@ -239,7 +270,7 @@ public struct JSONMessageAccumulator: Sendable {
         case "message_delta":
             applyMessageDelta(event)
         case "message_stop":
-            isComplete = true
+            messageComplete = true
         default:
             break
         }
@@ -329,10 +360,9 @@ public struct JSONMessageAccumulator: Sendable {
 
     private static func parseInput(_ buf: String, mode: PartialJSONMode) throws -> RawJSON {
         do {
-            return try PartialJSON.parseRaw(buf, mode: mode)
+            return try JSONTextParser.parse(Data(buf.utf8), mode: mode, maxDepth: JSONTextParser.toolInputMaxDepth)
         } catch {
-            throw ValueError(
-                "Unable to parse tool parameter JSON from model. Please retry your request or adjust your prompt. Error: \(error). JSON: \(buf)")
+            throw toolInputError(error, buf)
         }
     }
 }

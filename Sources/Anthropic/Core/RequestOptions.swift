@@ -74,10 +74,11 @@ public struct FinalRequestOptions: Sendable {
     public var content: Data? = nil
     public var jsonData: JSONValue? = nil
     /// The body in its own key order and number text, for a body that must be sent as it was received or built
-    /// (`messages.createStreaming(body:)`). `jsonData` then holds its `JSONValue` view, which middleware, platform
-    /// clients and spans read and may change; the body is written from this value with those changes folded in
-    /// (`RawJSON.reconciled(with:)`). Set both with `setRawJSONBody(_:)`.
-    public var rawJSONBody: RawJSON? = nil
+    /// (`messages.stream(body:)`). `jsonData` then holds its `JSONValue` view, which middleware, platform clients and
+    /// spans read and may change; the body is written from this value with those changes folded in
+    /// (`RawJSON.reconciled(with:)`), and no body is sent when `jsonData` is `nil`. `jsonData` is therefore the one
+    /// surface to edit, and this is set only with `setRawJSONBody(_:)`, which sets both.
+    public private(set) var rawJSONBody: RawJSON? = nil
     public var extraJSON: Body? = nil
     /// Set by the SDK method that makes the call, for the call's span. Not public options.
     public var spanName: String? = nil

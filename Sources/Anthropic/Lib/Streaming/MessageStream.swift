@@ -119,21 +119,22 @@ public final class MessageStream<Output: Sendable>: AsyncSequence, @unchecked Se
                 // The snapshot takes only part of it (`accumulateUndecodedEvent`), so it is not the Message the events make.
                 withholdMessageSnapshot(rawStream)
             }
-            if snapshot == nil {
-                guard case .messageStart = event else { return .raw(event) }
-            }
+            if snapshot == nil, !startsMessage(event) { return .raw(event) }
             do {
                 snapshot = try accumulateEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs)
+                if case .contentBlockStop(let e) = event, let parser, let message = snapshot, message.content.indices.contains(e.index),
+                   case .text(let t) = message.content[e.index]
+                {
+                    parsedOutputs[e.index] = try parser(t.text)
+                }
             } catch {
+                // The Message cannot be built past this event, so the stream ends here and every later read (and
+                // `getFinalMessage()`) throws this, as `JSONMessageStream` does.
                 withholdMessageSnapshot(rawStream)
+                rawStream.fail(error)
                 throw error
             }
             guard let message = snapshot else { continue }
-            if case .contentBlockStop(let e) = event, let parser, message.content.indices.contains(e.index),
-               case .text(let t) = message.content[e.index]
-            {
-                parsedOutputs[e.index] = try parser(t.text)
-            }
             pending.append(contentsOf: buildEvents(event, snapshot: message))
         }
     }
@@ -146,6 +147,9 @@ let tracksToolInput: Set<String> = ["tool_use", "server_tool_use"]
 public func accumulateEvent(_ event: RawMessageStreamEvent, snapshot current: Message?, jsonBufs: inout [Int: String]) throws -> Message {
     guard var snapshot = current else {
         if case .messageStart(let e) = event { return e.message }
+        if case .unknown(let json) = event, startsMessage(event) {
+            return try messageOfUndecodedStart(json, as: RawMessageStartEvent.self).message
+        }
         throw AnthropicError("Unexpected event order, got \(rawEventType(event)) before \"message_start\"")
     }
     switch event {
@@ -156,6 +160,12 @@ public func accumulateEvent(_ event: RawMessageStreamEvent, snapshot current: Me
             throw AnthropicError("Unexpected content_block_delta for unknown content block index \(e.index)")
         }
         var content = snapshot.content[e.index]
+        if case .unknown(let held) = content {
+            // A block whose start did not decode takes its deltas as JSON.
+            snapshot.content[e.index] = try blockApplyingDelta(try JSONValue.from(e.delta), to: content, held: held, index: e.index,
+                                                               jsonBufs: &jsonBufs, mode: .on, unknown: ContentBlock.unknown)
+            return snapshot
+        }
         switch e.delta {
         case .textDelta(let d):
             if case .text(var b) = content {
@@ -206,38 +216,47 @@ public func accumulateEvent(_ event: RawMessageStreamEvent, snapshot current: Me
         if let v = e.usage.serverToolUse { snapshot.usage.serverToolUse = v }
         if let v = e.usage.outputTokensDetails { snapshot.usage.outputTokensDetails = v }
     case .unknown(let json):
-        accumulateUndecodedEvent(json, into: &snapshot)
+        try accumulateUndecodedEvent(json, into: &snapshot, jsonBufs: &jsonBufs)
     case .messageStart, .messageStop, .contentBlockStop:
         break
     }
     return snapshot
 }
 
-/// Whether `json`, an event a stream handed out as `unknown`, has a type the Messages events have: one whose fields
-/// drifted from the schema, rather than an event type this SDK does not know.
-func isUndecodedMessageEvent(_ json: JSONValue) -> Bool {
-    switch json["type"]?.stringValue {
-    case "message_start", "message_delta", "message_stop", "content_block_start", "content_block_delta", "content_block_stop": return true
-    default: return false
+/// Applies an event that a stream handed out undecoded, losing only what does not decode; see
+/// `accumulateUndecodedBetaEvent`.
+func accumulateUndecodedEvent(_ json: JSONValue, into snapshot: inout Message, jsonBufs: inout [Int: String]) throws {
+    let type = json["type"]?.stringValue
+    guard type == "content_block_start" || type == "content_block_delta" || type == "message_delta" else { return }
+    let repairable = type == "message_delta" ? messageDeltaWithRequiredFields(json, outputTokens: snapshot.usage.outputTokens) : json
+    if let event = decodeLeavingOutDrift(RawMessageStreamEvent.self, from: repairable) {
+        if case .unknown = event {} else {
+            snapshot = try accumulateEvent(event, snapshot: snapshot, jsonBufs: &jsonBufs)
+            return
+        }
+    }
+    switch type {
+    case "content_block_start":
+        let block = json["content_block"] ?? .null
+        snapshot.content.append(decodeLeavingOutDrift(ContentBlock.self, from: block) ?? .unknown(block))
+    case "content_block_delta":
+        guard let index = json["index"]?.intValue, snapshot.content.indices.contains(index), let delta = json["delta"] else { return }
+        let block = snapshot.content[index]
+        var held: JSONValue?
+        if case .unknown(let j) = block { held = j }
+        snapshot.content[index] = try blockApplyingDelta(delta, to: block, held: held, index: index, jsonBufs: &jsonBufs, mode: .on,
+                                                         unknown: ContentBlock.unknown)
+    default:
+        break
     }
 }
 
-/// What the snapshot needs of an event that a stream handed out undecoded; see `accumulateUndecodedBetaEvent`.
-func accumulateUndecodedEvent(_ json: JSONValue, into snapshot: inout Message) {
-    switch json["type"]?.stringValue {
-    case "content_block_start":
-        let block = json["content_block"] ?? .null
-        snapshot.content.append((try? block.decode(as: ContentBlock.self)) ?? .unknown(block))
-    case "message_delta":
-        if let delta = try? (json["delta"] ?? .null).decode(as: RawMessageDeltaEvent.Delta.self) {
-            snapshot.stopReason = delta.stopReason
-            snapshot.stopSequence = delta.stopSequence
-            snapshot.stopDetails = delta.stopDetails
-            if let container = delta.container { snapshot.container = container }
-        }
-        if let outputTokens = json["usage"]?["output_tokens"]?.intValue { snapshot.usage.outputTokens = outputTokens }
-    default:
-        break
+/// Whether `event` is a `message_start`, decoded or not.
+func startsMessage(_ event: RawMessageStreamEvent) -> Bool {
+    switch event {
+    case .messageStart: return true
+    case .unknown(let json): return json["type"]?.stringValue == "message_start"
+    default: return false
     }
 }
 
@@ -249,12 +268,20 @@ func accumulateToolInput(_ bufs: inout [Int: String], index: Int, partialJSON: S
     if buf.isEmpty { return nil }
     let parsed: JSONValue
     do {
-        parsed = try PartialJSON.parse(buf, mode: mode)
+        parsed = try JSONTextParser.parse(Data(buf.utf8), mode: mode, maxDepth: JSONTextParser.toolInputMaxDepth).jsonValue
     } catch {
-        throw ValueError(
-            "Unable to parse tool parameter JSON from model. Please retry your request or adjust your prompt. Error: \(error). JSON: \(buf)")
+        throw toolInputError(error, buf)
     }
     return parsed.objectValue ?? [:]
+}
+
+/// The error for a tool input `buf` that does not parse: upstream's, for input that is not JSON, and one that says so
+/// for input nested deeper than the parser goes (`PartialJSONError.exceedsNestingLimit`), which is no fault of the model's.
+func toolInputError(_ error: any Error, _ buf: String) -> ValueError {
+    if let e = error as? PartialJSONError, e.exceedsNestingLimit {
+        return ValueError("The tool input nests arrays and objects deeper than the \(JSONTextParser.toolInputMaxDepth) levels this SDK parses. JSON: \(buf)")
+    }
+    return ValueError("Unable to parse tool parameter JSON from model. Please retry your request or adjust your prompt. Error: \(error). JSON: \(buf)")
 }
 
 /// The events to yield for one raw event (`lib/streaming/_messages.build_events`).

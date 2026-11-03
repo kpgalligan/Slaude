@@ -11,7 +11,8 @@ and their `beta` twins).
 | `lib/streaming/_messages.py`, `_types.py` | `Sources/Anthropic/Lib/Streaming/MessageStream.swift`, `MessageStreamEvents.swift` |
 | `lib/streaming/_beta_messages.py`, `_beta_types.py` | `Sources/Anthropic/Lib/Streaming/BetaMessageStream.swift`, `MessageStreamEvents.swift` |
 | `jiter.from_json(..., partial_mode=...)` | `Sources/Anthropic/Lib/Streaming/PartialJSON.swift` (the parser is `Core/JSONText.swift`, shared with `RawJSON.parse`) |
-| — (verbatim JSON: `createStreaming(body:)`) | `Sources/Anthropic/Lib/Streaming/JSONMessageStream.swift`, `Core/RawJSON.swift`, `Core/JSONStreamEvent.swift` |
+| — (verbatim JSON: `stream(body:)`, `createStreaming(body:)`) | `Sources/Anthropic/Lib/Streaming/JSONMessageStream.swift`, `Core/RawJSON.swift`, `Core/JSONStreamEvent.swift` |
+| — (drifted events in the typed helpers) | `Sources/Anthropic/Lib/Streaming/UndecodedEvents.swift` |
 | `messages.stream`, `beta.messages.stream` | `Sources/Anthropic/Lib/Streaming/MessagesStreamResource.swift` |
 | `messages.batches.results`, `beta.messages.batches.results` | `Sources/Anthropic/Lib/Streaming/BatchResults.swift` |
 | `lib/_parse/_transform.py`, `_response.py` | `Sources/Anthropic/Lib/Parse/StructuredOutput.swift`, `ParsedMessage.swift` |
@@ -35,15 +36,19 @@ and their `beta` twins).
   `.compaction`); events the stream does not process (unknown types, anything before
   `message_start`) pass through as `.raw(...)`. The names avoid the generated aliases
   `MessageStreamEvent` / `MessageStopEvent` / `ContentBlockStopEvent` (= the raw types).
-* **Verbatim JSON.** `createStreaming(body:)` (GA and beta) sends a `RawJSON` body unchanged and returns a
-  `JSONMessageStream`: each event is a `JSONStreamEvent` (the SSE name, the data as `RawJSON` in document order, the
+* **Verbatim JSON.** `stream(body:)` (GA and beta) sends a `RawJSON` body unchanged and returns a
+  `JSONMessageStream` (`createStreaming(body:)` returns its `Stream` of events, as the generated `createStreaming`
+  returns the typed one): each event is a `JSONStreamEvent` (the SSE name, the data as `RawJSON` in document order, the
   typed event, and `decodingError` when a known event did not decode). `JSONMessageAccumulator` is
-  `accumulate_event` over that JSON, so the Message keeps every field the API sent: `message`, `messageParam` (the
-  turn to append to a history) and `isComplete` (`message_stop` seen). A tool input is parsed at its
-  `content_block_stop` in partial mode (`trailingStrings` with the fine-grained tool streaming beta, as the typed
-  streams do), keeping the model's key order; an input that is not JSON raises the upstream `ValueError` there.
-  `RawJSON.parse` and `PartialJSON` share one parser, which accepts only the JSON grammar (no leading zeros) and nests at
-  most 64 levels (it recurses per level, on a task's 512 KiB stack).
+  `accumulate_event` over that JSON, so the Message keeps every field the API sent: `currentMessageSnapshot`,
+  `messageParam` (the turn to append to a history) and `messageComplete` (`message_stop` seen), named as on
+  `MessageStream`. A tool input is parsed at its `content_block_stop` in partial mode (`trailingStrings` with the
+  fine-grained tool streaming beta, as the typed streams do), keeping the model's key order; an input that is not JSON
+  raises the upstream `ValueError` there. `RawJSON.parse` and `PartialJSON` share one parser, which accepts only the
+  JSON grammar (no leading zeros), keeps its own stack rather than recursing, and nests at most 128 levels (a tool input
+  120, so that a history holding it parses again; jiter allows 200). What bounds it is the recursive work on the
+  value afterwards, measured on a task's 512 KiB stack in a debug build (`JSONTextParser.maxDepth`). A lone high
+  surrogate becomes U+FFFD wherever it is; object keys are compared by their UTF-8 bytes.
 * `stream(...)` is `async throws` and returns once the response headers arrived (Python's
   `async with` entering the manager). A stream is one sequence: iterating it, `textStream`,
   `untilDone()` and `getFinalMessage()` all continue where the previous consumer stopped.
@@ -51,15 +56,20 @@ and their `beta` twins).
   `Core/Streaming.swift`). Before it, a cancelled task or `close()` makes every read throw `CancellationError`, and a
   body that ends or breaks makes every read throw `StreamEndedEarlyError`; `getFinalMessage()` /
   `getFinalText()` of `MessageStream`, `BetaMessageStream`, `BetaThreadMessageStream` and `JSONMessageStream` throw
-  rather than return a partial message (upstream returns the snapshot). `messageComplete` (typed) and `isComplete`
-  (JSON) say whether `message_stop` arrived. `textStream` is a `MessageTextStream` rather than an
-  `AsyncThrowingStream(unfolding:)`, which would end without an error in a cancelled task. A tool input that does not
-  parse ends a `JSONMessageStream` with that error (`Stream.fail`), which later reads rethrow.
+  rather than return a partial message (upstream returns the snapshot). `messageComplete` says whether
+  `message_stop` arrived. `textStream` is a `MessageTextStream` rather than an `AsyncThrowingStream(unfolding:)`, which
+  would end without an error in a cancelled task. A tool input that does not parse, or a structured-output parser that
+  throws, ends the stream (typed or JSON) with that error (`Stream.fail`), which later reads and `getFinalMessage()`
+  rethrow. A transport error after `message_stop` ends the stream normally; one before it is `StreamEndedEarlyError`, and
+  on a stream without an end event (Sessions) `APIConnectionError` / `APITimeoutError`, as for a request.
 * **Refusal fallbacks.** `BetaRefusalFallbackMiddleware` conforms to the core `Middleware` protocol.
   Python's context variable becomes a task-local: `BetaFallbackState().run { ... }` replaces
   `with state:`. Python logs to `anthropic.lib.middleware`; Swift takes a `MiddlewareLogger`
   (stderr by default). The streaming splice is a pull-driven state machine (the Python generator),
-  so a hop request is only sent once the consumer has read up to the refusal.
+  so a hop request is only sent once the consumer has read up to the refusal. A hop's events reach the client with
+  the key order and number text they arrived with, only their `index` shifted (`emitFrame(original:)` over
+  `RawJSON.reconciled(with:)`), so `stream(body:)` sees them as the server sent them; the events the splice makes have
+  their keys sorted (Python's `json.dumps` writes insertion order, which a Swift `Dictionary` does not have).
 * `transformSchema` lists leftover keywords in the description in sorted key order (`JSONValue`
   objects are unordered); Python uses the schema's insertion order. An unsupported `type` throws
   `ValueError` (Python: `AssertionError` from `assert_never`).

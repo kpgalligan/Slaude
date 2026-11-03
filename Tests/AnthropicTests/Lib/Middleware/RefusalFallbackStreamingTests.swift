@@ -186,6 +186,21 @@ final class ClosingBody: @unchecked Sendable {
         #expect(try JSONValue.from(try firstDelta(events))["input_transformations"] == nil)
     }
 
+    @Test func theSplicedHopReachesTheJSONStreamAsTheServerSentIt() async throws {
+        let server = LibMockServer([.sse(streamA), .sse(streamB)])
+        let client = try server.client(middleware: [fbMiddleware(fableFallbacks)])
+        let stream = try await client.beta.messages.stream(
+            body: ["model": "claude-fable-5", "max_tokens": 1024, "messages": [["role": "user", "content": .string(fableUserText)]]])
+        var starts: [String] = []
+        for try await event in stream where event.type == "content_block_start" { starts.append(event.json.serializedString) }
+        #expect(starts.count == 4)
+        // The seam the middleware makes has its keys sorted, so it is the same text in every process.
+        #expect(starts[2].hasPrefix(#"{"content_block":{"from":{"model":"claude-fable-5"},"#))
+        // B's text block, its index shifted, with the rest as B sent it.
+        #expect(starts[3] == #"{"type":"content_block_start","index":3,"content_block":{"type":"text","text":""}}"#)
+        #expect(stream.messageComplete)
+    }
+
     @Test func theStreamHelperGetsTheFallback() async throws {
         let server = LibMockServer([.sse(streamA), .sse(streamB)])
         let client = try server.client(middleware: [fbMiddleware(fableFallbacks)])

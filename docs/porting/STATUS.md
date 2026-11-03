@@ -57,8 +57,12 @@ test transpiler doesn't handle; each is ported by hand: the batch `results` test
   (`LenientStreamEvent`: the Messages and Sessions event unions): an event of a known type that does not decode (a
   `null` where a number was expected, a required key left out) is handed out as the union's `unknown` case holding its
   JSON, and the stream goes on, as upstream's `construct_type` and the TypeScript SDK's casts let it through. The
-  typed `MessageStream` / `BetaMessageStream` still give such a block start its place and take a message delta's stop
-  reason, and withhold their snapshot from the call's span (see `tracing.md`).
+  typed `MessageStream` / `BetaMessageStream` still take such an event into the Message, losing only what does not
+  decode (`Lib/Streaming/UndecodedEvents.swift`): the event is decoded leaving out each drifted field (the nearest
+  optional one around a drifted required field), a block that still does not decode is held as its JSON and takes its
+  deltas as `JSONMessageAccumulator` applies them, a drifted `message_delta` keeps its stop reason, and a
+  `message_start` whose Message cannot be built even so fails the stream naming why. They withhold their snapshot from
+  the call's span (see `tracing.md`).
 * Request bodies: Python's dicts keep insertion order, so its bodies are the same bytes on every request. A Swift
   `Dictionary` (and so `JSONValue`) has no order and iterates differently per instance and process, so the request
   pipeline writes a body built from typed params with each object's keys sorted (`BaseClient.serializeBody`): the
@@ -67,8 +71,9 @@ test transpiler doesn't handle; each is ported by hand: the batch `results` test
   platform clients, `extraBody`) folded in by `RawJSON.reconciled(with:)`.
 * Verbatim JSON, which the TypeScript SDK has by passing JSON through and Python by keeping unknown fields on its
   models: `RawJSON` is an order-preserving JSON value (document order when parsed, insertion order when built, each
-  number's text kept, explicit `null`s kept). `messages.createStreaming(body:)` / `beta.messages.createStreaming(body:)`
-  send a `RawJSON` body as it is and return a `JSONMessageStream`, whose events carry their JSON beside the typed
+  number's text kept, explicit `null`s kept; not `Codable`, which would lose both: it is stored as its text).
+  `messages.stream(body:)` / `beta.messages.stream(body:)` send a `RawJSON` body as it is and return a
+  `JSONMessageStream` (`createStreaming(body:)` returns its events alone), whose events carry their JSON beside the typed
   event (`JSONStreamEvent`) and whose `JSONMessageAccumulator` builds the Message as JSON
   (`_beta_messages.accumulate_event` over JSON: block starts as received, text / thinking / signature / citations /
   compaction deltas applied, `input_json_delta` parts parsed at the block's stop in the model's key order). It is for a

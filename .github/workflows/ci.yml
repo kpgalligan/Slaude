@@ -10,18 +10,26 @@ concurrency:
 
 jobs:
   macos:
-    name: macOS (Xcode 26)
+    name: macOS (Xcode ${{ matrix.xcode }})
     runs-on: macos-26
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        # 26.2 (Swift 6.2.3) is the toolchain the README states, and its type checker is the slowest seen on the test
+        # target; `latest` is the newest non-beta Xcode 26 on the image.
+        xcode: ["26.2", "latest"]
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 26
-        # The newest non-beta Xcode 26 the image carries; fails unless the active Xcode is then a 26.
+      - name: Select Xcode
+        # Fails, listing what the image has, unless the Xcode asked for is there and active.
         run: |
-          xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | grep -v -i beta | sort -V | tail -n 1)"
-          if [ -n "$xcode" ]; then sudo xcode-select -s "$xcode/Contents/Developer"; fi
+          if [ "${{ matrix.xcode }}" = latest ]; then pattern="Xcode_26*.app"; want="26"; else pattern="Xcode_${{ matrix.xcode }}*.app"; want="${{ matrix.xcode }}"; fi
+          xcode="$(ls -d /Applications/$pattern 2>/dev/null | grep -v -i beta | sort -V | tail -n 1)"
+          if [ -z "$xcode" ]; then echo "no $pattern on this runner:"; ls -d /Applications/Xcode*.app; exit 1; fi
+          sudo xcode-select -s "$xcode/Contents/Developer"
           xcodebuild -version
-          xcodebuild -version | grep -q '^Xcode 26' || { echo "no Xcode 26 on this runner"; exit 1; }
+          xcodebuild -version | grep -q "^Xcode $want" || { echo "the active Xcode is not $want"; exit 1; }
           swift --version
       - name: Build
         run: swift build

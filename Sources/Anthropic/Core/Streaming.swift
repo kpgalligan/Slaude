@@ -308,11 +308,25 @@ public final class Stream<Element: Sendable>: AsyncSequence, @unchecked Sendable
             throw error
         }
 
-        /// Ends the stream with an error of reading its body: a cancel, or a broken connection.
+        /// Ends the stream with an error of reading its body: a cancel, or a broken connection. A stream that had its
+        /// end event is whole, so what happens to the connection after it (a reset, a stall before the last chunk)
+        /// ends it normally, as a cancel then does. A transport's error is the SDK's connection error, as a request's
+        /// is (`attemptRequest`): `StreamEndedEarlyError` before the end event, `APITimeoutError` or
+        /// `APIConnectionError` for a stream without one.
         private func failedReading(_ error: any Error) throws -> Element? {
             if Task.isCancelled || isCancellation(error) { return try cancelled() }
-            guard let endEvent, isIncomplete, !(error is AnthropicError) else { return try failed(error) }
-            return try failed(StreamEndedEarlyError(response: response, endEvent: endEvent, underlying: error))
+            if isWhole {
+                response.streamObserver?.end(.read, error: nil)
+                return try result(end(.done))
+            }
+            if error is AnthropicError { return try failed(error) }
+            if let endEvent { return try failed(StreamEndedEarlyError(response: response, endEvent: endEvent, underlying: error)) }
+            if error is TransportTimeoutError { return try failed(APITimeoutError(request: response.request)) }
+            if let e = error as? URLError {
+                return try failed(e.code == .timedOut ? APITimeoutError(request: response.request)
+                    : APIConnectionError(request: response.request, underlying: e))
+            }
+            return try failed(error)
         }
 
         func next() async throws -> Element? {
